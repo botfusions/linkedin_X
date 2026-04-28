@@ -103,17 +103,25 @@ TZ=Europe/Istanbul
 
 Tum diger API key'ler Supabase `env_config` tablosundan otomatik yuklenir.
 
-### 3. LinkedIn Token Alma (Ilkez)
-Container basladiktan sonra:
+### 3. Container Adini Bul
+Redeploy sonrasi container adi degisir. Her zaman once bul:
 ```bash
-docker exec -it botfusions-agent npx tsx src/linkedin_auth.ts
+docker ps --format "{{.Names}}" | head -5
 ```
-Tarayicida linki ac, LinkedIn'de onayla, kodu yapistir. Token 60 gun gecerli.
+`dgecwxjms61k579zpew9y0rd-XXXXXXXXX` formatindaki satir senin container'in.
 
-### 4. Token Suresi Dolunca
-Telegram'a bildirim gelir. VPS'e baglanip tekrar:
+### 4. LinkedIn Token Alma (Ilkez)
+Container adini bulduktan sonra:
 ```bash
-docker exec -it botfusions-agent npx tsx src/linkedin_auth.ts
+docker exec -it <CONTAINER_ADI> npx tsx src/linkedin_auth.ts
+```
+Tarayicida linki ac, LinkedIn'de onayla, yonlendirme URL'sini yapistir. Token 60 gun gecerli.
+
+### 5. Token Suresi Dolunca
+Telegram'a bildirim gelir. Container adini tekrar bulup:
+```bash
+docker ps --format "{{.Names}}" | head -5
+docker exec -it <CONTAINER_ADI> npx tsx src/linkedin_auth.ts
 ```
 
 ---
