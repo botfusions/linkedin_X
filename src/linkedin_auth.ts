@@ -3,8 +3,10 @@ import path from "path";
 import readline from "readline";
 import axios from "axios";
 import dotenv from "dotenv";
+import { initEnvFromSupabase } from "./services/supabase.js";
 
 dotenv.config();
+await initEnvFromSupabase();
 
 const TOKEN_PATH = path.join(process.cwd(), "data", ".linkedin_token.json");
 
