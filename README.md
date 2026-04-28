@@ -1,125 +1,200 @@
-# 🤖 Botfusions Autonomous Content Engine (v2.3)
+# Botfusions Autonomous Content Engine (v2.3)
 
-> **Precision in every byte.** LinkedIn ve X (Twitter) platformları için tasarlanmış, kendi kendini optimize edebilen (Self-Improving), tam otonom içerik üretim ve paylaşım ajanı.
+LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
 ---
 
-## 🚀 Genel Bakış
+## Ozellikler
 
-Botfusions ACE, manuel müdahale gerektirmeden Google Sheets üzerinden aldığı konuları derinlemesine araştıran, platforma özel (LinkedIn & X) içerik üreten, bu içeriği sosyal medya algoritmalarına göre skorlayıp revize eden ve görselleriyle birlikte paylaşan bir otonom sistemdir. n8n gibi ara araçlara ihtiyaç duymadan doğrudan API entegrasyonlarıyla çalışır.
+- **Dual-Platform:** LinkedIn (kurumsal) + X (vizyoner) icerik uretimi
+- **3 Icerik Kaynagi:** Google Sheets konular, Google News AI RSS haberler, Istanbul hava durumu
+- **Self-Improving Optimizer:** 14+ kurala gore skorlama, 80/100 altindakiler otomatik revize
+- **AI Gorsel Uretimi:** Gemini 3.1 Flash ile Turkce infografikler
+- **Canli Arastirma:** Perplexity AI ile guncel veri toplama
+- **Supabase:** API key deposu + yayin takip tablosu
+- **Telegram Bildirim:** Her yayinda rapor, hatalarda alarm
+- **Docker + Coolify:** VPS'te 7/24 otonom calisma
 
-```mermaid
-graph TD
-    A[Google Sheets] -->|Konu Seçimi| B(Autonomous Agent)
-    B -->|Canlı Araştırma| C[Perplexity AI]
-    C -->|Ham Veri| D[Gemini 2.5 Pro]
-    D -->|Dual-Platform İçerik| E{Self-Improvement}
-    E -->|LinkedIn Skorlama| F[LinkedIn Optimizer]
-    E -->|X Skorlama| G[X Optimizer]
-    F -->|80+ Skor| H[LinkedIn Post]
-    G -->|80+ Skor| I[X Post]
-    H & I --> J[Gemini Image Engine]
-    J -->|Görsel + Metin| K[Yayınla: LinkedIn & X]
-    K -->|Durum Güncelle| A
+---
+
+## Gunluk Program
+
+| Saat (TR) | Gorev | Kaynak |
+|:---|:---|:---|
+| **08:00** | Istanbul Hava Durumu + Gorsel | Weather API |
+| **10:00** | RSS Haber Akisi | Google News AI |
+| **13:00** | Excel Konu Akisi | Google Sheets (GEO) |
+| **16:00** | RSS Haber Akisi | Google News AI |
+| **17:00** | Excel Konu Akisi | Google Sheets (GEO) |
+
+---
+
+## Proje Yapisi
+
+```
+src/
+├── bootstrap.ts              # Giris noktasi (Supabase env yukler)
+├── scheduler.ts              # Cron motoru (5 zamanlama)
+├── autonomous_agent.ts       # Excel konu otonom akisi
+├── rss_agent.ts              # RSS haber otonom akisi
+├── linkedin_auth.ts          # LinkedIn OAuth token yenileme (CLI)
+├── index.ts                  # Tek seferlik calistirma
+└── services/
+    ├── agentFlow.ts          # Hava durumu + Excel akis mantigi
+    ├── llm.ts                # Perplexity arastirma + OpenRouter icerik
+    ├── google.ts             # Google Sheets (GEO) entegrasyonu
+    ├── rss.ts                # Google News RSS okuma + parse
+    ├── gemini_image.ts       # Gemini ile gorsel uretim + kayit
+    ├── linkedin.ts           # LinkedIn ugcPosts API
+    ├── x.ts                  # X (Twitter) API v2
+    ├── optimizer.ts          # LinkedIn skorlama + self-improve
+    ├── x_optimizer.ts        # X skorlama + self-improve
+    ├── rules.ts              # LinkedIn algoritma kurallari
+    ├── x_rules.ts            # X algoritma kurallari
+    ├── weather.ts            # Istanbul hava durumu servisi
+    ├── supabase.ts           # Supabase client + CRUD
+    ├── telegram.ts           # Telegram bildirim servisi
+    └── imageHosting.ts       # ImgBB gorsel barindirma
 ```
 
 ---
 
-## ✨ Öne Çıkan Özellikler
+## Supabase Tablolari
 
--   **🧠 Dual-Agent Content Engine:** LinkedIn için kurumsal-stratejik, X için vizyoner-cyberpunk (Antigravity Persona) kimlikleriyle içerik üretimi.
--   **🔍 Live Research:** Perplexity AI ile internet üzerindeki en güncel verileri ve istatistikleri toplayarak halüsinasyon riskini minimize eder.
--   **⚖️ Self-Improving Optimizer:** İçerikleri paylaşmadan önce 14+ algoritma kuralına göre skorlar. Skor 80/100'ün altındaysa AI tarafından otomatik olarak revize edilir.
--   **🎨 AI Image Generation:** Konu ve araştırma verilerine dayalı, profesyonel infografik ve teknolojik görseller üretir.
--   **📅 Smart Scheduling:** `node-cron` ile 7/24 otonom çalışma. LinkedIn ve X için en yüksek etkileşim saatlerini hedefler.
--   **🛡️ Link Guard:** Paylaşımlarda link tespit ederse algoritma cezası almamak için linki otomatik olarak "İlk Yorum" şablonuna taşır.
+### env_config (API Key Deposu)
+| Kolon | Tip | Aciklama |
+|-------|-----|----------|
+| id | UUID | Primary key |
+| key_name | TEXT | Degisken adi (unique) |
+| key_value | TEXT | Deger |
+| created_at | TIMESTAMPTZ | Olusturma tarihi |
 
----
-
-## 🛠️ Teknik Stack
-
--   **Core:** Node.js (v20+), TypeScript
--   **AI Brain:** Gemini 2.5 Pro (via OpenRouter)
--   **Research:** Perplexity Sonar
--   **Database:** Google Sheets API
--   **Image:** Gemini 3.1 Flash Image Engine
--   **Automation:** Node-Cron
--   **Deployment:** Docker & Coolify
-
----
-
-## 📅 Otomatik Takvim
-
-Sistem şu anki yapılandırmasıyla günde 3 kez tetiklenir:
-
-| Saat (TR) | Görev | Hedef Platform |
-| :--- | :--- | :--- |
-| **08:00** | İstanbul Detaylı Hava Durumu & Analiz | LinkedIn + X |
-| **13:00** | Excel Otonom İçerik Akışı (1. Konu) | LinkedIn + X |
-| **16:30** | Excel Otonom İçerik Akışı (2. Konu) | LinkedIn + X |
+### linkedin+x (Yayin Takibi)
+| Kolon | Tip | Aciklama |
+|-------|-----|----------|
+| id | UUID | Primary key |
+| topic | TEXT | Konu/haber basligi |
+| linkedin_post | TEXT | LinkedIn post metni |
+| x_post | TEXT | X post metni |
+| image_url | TEXT | Gorsel dosya yolu |
+| linkedin_score | INTEGER | LinkedIn optimizer skoru |
+| x_score | INTEGER | X optimizer skoru |
+| linkedin_url | TEXT | LinkedIn post URL |
+| x_url | TEXT | X post URL |
+| source | TEXT | Kaynak: excel / weather / rss |
+| status | TEXT | published / failed |
+| published_at | TIMESTAMPTZ | Yayin tarihi |
 
 ---
 
-## ⚙️ Kurulum & Çalıştırma
+## Coolify Deployment (VPS)
 
-### 1. Yerel Geliştirme
+### 1. GitHub'dan Deploy
+Coolify Dashboard → **New Resource** → **Public Repository**
+- Repository: `botfusions/linkedin_X`
+- Branch: `main`
+
+### 2. Environment Variables (Sadece 3)
+```
+SUPABASE_URL=https://vvssjczexbrhrqtkdhmb.supabase.co
+SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+TZ=Europe/Istanbul
+```
+
+Tum diger API key'ler Supabase `env_config` tablosundan otomatik yuklenir.
+
+### 3. LinkedIn Token Alma (Ilkez)
+Container basladiktan sonra:
+```bash
+docker exec -it botfusions-agent npx tsx src/linkedin_auth.ts
+```
+Tarayicida linki ac, LinkedIn'de onayla, kodu yapistir. Token 60 gun gecerli.
+
+### 4. Token Suresi Dolunca
+Telegram'a bildirim gelir. VPS'e baglanip tekrar:
+```bash
+docker exec -it botfusions-agent npx tsx src/linkedin_auth.ts
+```
+
+---
+
+## Yerel Gelistirme
 
 ```bash
-# Bağımlılıkları yükle
+# Bagimliliklar
 npm install
 
-# Ortam değişkenlerini yapılandır
+# .env ayarla
 cp .env.example .env
-# .env dosyasını kendi API anahtarlarınla doldur
-```
 
-> [!IMPORTANT]
-> **X (Twitter) API Notu:** Paylaşım yapabilmek için X App izinlerinin **"Read and Write"** olarak ayarlanması ve Access Token'ların bu izinle yeniden oluşturulması şarttır. Aksi takdirde 403 hatası alınır.
+# Tek seferlik calistir (Excel akisi)
+npm run dev
 
-### 2. Docker ile Dağıtım
+# Sadece RSS haber akisi
+npm run rss
 
-```bash
-# Container'ı arka planda başlat
-docker compose up -d --build
-```
+# LinkedIn token yenile
+npm run linkedin-auth
 
----
-
-## 📝 Son Güncellemeler (v2.3)
-
--   ✅ **X API v2 Entegrasyonu:** "Read and Write" izinleri doğrulanmış ve stabil hale getirildi.
--   ✅ **Hava Durumu Otomasyonu:** İstanbul için detaylı veri çekme ve görselleştirme akışı test edildi.
--   ✅ **Görsel Yükleme Fix:** X (Twitter) v1.1 media upload ve v2 tweet entegrasyonu sağlandı.
--   ✅ **Güvenlik:** API anahtarları ve servis yapılandırmaları çevre değişkenlerine (Environment Variables) taşındı.
-
----
-
-## 📂 Proje Yapısı
-
-```bash
-src/
-├── scheduler.ts          # 7/24 Cron motoru (Giriş noktası)
-├── autonomous_agent.ts   # Ana otonom iş akışı (Orchestrator)
-├── cli.ts                # Yönetim ve test araçları
-└── services/
-    ├── agentFlow.ts      # Ajan iş akışı mantığı
-    ├── llm.ts            # Araştırma ve içerik motoru
-    ├── google.ts         # Excel (Google Sheets) entegrasyonu
-    ├── gemini_image.ts   # Görsel üretim motoru
-    ├── imageHosting.ts   # ImgBB görsel barındırma
-    ├── optimizer.ts      # LinkedIn skorlama & revize
-    ├── x_optimizer.ts    # X skorlama & revize
-    ├── rules.ts          # LinkedIn algoritma kuralları
-    ├── x_rules.ts        # X (Twitter) algoritma kuralları
-    ├── weather.ts        # Hava durumu servisi
-    ├── linkedin.ts       # LinkedIn API entegrasyonu
-    └── x.ts              # X (Twitter) API v2 entegrasyonu
+# Scheduler baslat (7/24 cron)
+npm run scheduler
 ```
 
 ---
 
-## 📜 Lisans
+## Teknik Stack
 
-© 2026 Botfusions. Tüm hakları saklıdır.
-MIT Lisansı ile lisanslanmıştır.
+| Bilesen | Teknoloji |
+|---------|-----------|
+| Core | Node.js 20+, TypeScript |
+| LLM | OpenRouter (GPT-4o-mini) |
+| Arastirma | Perplexity Sonar |
+| Gorsel | Gemini 3.1 Flash Image |
+| Veri Kaynagi | Google Sheets API |
+| Haber Kaynagi | Google News AI RSS |
+| Veritabani | Supabase (PostgreSQL) |
+| Bildirim | Telegram Bot API |
+| Zamanlama | node-cron |
+| Deployment | Docker + Coolify |
 
+---
+
+## Icerik Formatı (LinkedIn)
+
+```
+%180 donusum artisi mumkun mu? 🚀
+Kisa aciklama...
+
+Geleneksel X → Yeni durum
+
+📊 Rakamlar ne diyor?
+→ Istatistik 1
+→ Istatistik 2
+→ Istatistik 3
+
+⚙️ Stratejiler:
+✅ Madde 1
+✅ Madde 2
+✅ Madde 3
+
+📌 Neden simdi?
+Aciklama...
+
+👇 Yorumlarinizi bekliyorum!
+
+#Hashtag1 #Hashtag2 #Hashtag3 #Hashtag4 #Hashtag5 #Hashtag6 #Hashtag7 #Hashtag8 #Hashtag9 #Hashtag10
+```
+
+---
+
+## Kurallar
+
+- Tum infografikler **TURKCE** (basliklar, etiketler, metrikler dahil)
+- LinkedIn skoru **80/100** altindaysa otomatik revize
+- Bos metin veya hatali gorselle **ASLA** paylasim yapilmasin
+- "Detay icin ilk yorum" gibi cumleler **YOK**
+- Her yayin Supabase'e kayit + Telegram'a bildirim
+
+---
+
+© 2026 Botfusions. MIT Lisans.
