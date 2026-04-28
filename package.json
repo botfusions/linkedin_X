@@ -1,0 +1,33 @@
+{
+  "name": "linkedin-automation-botfusions",
+  "version": "1.0.0",
+  "description": "LinkedIn Automation Agent with Scheduling and GEO focus",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "start": "tsx src/index.ts",
+    "agent": "tsx src/autonomous_agent.ts",
+    "scheduler": "tsx src/scheduler.ts",
+    "rss": "tsx src/rss_agent.ts",
+    "linkedin-auth": "tsx src/linkedin_auth.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.105.1",
+    "axios": "^1.6.8",
+    "dotenv": "^16.4.5",
+    "fast-xml-parser": "^5.7.2",
+    "fs-extra": "^11.2.0",
+    "google-auth-library": "^10.6.2",
+    "google-spreadsheet": "^5.2.0",
+    "node-cron": "^3.0.3",
+    "postgres": "^3.4.9",
+    "twitter-api-v2": "^1.29.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "@types/node-cron": "^3.0.11",
+    "tsx": "^4.7.2",
+    "typescript": "^5.4.5"
+  }
+}

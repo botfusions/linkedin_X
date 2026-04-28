@@ -1,0 +1,30 @@
+# Gizli dosyalar
+.env
+.env.local
+.env.production
+.linkedin_token.json
+
+# Loglar
+*.log
+npm-debug.log*
+
+# Node
+node_modules/
+
+# Gecici dosyalar
+temp_images/
+out/
+scratch/
+
+# n8n verileri
+n8n_data/
+
+# Analysis temp
+repo_analysis_tmp/
+
+# Claude Code session
+.claude/
+
+# OS dosyalari
+.DS_Store
+Thumbs.db

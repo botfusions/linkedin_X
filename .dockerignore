@@ -1,0 +1,9 @@
+node_modules
+.env
+.git
+*.log
+temp_images/
+out/
+scratch/
+.linkedin_token.json
+npm-debug.log*

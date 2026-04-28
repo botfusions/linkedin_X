@@ -1,0 +1,1435 @@
+{
+  "name": "rss haber",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            },
+            {
+              "triggerAtHour": 16
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -816,
+        -256
+      ],
+      "id": "f7c4ba44-701c-4755-9b24-39d464562fca",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        592,
+        -256
+      ],
+      "id": "82636f2c-c4b1-4e88-9ddd-ace9881a10f5",
+      "name": "Loop Over Items",
+      "executeOnce": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "Title",
+              "value": "={{ $json.title }}"
+            },
+            {
+              "name": "Subtitle",
+              "value": "={{$json[\"contentSnippet\"]}}"
+            },
+            {
+              "name": "URL",
+              "value": "={{ $json.link }}"
+            },
+            {
+              "name": "Date",
+              "value": "={{ $json.pubDate }}"
+            },
+            {
+              "name": "content",
+              "value": "={{$json[\"content\"]}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Filter RSS Data",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        864,
+        -736
+      ],
+      "typeVersion": 1,
+      "id": "56b08177-d823-4dc5-abee-05e9f74d218c"
+    },
+    {
+      "parameters": {
+        "maxItems": 5,
+        "keep": "=firstItems"
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        16,
+        -256
+      ],
+      "id": "11be83b8-e3a5-4e9a-a5b2-82f07007be5b",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "type": "random"
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        -256
+      ],
+      "id": "46f308b9-9fda-4260-8011-53401895136c",
+      "name": "Sort"
+    },
+    {
+      "parameters": {
+        "url": "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB/sections/CAQiQ0NCQVNMQW9JTDIwdk1EZGpNWFlTQW1WdUdnSlZVeUlOQ0FRYUNRb0hMMjB2TUcxcmVpb0pFZ2N2YlM4d2JXdDZLQUEqKggAKiYICiIgQ0JBU0Vnb0lMMjB2TURkak1YWVNBbVZ1R2dKVlV5Z0FQAVAB?ceid=US:en&oc=3",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        -496,
+        -256
+      ],
+      "id": "fc862615-ee2c-452f-acbe-bac9ec9c65d9",
+      "name": "AI News",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c51f320e-4fb8-4bd4-8e36-9330e251936e",
+              "name": "google_news_url",
+              "type": "string",
+              "value": "={{ JSON.parse(JSON.parse($json.data.split('\\n\\n')[1])[0][2])[1] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2ad9cbba-1882-4ecc-ace8-8fcfc6ec205a",
+      "name": "Decoded url",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        32,
+        112
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://news.google.com/_/DotsSplashUi/data/batchexecute",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded;charset=UTF-8"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "Referer",
+              "value": "https://www.google.com/"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "f.req",
+              "value": "={{ $json.f_req }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "4475d842-2228-43da-90c7-802d85850440",
+      "name": "Call decoding URL",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -288,
+        112
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n    const gn_art_id = item.json.base64Str;\n    const timestamp = item.json.timestamp;\n    const signature = item.json.signature;\n\n    const articlesReq = [\n        'Fbv4je',\n        `[\"garturlreq\",[[\"X\",\"X\",[\"X\",\"X\"],null,null,1,1,\"US:en\",null,1,null,null,null,null,null,0,1],\"X\",\"X\",1,[1,1,1],1,1,null,0,0,null,0],\"${gn_art_id}\",${timestamp},\"${signature}\"]`,\n    ];\n\n    return {\n        json: {\n            f_req: JSON.stringify([[articlesReq]])  // Questo verrà usato nel nodo HTTP Request\n        }\n    };\n});"
+      },
+      "id": "8a150339-cb59-4a03-9c03-c4658ac39d7c",
+      "name": "Prepare decoding variables",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -592,
+        112
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.link }}",
+        "options": {}
+      },
+      "id": "c7c52894-69d2-44ca-8618-3f363c5baa70",
+      "name": "Get encoded news URL",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1344,
+        -240
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b5a11795-2bd1-412f-a215-f7402bece002",
+              "name": "signature",
+              "type": "string",
+              "value": "={{ $json.signature }}"
+            },
+            {
+              "id": "33267283-3ac8-4d65-9a01-c7f154a7d061",
+              "name": "timestamp",
+              "type": "string",
+              "value": "={{ $json.timestamp }}"
+            },
+            {
+              "id": "bff8f19a-30d6-4307-87da-9b98b26cee8b",
+              "name": "base64Str",
+              "type": "string",
+              "value": "={{ $('Limit1').item.json.guid }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7edef4c8-86ee-42da-97ad-9dae0dcb83ed",
+      "name": "Map needed keys",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -896,
+        112
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "signature",
+              "cssSelector": "div",
+              "returnValue": "attribute",
+              "attribute": "data-n-a-sg"
+            },
+            {
+              "key": "timestamp",
+              "cssSelector": "div",
+              "returnValue": "attribute",
+              "attribute": "data-n-a-ts"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6d058136-3a8b-4c0c-a458-ea8a5d7528a9",
+      "name": "Extract decoding keys",
+      "type": "n8n-nodes-base.html",
+      "position": [
+        1584,
+        -240
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "5a82d87d-292f-44fa-87be-70dfc4e6ba16",
+      "name": "Aggregate results in a single object",
+      "type": "n8n-nodes-base.aggregate",
+      "position": [
+        448,
+        112
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Get Google News\n\nChange the language parameters on ISO639-1 standard \n\n1. hl=it\n2. gl=IT\n3. ceid=IT:it",
+        "height": 400,
+        "width": 220
+      },
+      "id": "90276ba3-7138-4c91-befc-f48043b4ab3a",
+      "name": "Sticky Note11",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        768,
+        -512
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Limit result\n\nI suggest limiting the results to a maximum of 3 because the entire workflow makes a lot of HTTP requests",
+        "height": 400,
+        "width": 220
+      },
+      "id": "ad4b7020-0c02-4b40-a83a-4ca719846d9e",
+      "name": "Sticky Note12",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1008,
+        -512
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Get encoded content\n\nHere we retrieve HTML content",
+        "height": 400,
+        "width": 220,
+        "color": 3
+      },
+      "id": "4f1ce3bf-a720-43ee-bbb2-4ecf640c0b99",
+      "name": "Sticky Note14",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1248,
+        -512
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Decoding Keys\n\nThe HTML content extracted contains the necessary variables for decoding:\n\n+ signature\n+ timestamp\n+ base64string (already in the URL)",
+        "height": 400,
+        "width": 220
+      },
+      "id": "ef3c6040-2e47-4428-b653-e74103631c03",
+      "name": "Sticky Note15",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1488,
+        -512
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {}
+      },
+      "id": "35656d78-63a0-412d-a258-94f7075b7ec2",
+      "name": "Gemini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "position": [
+        656,
+        576
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "TleQLEpwAGvafRyO",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "id": "84159013-ab22-4829-8b37-8be183653832",
+      "name": "Limit1",
+      "type": "n8n-nodes-base.limit",
+      "position": [
+        1088,
+        -240
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "person": "CETScQHWaU",
+        "text": "={{ $('linked ps 1').item.json.formatted_output }}",
+        "shareMediaCategory": "IMAGE",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        2704,
+        32
+      ],
+      "id": "83f57c3d-52ca-4071-ae33-d175a69ac65a",
+      "name": "Create a post",
+      "alwaysOutputData": true,
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "CjlLDkhNLlzjVkhB",
+          "name": "Botfusions linked"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "data",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1I9VFzJpIOpyP5r_rAmXYmZgtEpAw1TzK",
+          "mode": "list",
+          "cachedResultName": "NONA BANANA  ",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1I9VFzJpIOpyP5r_rAmXYmZgtEpAw1TzK"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2512,
+        240
+      ],
+      "id": "ff9f7199-9ed0-4665-8cc3-9624b6717be7",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "f4pLwD17RnohJOxG",
+          "name": "Botfusions"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fc4dbcf7-30fa-47f9-80cb-3a76fa370b4d",
+              "name": "uRL",
+              "value": "={{ $json.thumbnailLink }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2880,
+        240
+      ],
+      "id": "99449418-2d37-4a78-b046-b81b6c89d048",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an X (Twitter) content optimizer for Botfusions.\n\nTASK: Convert the given LinkedIn post into an optimized X post.\n\nCOMPANY (optional to mention):\n- Botfusions\n- Services: N8N Automation, AI Integration\n\nTWITTER/X RULES:\n- Maximum 280 characters (CRITICAL)\n- Hook in first line (grab attention immediately)\n- Use emojis sparingly (1-3 max, only if adds value)\n- Company info is optional (only if fits naturally)\n- Focus on core message and value\n- Remove fluff and unnecessary words\n- Keep 2-3 hashtags maximum\n\nOPTIMIZATION STRATEGY:\n1. Extract the main hook/insight from LinkedIn post\n2. Cut to essentials - every word must earn its place\n3. Make it scannable and punchy\n4. Use line breaks for readability (max 3 lines)\n5. End with CTA or thought-provoking question\n6. Add 2-3 relevant hashtags\n\nFORMAT:\nLine 1: Hook (punchy, attention-grabbing)\nLine 2-3: Core value/insight\nLine 4: CTA or question (optional)\nLine 5: Hashtags (2-3 max)\n\nOUTPUT: X post only, TURKISH, max 280 characters"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1408,
+        864
+      ],
+      "id": "96114943-299e-4cb4-92da-09938fa3d2d2",
+      "name": "X Platform",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-flash-image-preview",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-flash-image-preview"
+        },
+        "prompt": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        2096,
+        112
+      ],
+      "id": "a8061d3c-7f97-4c09-9c11-30563abd1187",
+      "name": "Generate an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "TleQLEpwAGvafRyO",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('linked ps 1').item.json.formatted_output }}",
+        "options": {
+          "systemMessage": "=const visualPrompt = `Convert this Turkish LinkedIn post into an English visual prompt for Nanobanana.\n\nANALYZE CONTENT LENGTH & CREATE APPROPRIATE VISUAL:\n\nSHORT POST (< 500 chars):\n- Quote-style graphic: Feature key statement with large typography\n- Minimal icons, clean background\n- Focus on 1 main message\n\nMEDIUM POST (500-1200 chars):\n- Mini infographic: 3-4 key points with icons\n- Each point: icon + 1 short sentence\n- Compact, focused layout\n\nLONG POST (> 1200 chars):\n- Full infographic: Multiple sections with data visualization\n- Charts, statistics, detailed visual storytelling\n- Comprehensive layout\n\nCORE REQUIREMENTS:\n- ALL TEXT IN ENGLISH (headers, labels, branding)\n- Content-specific visuals (AI→tech imagery, health→medical symbols)\n- Color variety: purple, green, orange, teal (avoid blue dominance)\n- 16:9 format, LinkedIn-optimized\n- Bottom branding: \"Botfusions | info@botfusions.com\" (LARGE, readable - 15% image height)\n- High contrast text, mobile-friendly\n- NO text on main visual area\n\nSTYLE: Modern, professional, photorealistic or flat-design. Match visual complexity to post length.\n\nOUTPUT: Only the image prompt, no quotes or explanations.\n\nPOST (MAX 1900 CHARS):\n{{ ($json.contentSnippet || $json.content || '').replace(/<[^>]*>/g, '').substring(0, 2000) }}"
+        }
+      },
+      "id": "6ed3002d-f4d5-4a6c-8f41-8f919a47ec4a",
+      "name": "GENERATE PROMPT",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        1712,
+        112
+      ],
+      "typeVersion": 1.8
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1PNQq8FBhkhNxWabAx45OEQUM_bw79gJk4i_teIbmJXQ",
+          "mode": "list",
+          "cachedResultName": "LİNK+ıX  Haberler",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PNQq8FBhkhNxWabAx45OEQUM_bw79gJk4i_teIbmJXQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sayfa1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PNQq8FBhkhNxWabAx45OEQUM_bw79gJk4i_teIbmJXQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "LİNKED": "={{ $('LINKED POST AI').item.json.post_text }}"
+          },
+          "matchingColumns": [
+            "LİNKED"
+          ],
+          "schema": [
+            {
+              "id": "LİNKED",
+              "displayName": "LİNKED",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3184,
+        240
+      ],
+      "id": "717cfb65-9f49-4b8d-af45-6efbf685502e",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wAceBSmw5ih0M3OR",
+          "name": "Botfusions"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3056,
+        688
+      ],
+      "id": "98879a74-b8d0-478b-9e04-300f89869264",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "f4pLwD17RnohJOxG",
+          "name": "Botfusions"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://upload.twitter.com/1.1/media/upload.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "twitterOAuth1Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "multipart/form-data"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "media",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2784,
+        656
+      ],
+      "id": "1838e452-c8bb-4d4e-ab31-6ad317eeea86",
+      "name": "HTTP Request",
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "fmdrgxoWfKe0H6QY",
+          "name": "X account 2"
+        },
+        "twitterOAuth1Api": {
+          "id": "CXeN9PoqrOohkzMu",
+          "name": "X oauth 1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "attachments": "={{ $json.media.media_ids[0] }}"
+        }
+      },
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [
+        2768,
+        1008
+      ],
+      "id": "98a98f6c-c36e-4661-b1f9-26597eb80d95",
+      "name": "Create Tweet",
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "fmdrgxoWfKe0H6QY",
+          "name": "X account 2"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {
+          "includeUnpaired": true
+        }
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2240,
+        1008
+      ],
+      "id": "6bfca758-37a6-4afc-a101-56bf227119e1",
+      "name": "Merge",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Tüm olası yolları dene\nconst allData = items[0].json;\n\nconst mediaId = allData.media_id_string \n             || allData.body?.media_id_string\n             || allData.data?.media_id_string\n             || allData.media_id\n             || allData.body?.media_id;\n\nconst tweetText = allData.x_post || \"Test tweet\";\n\nitems[0].json = {\n  text: tweetText,\n  media: {\n    media_ids: [mediaId]\n  }\n};\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2512,
+        688
+      ],
+      "id": "dae38364-b161-476d-a9c3-8909edddb765",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1PNQq8FBhkhNxWabAx45OEQUM_bw79gJk4i_teIbmJXQ",
+          "mode": "list",
+          "cachedResultName": "LİNK+ıX  Haberler",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PNQq8FBhkhNxWabAx45OEQUM_bw79gJk4i_teIbmJXQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1232894019,
+          "mode": "list",
+          "cachedResultName": "X PLATFORM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PNQq8FBhkhNxWabAx45OEQUM_bw79gJk4i_teIbmJXQ/edit#gid=1232894019"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "X PLATFORM": "={{ $json.text }}"
+          },
+          "matchingColumns": [
+            "X PLATFORM"
+          ],
+          "schema": [
+            {
+              "id": "X PLATFORM",
+              "displayName": "X PLATFORM",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3040,
+        1008
+      ],
+      "id": "2a761469-459e-4b7a-b7b7-1ab81f730a32",
+      "name": "Append or update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wAceBSmw5ih0M3OR",
+          "name": "Botfusions"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// INPUT'tan gelen veriyi al - DOĞRU YÖNTEM\nconst rawBody = $json.text || $json.body || $json.output || $json.linkedin_post || '';\n\n// JSON string ise parse et\nlet cleanContent = '';\n\nif (typeof rawBody === 'string' && rawBody.trim().startsWith('{')) {\n  try {\n    const parsed = JSON.parse(rawBody);\n    cleanContent = parsed.body || rawBody;\n  } catch (e) {\n    cleanContent = rawBody;\n  }\n} else {\n  cleanContent = rawBody;\n}\n\n// 1. Markdown temizle\nlet cleanBody = cleanContent\n  .replace(/\\*\\*(.*?)\\*\\*/g, '$1')      // Bold kaldır\n  .replace(/__(.*?)__/g, '$1')          // Italic kaldır\n  .replace(/###\\s+/g, '')               // H3 kaldır\n  .replace(/##\\s+/g, '')                // H2 kaldır\n  .replace(/```[\\s\\S]*?```/g, '')       // Code block kaldır\n  .replace(/`(.*?)`/g, '$1')            // Inline code kaldır\n\n// 2. Hashtag'leri ayır\nconst hashtagMatch = cleanBody.match(/(#[\\wığüşöçİĞÜŞÖÇ]+\\s*)+$/);\nconst hashtags = hashtagMatch ? hashtagMatch[0].trim() : '';\nconst contentWithoutHashtags = cleanBody.replace(/(#[\\wığüşöçİĞÜŞÖÇ]+\\s*)+$/, '').trim();\n\n// 3. Karakter kontrolü\nlet finalContent = contentWithoutHashtags;\nconst MIN_CHARS = 1900;\nconst MAX_CHARS = 2500;\nconst targetMax = MAX_CHARS - hashtags.length - 10;\n\nif (finalContent.length > targetMax) {\n  let tempContent = finalContent.substring(0, targetMax);\n  const lastPeriod = Math.max(\n    tempContent.lastIndexOf('.'),\n    tempContent.lastIndexOf('!'),\n    tempContent.lastIndexOf('?')\n  );\n  if (lastPeriod > targetMax - 300) {\n    finalContent = tempContent.substring(0, lastPeriod + 1).trim();\n  } else {\n    const lastSpace = tempContent.lastIndexOf(' ');\n    finalContent = tempContent.substring(0, lastSpace).trim() + '...';\n  }\n}\n\n// 4. Satır aralarını düzenle\nfinalContent = finalContent\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .replace(/\\n\\s+\\n/g, '\\n\\n')\n  .trim();\n\n// 5. Final çıktı\nconst linkedinPost = `${finalContent}\\n\\n${hashtags}`;\n\n// 6. Return\nconst charCount = linkedinPost.length;\nconst contentLength = finalContent.length;\n\nreturn {\n  linkedin_post: linkedinPost,\n  char_count: charCount,\n  content_length: contentLength,\n  hashtags_length: hashtags.length,\n  status: charCount >= MIN_CHARS && charCount <= MAX_CHARS ? 'PERFECT' : (charCount < MIN_CHARS ? 'TOO_SHORT' : 'TOO_LONG'),\n  is_valid: charCount >= MIN_CHARS && charCount <= MAX_CHARS,\n  warning: charCount > MAX_CHARS ? `Content is ${charCount - MAX_CHARS} characters over limit` : (charCount < MIN_CHARS ? `Content is ${MIN_CHARS - charCount} characters short` : null),\n  raw_body_length: rawBody.length\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        112
+      ],
+      "id": "bff40d6c-8401-4a94-bc2b-01333c08d4ab",
+      "name": "LINKED POST AI"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1PNQq8FBhkhNxWabAx45OEQUM_bw79gJk4i_teIbmJXQ",
+          "mode": "list",
+          "cachedResultName": "LİNK+ıX  Haberler",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PNQq8FBhkhNxWabAx45OEQUM_bw79gJk4i_teIbmJXQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 767194044,
+          "mode": "list",
+          "cachedResultName": "DATA",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PNQq8FBhkhNxWabAx45OEQUM_bw79gJk4i_teIbmJXQ/edit#gid=767194044"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Title": "={{ $json.Title }}",
+            "Subtitle": "={{ $json.Subtitle }}",
+            "URL": "={{ $json.URL }}",
+            "Date": "={{ $json.Date }}",
+            "content": "={{ $json.content }}"
+          },
+          "matchingColumns": [
+            "Title"
+          ],
+          "schema": [
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subtitle",
+              "displayName": "Subtitle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1200,
+        -736
+      ],
+      "id": "f12711e6-8058-4825-9e6e-ca55c9c23e3a",
+      "name": "Append or update row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wAceBSmw5ih0M3OR",
+          "name": "Botfusions"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sadece ilk 5 haberi al\nreturn items.slice(0, 2);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        -256
+      ],
+      "id": "3cb7f5e6-a3d5-43e7-9a1b-655755c67aff",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1536,
+        352
+      ],
+      "id": "9fbb422a-865b-4997-bf94-716f2405ed2b",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "TleQLEpwAGvafRyO",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-5.2",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1424,
+        1088
+      ],
+      "id": "0e7f627d-c829-42a9-bfea-7030aac4f5b6",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "wH6hWK4PWynSQNMh",
+          "name": "Newkey19022026"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Debug için\nconsole.log('Gelen veri:', JSON.stringify($input.all(), null, 2));\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        112
+      ],
+      "id": "5765a5e9-e373-4e6f-9c3b-7fef6150d91f",
+      "name": "linked ps 1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Tüm haberleri al\nconst newsItems = $input.all();\n\n// Başlık\nlet formatted = \"📰 GÜNÜN HABERLERİ\\n\";\nformatted += \"═\".repeat(80) + \"\\n\\n\";\n\n// Her haberi formatla\nnewsItems.forEach((item, index) => {\n  const json = item.json;\n  \n  // Haber başlığı\n  formatted += `📌 ${index + 1}. HABER\\n`;\n  formatted += \"─\".repeat(80) + \"\\n\";\n  \n  // İçerik al\n  let text = json.text || json.content || json.body || 'İçerik yok';\n  \n  // String ise işle\n  if (typeof text === 'string') {\n    // { \"body\": \"...\" } formatını temizle\n    const bodyMatch = text.match(/\"body\":\\s*\"([^\"]+(?:\\\\.[^\"]*)*?)\"/);\n    if (bodyMatch && bodyMatch[1]) {\n      text = bodyMatch[1];\n    } else {\n      // Alternatif: Basitçe { \"body\": \" kısmını sil\n      text = text.replace(/^\\s*\\{\\s*\"body\":\\s*\"/i, '').replace(/\"\\s*\\}\\s*$/, '');\n    }\n  }\n  \n  // Eğer hala object ise\n  if (typeof text === 'object') {\n    text = text.body || text.text || text.content || JSON.stringify(text);\n  }\n  \n  // Escape karakterlerini temizle\n  text = text\n    .replace(/\\\\\"/g, '\"')        // \\\" -> \"\n    .replace(/\\\\n/g, ' ')        // \\n -> boşluk (escape edilmiş)\n    .replace(/\\\\t/g, ' ')        // \\t -> boşluk\n    .replace(/\\\\r/g, '')         // \\r -> sil\n    .replace(/\\\\/g, '')          // Kalan \\ karakterlerini sil\n    .replace(/\\s+/g, ' ')        // Çoklu boşlukları tek boşluğa çevir\n    .trim();\n  \n  // Maksimum 1600 karakter al\n  let preview = text.substring(0, 1600).trim();\n  \n  // Son cümleyi tamamla\n  const lastPunctuation = Math.max(\n    preview.lastIndexOf('.'),\n    preview.lastIndexOf('!'),\n    preview.lastIndexOf('?')\n  );\n  \n  // Son 100 karakter içinde noktalama varsa oradan kes\n  if (lastPunctuation > preview.length - 100 && lastPunctuation > 0) {\n    preview = preview.substring(0, lastPunctuation + 1);\n  }\n  \n  formatted += preview;\n  \n  if (text.length > 1600) {\n    formatted += \"...\";\n  }\n  \n  formatted += \"\\n\\n\";\n  formatted += \"─\".repeat(80) + \"\\n\\n\";\n});\n\n// İstatistik\nformatted += `✅ Toplam ${newsItems.length} haber\\n`;\nformatted += `⏰ ${new Date().toLocaleString('tr-TR')}\\n`;\nformatted += \"═\".repeat(80);\n\n// Output\nreturn [{ \n  json: { \n    formatted_output: formatted,\n    total_count: newsItems.length,\n    char_count: formatted.length,\n    processed_date: new Date().toISOString()\n  } \n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        112
+      ],
+      "id": "46e67451-25bf-4e2a-9602-64528907a11c",
+      "name": "Haberleri Formatla"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=News Articles: {{ $json.data[0].google_news_url }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=## ROLE:\nYou are an Elite LinkedIn Content Creator specializing in viral, curiosity-driven posts in Turkish.\ntopic:{{ $json.data[0].google_news_url }}\n## TASK:\nAnalyze the provided raw HTML of a news article and create a **single, engaging LinkedIn post** in Turkish.\n\n## INPUT:\n- Raw HTML source code of a news article.\n\n## STRICT OUTPUT RULES (CRITICAL):\n1. **JSON ONLY:** Your output must be a valid JSON object.\n2. **SINGLE KEY:** The JSON object must contain **ONLY** the key `\"body\"`.\n3. **NO MARKDOWN:** Do not use ```json or ``` tags. Start directly with { and end with }.\n4. **LANGUAGE:** The content must be in **TURKISH**.\n\n## CONTENT GENERATION RULES:\n\n### LENGTH CONSTRAINTS (CRITICAL):\n- **MINIMUM:** 1900 characters\n- **MAXIMUM:** 2000 characters\n- **STRICT:** Stay within this range. Count every character including spaces and hashtags.\n\n### STRUCTURE (2-3 Paragraphs):\n\n**Paragraph 1 - THE HOOK (300-400 chars):**\n- Start with a provocative question, surprising stat, or bold statement\n- Create curiosity and intrigue\n- Make readers want to continue\n- Example: \"Peki ya size söylesem ki...\"\n\n**Paragraph 2 - THE CORE NEWS (600-800 chars):**\n- Explain the main news from the HTML\n- Focus on the most interesting angles\n- Use concrete numbers/facts when available\n- Keep it scannable and punchy\n- Add line breaks for readability\n\n**Paragraph 3 - THE IMPACT & CTA (400-500 chars):**\n- Explain why this matters (business impact, future implications)\n- End with a thought-provoking question to drive comments\n- Keep it conversational and engaging\n\n**Hashtags (200-300 chars):**\n- Add 6-10 relevant Turkish hashtags at the end\n- Include industry-specific and trending tags\n\n### TONE & STYLE:\n- 🎯 Conversational but professional\n- 🔥 Create FOMO (Fear of Missing Out)\n- 💡 Use rhetorical questions\n- ✨ Emphasize unexpected angles\n- 📊 Use emojis sparingly (2-3 max)\n- 🚀 Build curiosity without clickbait\n\n### FORMATTING:\n- Use \\n\\n for paragraph breaks\n- NO bullet points or lists\n- NO bold/italic markdown\n- Keep sentences short and impactful\n\n## OUTPUT FORMAT:\nReturn **ONLY** this JSON structure:\n{{ $now.format('DD  , HH:mm') }}\n{\n   \"Hook paragraph that grabs attention...\\n\\nCore news paragraph with key facts and insights...\\n\\nImpact paragraph with thought-provoking question?\\n\\n#hashtag1 #hashtag2 #hashtag3\"\n}"
+            }
+          ]
+        }
+      },
+      "id": "a42c6d5b-84ae-4ac5-b216-454ebf3b648c",
+      "name": "Haber Editörü",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        688,
+        112
+      ],
+      "typeVersion": 1.5
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2512,
+        1008
+      ],
+      "id": "0e36ff00-9657-46a8-a162-9055ae709938",
+      "name": "Wait",
+      "webhookId": "959f24ff-dbff-4ef6-8955-1b3578b62601"
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2448,
+        32
+      ],
+      "id": "aa33c70d-5409-482d-bb20-da5f826e4756",
+      "name": "Wait1",
+      "webhookId": "65fb614c-ba75-4928-b05a-7712ac3d3299"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Limit1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter RSS Data": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI News": {
+      "main": [
+        [
+          {
+            "node": "Sort",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decoded url": {
+      "main": [
+        [
+          {
+            "node": "Aggregate results in a single object",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call decoding URL": {
+      "main": [
+        [
+          {
+            "node": "Decoded url",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare decoding variables": {
+      "main": [
+        [
+          {
+            "node": "Call decoding URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get encoded news URL": {
+      "main": [
+        [
+          {
+            "node": "Extract decoding keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map needed keys": {
+      "main": [
+        [
+          {
+            "node": "Prepare decoding variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract decoding keys": {
+      "main": [
+        [
+          {
+            "node": "Map needed keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate results in a single object": {
+      "main": [
+        [
+          {
+            "node": "Haber Editörü",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Haber Editörü",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit1": {
+      "main": [
+        [
+          {
+            "node": "Get encoded news URL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter RSS Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "X Platform": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Generate an image": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GENERATE PROMPT": {
+      "main": [
+        [
+          {
+            "node": "Generate an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Tweet": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LINKED POST AI": {
+      "main": [
+        [
+          {
+            "node": "GENERATE PROMPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a post": {
+      "main": [
+        []
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "GENERATE PROMPT",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "X Platform",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "linked ps 1": {
+      "main": [
+        [
+          {
+            "node": "LINKED POST AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Haberleri Formatla": {
+      "main": [
+        [
+          {
+            "node": "linked ps 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Haber Editörü": {
+      "main": [
+        [
+          {
+            "node": "Haberleri Formatla",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Create Tweet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Create a post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timezone": "Europe/Istanbul",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "RVDJRweMCLaZJZlu",
+    "timeSavedMode": "fixed"
+  },
+  "versionId": "23ef455c-bfb3-478e-ae92-6397caef7537",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7a541743d42f3b3a8c74322c51666271feb89d0d6b7c765045458587124e6540"
+  },
+  "id": "RgffhADZwVE1HzE3",
+  "tags": []
+}

@@ -1,0 +1,181 @@
+{
+  "name": "tiwiter post",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://upload.twitter.com/1.1/media/upload.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "twitterOAuth1Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "multipart/form-data"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "media",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -608,
+        -112
+      ],
+      "id": "072f7300-f66a-46ef-850d-e661b5407ecb",
+      "name": "HTTP Request1",
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "fmdrgxoWfKe0H6QY",
+          "name": "X account 2"
+        },
+        "twitterOAuth1Api": {
+          "id": "CXeN9PoqrOohkzMu",
+          "name": "X oauth 1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Tüm olası yolları dene\nconst allData = items[0].json;\n\nconst mediaId = allData.media_id_string \n             || allData.body?.media_id_string\n             || allData.data?.media_id_string\n             || allData.media_id\n             || allData.body?.media_id;\n\nconst tweetText = allData.x_post || \"Test tweet\";\n\nitems[0].json = {\n  text: tweetText,\n  media: {\n    media_ids: [mediaId]\n  }\n};\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        -112
+      ],
+      "id": "d977cd69-e5ef-422d-b7bc-40366342669a",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -640,
+        112
+      ],
+      "id": "10dfcf56-d3e5-4b18-bad0-78de6bdf3120",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "attachments": "={{ $json.media.media_ids[0] }}"
+        }
+      },
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        112
+      ],
+      "id": "d32fd94d-77f5-4f20-acd8-610ff0b008df",
+      "name": "Create Tweet1",
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "fmdrgxoWfKe0H6QY",
+          "name": "X account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -432,
+        112
+      ],
+      "id": "42fc11f6-f8d4-4caa-98fc-eed5e9d264ab",
+      "name": "Wait",
+      "webhookId": "7174f3d9-4e37-4ca2-96ed-8a9ae7519175"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Create Tweet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "9777135b-aecc-4d04-ae62-24254198af31",
+  "meta": {
+    "instanceId": "7a541743d42f3b3a8c74322c51666271feb89d0d6b7c765045458587124e6540"
+  },
+  "id": "9FOUUzBIePDg1nYc",
+  "tags": []
+}
