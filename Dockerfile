@@ -13,4 +13,4 @@ ENV TZ=Europe/Istanbul
 ENV NODE_ENV=production
 
 # Scheduler modunda calisir (cron: 08:00, 13:00, 16:30)
-CMD ["npx", "tsx", "src/scheduler.ts"]
+CMD ["npx", "tsx", "src/bootstrap.ts"]
