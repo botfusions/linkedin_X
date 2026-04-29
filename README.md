@@ -205,4 +205,43 @@ Aciklama...
 
 ---
 
+## Test ve Bilinen Sorunlar (Production Lessons)
+
+Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya debug gerektiginde referans olarak kullanilir.
+
+### 1. Gemini Gorsel Timeout
+- **Sorun:** Gemini 3.1 Flash Image API 90s icinde yanit vermiyordu
+- **Neden:** API yuku saatlere gore degisiyor, testte hizli yanit vermis olabilir
+- **Cozum:** Timeout 180s'ye cikarildi (`src/services/llm.ts`)
+- **Not:** Gorsel uretilemezse post gonderilmez (ban riski), akis sonraki habere gecer
+
+### 2. Excel Konu Sutunu Eslesmemesi
+- **Sorun:** Satir 40'taki konu bulundugu halde "konu sutunu bulunamadi" hatasi
+- **Neden:** Sutun adi sabit listeyle (`"konu"`, `"topic"`, `"title"`) eslestiriliyordu, Excel'deki gercek sutun adı listede yoktu
+- **Cozum:** "Durum" harici ilk dolu sutunu konu olarak alan akilli fallback eklendi (`src/autonomous_agent.ts`)
+- **Debug:** Tum sutun adlari ve degerleri loglanir
+
+### 3. Excel Durum "Done" Yazmama
+- **Sorun:** Yayinlanan satirlar tekrar tekrar isleniyordu
+- **Neden:** Kod "Yayinlandi (LI X)" yaziyordu ama filtre sadece "done" ve "bitti" ariyordu
+- **Cozum:** Yayin sonrasi Excel'e "Done" yazilir, filtre "done"/"bitti"/"yayinlandi*" ile eslesir
+
+### 4. Bos Satirlar Kritik Hata Firlatiyordu
+- **Sorun:** Excel'de bos bir satir tum akisi durduruyordu
+- **Neden:** Tek kayit `find()` ile bulunuyordu, hata durumunda `continue` calismiyordu
+- **Cozum:** `filter()` + `for...of` dongusune cevrildi, bos/hatali satirlar atlanir
+
+### Test Onerileri
+
+| Senaryo | Test Yontemi |
+|---------|-------------|
+| Gemini timeout | API'yi bilerek yavas promptla test et, 180s asilmasini simule et |
+| Sutun eslesme | Farkli sutun adlari olan bir test sheet'i kullan (ornegin "Post Konusu") |
+| Bos satir | Sheet'e bos satirlar ekle, atlanip atlanmadigini kontrol et |
+| Durum guncelleme | Yayin sonrasi Excel'de "Done" yazildigini dogrula |
+| Gorselsiz post | Gemini API'yi gecici olarak kapali tut, post gonderilmedigini dogrula |
+| Tekrar calisma | Ayni satir iki kez islenmiyor mu kontrol et |
+
+---
+
 © 2026 Botfusions. MIT Lisans.
