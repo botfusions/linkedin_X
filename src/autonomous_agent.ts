@@ -28,17 +28,45 @@ export async function runAutonomousWorkflow() {
     }
 
     const { rowNumber, data } = targetRecord;
-    const konu = data[Object.keys(data).find(k => k.toLowerCase() === "konu" || k.toLowerCase() === "topic") || "Konu"];
-    const altBaslik = data[Object.keys(data).find(k => k.toLowerCase() === "altbaslik" || k.toLowerCase() === "subtopic" || k.toLowerCase() === "description") || "AltBaslik"];
-    const hedefKitle = data[Object.keys(data).find(k => k.toLowerCase() === "hedefkitle" || k.toLowerCase() === "audience" || k.toLowerCase() === "target") || "HedefKitle"];
+
+    // Debug: Mevcut sütun adlarını logla
+    const columnNames = Object.keys(data);
+    console.log(`📋 Satir ${rowNumber} sutunlari: ${columnNames.join(", ")}`);
+
+    const konuKey = Object.keys(data).find(k => {
+      const lower = k.toLowerCase().replace(/\s+/g, "").replace(/[-_]/g, "");
+      return lower === "konu" || lower === "topic" || lower === "başlık" || lower === "baslik" || lower === "konubaslik" || lower === "title" || lower === "başliklar" || lower === "basliklar" || lower === "içerik" || lower === "icerik" || lower === "subject" || lower === "content" || lower === "başlık(türkçe)" || lower === "postkonu";
+    });
+    const firstCol = columnNames[0];
+    const konu: string | undefined = konuKey ? String(data[konuKey]) : (firstCol ? String(data[firstCol]) : undefined);
+
+    const altBaslikKey = Object.keys(data).find(k => {
+      const lower = k.toLowerCase().replace(/\s+/g, "").replace(/[-_]/g, "");
+      return lower === "altbaslik" || lower === "subtopic" || lower === "description" || lower === "altbaşlık" || lower === "açıklama" || lower === "aciklama" || lower === "detay" || lower === "subtitle";
+    });
+    const altBaslik: string | undefined = altBaslikKey ? String(data[altBaslikKey]) : undefined;
+
+    const hedefKitleKey = Object.keys(data).find(k => {
+      const lower = k.toLowerCase().replace(/\s+/g, "").replace(/[-_]/g, "");
+      return lower === "hedefkitle" || lower === "audience" || lower === "target" || lower === "hedef" || lower === "kitle";
+    });
+    const hedefKitle: string | undefined = hedefKitleKey ? String(data[hedefKitleKey]) : undefined;
+
+    if (!konu) {
+      console.error(`❌ HATA: Satir ${rowNumber}'da konu bulunamadi! Sutunlar: ${columnNames.join(", ")}`);
+      throw new Error(`Satir ${rowNumber}'da konu sutunu bulunamadi.`);
+    }
 
     console.log(`\n📍 Konu Secildi [Satir ${rowNumber}]: ${konu}`);
+    if (altBaslik) console.log(`📎 Alt Baslik: ${altBaslik}`);
+    if (hedefKitle) console.log(`🎯 Hedef Kitle: ${hedefKitle}`);
 
+    const topicStr = String(konu);
     console.log("🔍 Arastirma yapiliyor (Perplexity)...");
-    const researchData = await researchTopicWithPerplexity(konu);
+    const researchData = await researchTopicWithPerplexity(topicStr);
 
     console.log("✍️ LinkedIn ve X icin icerikler uretiliyor...");
-    const generated = await generateContentWithGemini(researchData, targetAudience(hedefKitle));
+    const generated = await generateContentWithGemini(topicStr, researchData);
 
     if (!generated.postText || !generated.xPost) {
       throw new Error("Icerik uretimi basarisiz (LinkedIn veya X icerigi eksik).");
@@ -58,9 +86,14 @@ export async function runAutonomousWorkflow() {
     let linkedinSuccess = false;
     let linkedinError = "";
     try {
-      await createLinkedInPost(linkedinContent, imagePath);
-      console.log("✅ LinkedIn paylasimi basarili.");
-      linkedinSuccess = true;
+      const liResult = await createLinkedInPost(linkedinContent, imagePath);
+      if (liResult) {
+        console.log("✅ LinkedIn paylasimi basarili.");
+        linkedinSuccess = true;
+      } else {
+        linkedinError = "createLinkedInPost false dondu (token hatasi veya gorsel hatasi)";
+        console.error("❌ LinkedIn paylasimi basarisiz (false dondu).");
+      }
     } catch (err: any) {
       linkedinError = err.message;
       console.error("❌ LinkedIn paylasim hatasi:", linkedinError);
