@@ -34,13 +34,24 @@ export async function runAutonomousWorkflow() {
 
       const columnNames = Object.keys(data);
       console.log(`\n📋 Satir ${rowNumber} sutunlari: ${columnNames.join(", ")}`);
+      for (const col of columnNames) {
+        console.log(`   → ${col}: "${String(data[col]).substring(0, 80)}"`);
+      }
+
+      const statusColKey = columnNames.find((k) => k.toLowerCase() === "durum" || k.toLowerCase() === "status");
 
       const konuKey = Object.keys(data).find(k => {
         const lower = k.toLowerCase().replace(/\s+/g, "").replace(/[-_]/g, "");
         return lower === "konu" || lower === "topic" || lower === "başlık" || lower === "baslik" || lower === "konubaslik" || lower === "title" || lower === "başliklar" || lower === "basliklar" || lower === "içerik" || lower === "icerik" || lower === "subject" || lower === "content" || lower === "başlık(türkçe)" || lower === "postkonu";
       });
-      const firstCol = columnNames[0];
-      const konuRaw: string | undefined = konuKey ? String(data[konuKey]) : (firstCol ? String(data[firstCol]) : undefined);
+
+      let konuRaw: string | undefined;
+      if (konuKey) {
+        konuRaw = String(data[konuKey]);
+      } else {
+        const firstNonStatusCol = columnNames.find(k => k !== statusColKey && String(data[k] || "").trim().length > 0);
+        konuRaw = firstNonStatusCol ? String(data[firstNonStatusCol]) : undefined;
+      }
 
       if (!konuRaw || !konuRaw.trim()) {
         console.error(`⚠️ Satir ${rowNumber}'da konu bulunamadi, atlanıyor.`);
@@ -120,9 +131,8 @@ export async function runAutonomousWorkflow() {
         }
 
         if (linkedinSuccess || xSuccess) {
-          const status = `Yayinlandi (${linkedinSuccess ? "LI " : ""}${xSuccess ? "X" : ""})`;
-          await updateRowStatus(targetRecord._rawRow, status);
-          console.log(`📊 Excel guncellendi: Satir ${rowNumber} -> ${status}`);
+          await updateRowStatus(targetRecord._rawRow, "Done");
+          console.log(`📊 Excel guncellendi: Satir ${rowNumber} -> Done`);
         }
 
         await insertPublishedPost({
