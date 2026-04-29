@@ -1,4 +1,4 @@
-# Botfusions Autonomous Content Engine (v2.3)
+# Botfusions Autonomous Content Engine (v2.4)
 
 LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
@@ -41,7 +41,7 @@ src/
 ├── index.ts                  # Tek seferlik calistirma
 └── services/
     ├── agentFlow.ts          # Hava durumu + Excel akis mantigi
-    ├── llm.ts                # Perplexity arastirma + OpenRouter icerik
+    ├── llm.ts                # Perplexity arastirma + OpenRouter (Gemini 2.5 Pro) icerik
     ├── google.ts             # Google Sheets (GEO) entegrasyonu
     ├── rss.ts                # Google News RSS okuma + parse
     ├── gemini_image.ts       # Gemini ile gorsel uretim + kayit
@@ -155,7 +155,7 @@ npm run scheduler
 | Bilesen | Teknoloji |
 |---------|-----------|
 | Core | Node.js 20+, TypeScript |
-| LLM | OpenRouter (GPT-4o-mini) |
+| LLM | OpenRouter (Gemini 2.5 Pro) |
 | Arastirma | Perplexity Sonar |
 | Gorsel | Gemini 3.1 Flash Image |
 | Veri Kaynagi | Google Sheets API |

@@ -112,7 +112,7 @@ export async function runWeatherPostFlow(
     const { linkedinPost, xPost } = generated;
 
     // 3. Görsel Üretimi
-    console.log("\n🎨 Görsel promptu optimize ediliyor (Gemini Pro 2.5)...");
+    console.log("\n🎨 Görsel promptu optimize ediliyor (Gemini 2.5 Pro - OpenRouter)...");
     const optimizedPrompt = await generateOptimizedImagePrompt(
       researchData,
       imageVisualPrompt

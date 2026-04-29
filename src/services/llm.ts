@@ -127,7 +127,7 @@ export async function generateContentWithGemini(
     const response = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "openai/gpt-4o-mini",
+        model: "google/gemini-2.5-pro",
         messages: [
           {
             role: "system",
@@ -186,7 +186,7 @@ export async function generateShortContentWithGemini(researchData: string, syste
     `;
 
     const response = await axios.post("https://openrouter.ai/api/v1/chat/completions", {
-      model: "openai/gpt-4o-mini",
+      model: "google/gemini-2.5-pro",
       messages: [
         { role: "system", content: finalSystemPrompt + "\n\nÖnemli: JSON içinde tırnak işaretlerini ve yeni satırları doğru şekilde kaçır (escape). linkedinPost ve xPost alanları TAMAMEN AYNI metni içermelidir." },
         { role: "user", content: `Güncel Bilgi: ${researchData}\n\nLütfen sadece istenen JSON objesini döndür.` },
@@ -247,7 +247,7 @@ A minimalist 1:1 square weather infographic. A close-up view through a window fr
 `;
 
     const response = await axios.post("https://openrouter.ai/api/v1/chat/completions", {
-      model: "openai/gpt-4o-mini", 
+      model: "google/gemini-2.5-pro",
       messages: [
         { role: "system", content: systemPrompt + "\n\nZORUNLU: Tüm şablonu eksiksiz doldur. Cümleyi yarım bırakma. Sonuna mutlaka Türkçe özetini ekle." },
         { role: "user", content: `**Zaman:** ${formattedDate}\n**Hava Verisi:** ${researchData}\n\nLütfen promptu oluştur.` },
@@ -262,7 +262,9 @@ A minimalist 1:1 square weather infographic. A close-up view through a window fr
     result = result.replace(/^["']|["']$/g, "");
     
     // Debug için dosyaya kaydet
-    await fs.writeFile(path.join(process.cwd(), "scratch/last_prompt.txt"), result);
+    const scratchDir = path.join(process.cwd(), "scratch");
+    try { await fs.access(scratchDir); } catch { await fs.mkdir(scratchDir, { recursive: true }); }
+    await fs.writeFile(path.join(scratchDir, "last_prompt.txt"), result);
     
     return result;
   } catch (error: any) {
@@ -382,7 +384,7 @@ AEO → AI yanıtlarında otorite
     const response = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "openai/gpt-4o-mini",
+        model: "google/gemini-2.5-pro",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Haber Basligi: ${title}\n\nHaber Icerigi:\n${content}\n\nSadece JSON olarak don.` },

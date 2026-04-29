@@ -6,6 +6,15 @@ import { runRSSNewsWorkflow } from "./rss_agent.js";
 
 dotenv.config();
 
+// ─── Process-level Error Handlers (Crash Prevention) ───
+process.on("unhandledRejection", (reason) => {
+  console.error("⚠️ Unhandled Promise Rejection (cron callback):", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("⚠️ Uncaught Exception:", err.message);
+});
+
 async function randomDelay() {
   const minutes = Math.floor(Math.random() * 6);
   const ms = minutes * 60 * 1000;
@@ -13,6 +22,14 @@ async function randomDelay() {
     console.log(`⏳ Ban Korumasi: Paylasim ${minutes} dakika rastgele erteleniyor...`);
     await new Promise(resolve => setTimeout(resolve, ms));
   }
+}
+
+function safeCron(fn: () => Promise<void>): () => void {
+  return () => {
+    fn().catch((err) => {
+      console.error("❌ Cron job hatasi (process korundu):", err?.message || err);
+    });
+  };
 }
 
 console.log("⏰ Botfusions Zamanlayici Baslatildi...");
@@ -64,54 +81,54 @@ NO forecasts, NO complex tables, NO text at the bottom. The look should be extre
 // 08:00 - Hava Durumu
 cron.schedule(
   "0 8 * * *",
-  async () => {
+  safeCron(async () => {
     console.log("🚀 [08:00] Hava durumu postu hazirlaniyor...");
     await randomDelay();
     await runWeatherPostFlow(WEATHER_TEXT_PROMPT, WEATHER_IMAGE_PROMPT);
-  },
+  }),
   { timezone: "Europe/Istanbul" },
 );
 
 // 10:00 - RSS Haber
 cron.schedule(
   "0 10 * * *",
-  async () => {
+  safeCron(async () => {
     console.log("🚀 [10:00] RSS haber postu hazirlaniyor...");
     await randomDelay();
     await runRSSNewsWorkflow();
-  },
+  }),
   { timezone: "Europe/Istanbul" },
 );
 
 // 13:00 - Excel Postu
 cron.schedule(
   "0 13 * * *",
-  async () => {
+  safeCron(async () => {
     console.log("🚀 [13:00] Gun ortasi postu (LinkedIn + X) hazirlaniyor...");
     await randomDelay();
     await runAutonomousWorkflow();
-  },
+  }),
   { timezone: "Europe/Istanbul" },
 );
 
 // 16:00 - RSS Haber
 cron.schedule(
   "0 16 * * *",
-  async () => {
+  safeCron(async () => {
     console.log("🚀 [16:00] RSS haber postu hazirlaniyor...");
     await randomDelay();
     await runRSSNewsWorkflow();
-  },
+  }),
   { timezone: "Europe/Istanbul" },
 );
 
 // 17:00 - Excel Postu
 cron.schedule(
   "0 17 * * *",
-  async () => {
+  safeCron(async () => {
     console.log("🚀 [17:00] Gun sonu postu (LinkedIn + X) hazirlaniyor...");
     await randomDelay();
     await runAutonomousWorkflow();
-  },
+  }),
   { timezone: "Europe/Istanbul" },
 );
