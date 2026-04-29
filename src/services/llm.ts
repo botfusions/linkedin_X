@@ -285,7 +285,7 @@ export async function generateImageWithGemini(prompt: string): Promise<string> {
       {
         contents: [{ parts: [{ text: `Generate a technological infographic: ${prompt}${TURKISH_RULE}` }] }],
       },
-      { headers: { "Content-Type": "application/json" }, timeout: 90000 }
+      { headers: { "Content-Type": "application/json" }, timeout: 180_000 }
     );
 
     if (!response.data?.candidates?.[0]?.content?.parts) {

@@ -38,7 +38,13 @@ export async function runRSSNewsWorkflow() {
       const optimizedX = await optimizeXWithSelfImprove(generated.xPost, article.title);
 
       console.log("🎨 Turkce infografik uretiliyor...");
-      const imagePath = await generateGeminiImage(generated.imagePrompt);
+      let imagePath: string | undefined;
+      try {
+        imagePath = await generateGeminiImage(generated.imagePrompt);
+      } catch (imgErr: any) {
+        console.error("⚠️ Görsel üretilemedi, bu haber atlanıyor:", imgErr.message);
+        continue;
+      }
 
       let linkedinSuccess = false;
       let linkedinError = "";
