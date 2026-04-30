@@ -49,9 +49,14 @@ export async function runRSSNewsWorkflow() {
       let linkedinSuccess = false;
       let linkedinError = "";
       try {
-        await createLinkedInPost(optimizedLI.finalPost, imagePath);
-        console.log("✅ LinkedIn haber paylasimi basarili.");
-        linkedinSuccess = true;
+        const liResult = await createLinkedInPost(optimizedLI.finalPost, imagePath);
+        if (liResult) {
+          console.log("✅ LinkedIn haber paylasimi basarili.");
+          linkedinSuccess = true;
+        } else {
+          linkedinError = "createLinkedInPost false dondu (token hatasi veya gorsel hatasi)";
+          console.error("❌ LinkedIn paylasimi basarisiz (false dondu).");
+        }
       } catch (err: any) {
         linkedinError = err.message;
         console.error("❌ LinkedIn hatasi:", linkedinError);

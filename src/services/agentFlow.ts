@@ -135,9 +135,14 @@ export async function runWeatherPostFlow(
     let linkedinSuccess = false;
     let linkedinError = "";
     try {
-      await createLinkedInPost(linkedinPost, imagePath);
-      console.log("✅ LinkedIn hava durumu postu yayınlandı.");
-      linkedinSuccess = true;
+      const liResult = await createLinkedInPost(linkedinPost, imagePath);
+      if (liResult) {
+        console.log("✅ LinkedIn hava durumu postu yayınlandı.");
+        linkedinSuccess = true;
+      } else {
+        linkedinError = "createLinkedInPost false dondu (token hatasi veya gorsel hatasi)";
+        console.error("❌ LinkedIn hava durumu postu basarisiz (false dondu).");
+      }
     } catch (err: any) {
       linkedinError = err.message;
       console.error("❌ LinkedIn paylaşım hatası:", linkedinError);
