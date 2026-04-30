@@ -279,13 +279,22 @@ export async function generateImageWithGemini(prompt: string): Promise<string> {
   const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
   if (!GOOGLE_API_KEY) throw new Error("GOOGLE_API_KEY eksik!");
 
-  const TURKISH_RULE = "\n\nKRITIK KURAL: Tum basliklar, etiketler, label'lar ve metin TURKCE OLMALIDIR. Ingilizce terim kullanma.";
+  const TURKISH_RULE = `
+KRITIK KURALLAR:
+1. Tum basliklar, etiketler, label'lar ve metin TURKCE OLMALIDIR. Ingilizce terim kullanma.
+2. Metinler BUYUK ve BOLD olsun - mobilde okunabilir olmali (minimum 24pt).
+3. Temiz, modern, minimalist tasarim. Beyaz arka plan, koyu mavi (#1a365d) basliklar.
+4. Flat design ikonlar kullan. Gercekci foto degil, vektor tarzi.
+5. Maksimum 4-5 kisa metin kutusu. Asiri kalabalik yapma.
+6. Her metin kutusunda en fazla 5-6 kelime. Kisa ve oz.
+7. Asla yazim hatasi yapma. Turkce karakterleri dogru kullan (ş,ğ,ı,ö,ü,ç).
+`;
 
   try {
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GOOGLE_API_KEY}`,
       {
-        contents: [{ parts: [{ text: `Generate a technological infographic: ${prompt}${TURKISH_RULE}` }] }],
+        contents: [{ parts: [{ text: `Create a clean, professional infographic for social media. Square format (1:1). Modern flat design with bold readable Turkish text.\n\n${TURKISH_RULE}\n\nKonu: ${prompt}` }] }],
       },
       { headers: { "Content-Type": "application/json" }, timeout: 180_000 }
     );
