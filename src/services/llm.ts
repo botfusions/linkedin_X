@@ -231,19 +231,21 @@ Sen profesyonel bir görsel prompt mühendisisin.
 Aşağıdaki şablonu kullanarak, gelen hava durumu verilerine göre detaylı bir görsel üretim promptu oluştur. 
 
 **ŞABLON (ZORUNLU YAPI):**
-A minimalist 1:1 square weather infographic. A close-up view through a window from a cozy office in Istanbul, showing [LANDMARK] in the background. On the window glass, there is a simple, sleek, semi-transparent digital overlay displaying 'İSTANBUL' (in Turkish), the current temperature [TEMP]°C (NO DECIMALS, JUST INTEGER), a [DYNAMIC_WEATHER_ICON], and Humidity/Wind metrics. NO forecasts, NO bottom text. The scene is shot from a slight angle to show the depth of the window frame. The sky and lighting outside MUST strictly match the weather: [ATMOSPHERE_DESCRIPTION]. Clean and premium aesthetic. --ar 1:1
+A minimalist 1:1 square weather infographic. A close-up view through a window from a cozy office in Istanbul, showing [LANDMARK] in the background. On the window glass, there is a simple, sleek, semi-transparent digital overlay displaying 'İSTANBUL' (in Turkish), the current temperature [TEMP]°C (NO DECIMALS, JUST INTEGER), a [DYNAMIC_WEATHER_ICON], and Humidity/Wind metrics. NO forecasts, NO bottom text. The scene is shot from a slight angle to show the depth of the window frame. The sky and lighting outside MUST strictly match the actual weather data provided: [ATMOSPHERE_DESCRIPTION]. Clean and premium aesthetic. --ar 1:1
 
 **KURALLAR:**
 1. SADECE İNGİLİZCE PROMPT döndür.
 2. [LANDMARK] kısmını İstanbul'un ikonik ve tarihi mekanlarından (Bosphorus Bridge, Maiden's Tower, Hagia Sophia, Blue Mosque, Rumeli Fortress veya Bosphorus view with ferries) birini rastgele seçerek doldur. GALATA TOWER KULLANMA. Her seferinde farklı mekanlar seçmeye çalış.
 3. [DYNAMIC_WEATHER_ICON] kısmını verideki duruma göre (rain icon, sun icon, cloud icon vb.) doldur.
 4. [TEMP] kısmına güncel sıcaklığı yaz.
-5. [ATMOSPHERE_DESCRIPTION] kısmını hava durumuna göre detaylandır (Örn: 'bright blue sky with golden sunlight' if clear, 'moody grey sky with raindrops on glass' if rainy).
-6. EĞER HAVA 'AÇIK' (CLEAR) İSE: Kesinlikle yağmur, bulut veya kasvetli hava olmasın. Gökyüzü masmavi ve güneşli olsun.
-7. KRITIK: TUM ARAYUZ METINLERI TURKCE OLMALIDIR. "Nem", "Ruzgar Hizi", "Hissedilen" gibi Turkce terimler kullan.
-8. TEK BİR PARAGRAF olarak çıktı ver.
-9. Hiçbir giriş cümlesi (İşte promptunuz vb.) veya açıklama EKLEME. Sadece promptu döndür.
-10. Mutlaka --ar 1:1 ifadesini koru.
+5. [ATMOSPHERE_DESCRIPTION] kısmını hava durumuna göre detaylandır (Örn: 'bright blue sky with golden sunlight' if clear, 'grey overcast sky with visible clouds' if cloudy, 'dark grey sky with heavy rain falling' if rainy).
+6. EĞER HAVA 'AÇIK' (CLEAR) İSE: Kesinlikle yağmur damlaları, bulut veya kasvetli hava OLMASIN. Gökyüzü masmavi ve güneşli olsun. Pencere camı TEMIZ ve kuru olsun, asla su damlaları olmasın.
+7. EĞER HAVA 'BULUTLU' (CLOUDY) İSE: Yağmur olmasın ama gökyüzü gri ve bulutlu olsun. Pencere camı kuru olsun.
+8. EĞER HAVA 'YAĞMURLU' İSE: O zaman pencerede su damlaları ve yağmur efekti olsun.
+9. KRITIK: TUM ARAYUZ METINLERI TURKCE OLMALIDIR. "Nem", "Ruzgar Hizi", "Hissedilen" gibi Turkce terimler kullan.
+10. TEK BİR PARAGRAF olarak çıktı ver.
+11. Hiçbir giriş cümlesi (İşte promptunuz vb.) veya açıklama EKLEME. Sadece promptu döndür.
+12. Mutlaka --ar 1:1 ifadesini koru.
 `;
 
     const response = await axios.post("https://openrouter.ai/api/v1/chat/completions", {
