@@ -117,8 +117,12 @@ export async function runAutonomousWorkflow() {
             console.error("❌ LinkedIn paylasimi basarisiz (null dondu).");
           }
         } catch (err: any) {
-          linkedinError = err.message;
-          console.error("❌ LinkedIn paylasim hatasi:", linkedinError);
+          if (err.message === "SKIP_LINKEDIN") {
+            console.log("⏭️ LinkedIn atlanıyor (token yok, ban koruması).");
+          } else {
+            linkedinError = err.message;
+            console.error("❌ LinkedIn paylasim hatasi:", linkedinError);
+          }
         }
 
         let xSuccess = false;

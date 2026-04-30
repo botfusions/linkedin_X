@@ -162,8 +162,7 @@ async function getAccessToken(): Promise<string> {
       console.log("✅ LinkedIn token Supabase'ten yuklendi ve dosyaya yazildi.");
       return supabaseToken.access_token;
     }
-    console.log("ℹ️ Supabase'te de token bulunamadi.");
-    await sendErrorNotification("LinkedIn Token", "Token bulunamadi! VPS'te 'npm run linkedin-auth' calistirin.");
-    throw new Error("LinkedIn token bulunamadi. Once yetkilendirme yapin.");
+    console.log("ℹ️ LinkedIn token yok, paylaşım atlanıyor (ban koruması).");
+    throw new Error("SKIP_LINKEDIN");
   }
 }

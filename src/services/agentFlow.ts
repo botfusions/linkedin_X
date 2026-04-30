@@ -146,8 +146,12 @@ export async function runWeatherPostFlow(
         console.error("❌ LinkedIn hava durumu postu basarisiz (null dondu).");
       }
     } catch (err: any) {
-      linkedinError = err.message;
-      console.error("❌ LinkedIn paylaşım hatası:", linkedinError);
+      if (err.message === "SKIP_LINKEDIN") {
+        console.log("⏭️ LinkedIn atlanıyor (token yok, ban koruması).");
+      } else {
+        linkedinError = err.message;
+        console.error("❌ LinkedIn paylaşım hatası:", linkedinError);
+      }
     }
 
     // X Paylaşımı
