@@ -1,4 +1,4 @@
-# Botfusions Autonomous Content Engine (v2.4)
+# Botfusions Autonomous Content Engine (v2.6)
 
 LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
@@ -9,11 +9,12 @@ LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 - **Dual-Platform:** LinkedIn (kurumsal) + X (vizyoner) icerik uretimi
 - **3 Icerik Kaynagi:** Google Sheets konular, Google News AI RSS haberler, Istanbul hava durumu
 - **Self-Improving Optimizer:** 14+ kurala gore skorlama, 80/100 altindakiler otomatik revize
-- **AI Gorsel Uretimi:** Gemini 3.1 Flash ile Turkce infografikler
+- **Gorsel Uretim Motorlari:** Dinamik Hava Durumu ve Kurumsal Infografik motorlari
 - **Canli Arastirma:** Perplexity AI ile guncel veri toplama
-- **Supabase:** API key deposu + yayin takip tablosu
+- **Supabase:** API key deposu + LinkedIn token persistence + yayin takip tablosu
 - **Telegram Bildirim:** Her yayinda rapor, hatalarda alarm
 - **Docker + Coolify:** VPS'te 7/24 otonom calisma
+- **Ban Korumasi:** Postlar arasi 3-5dk bekleme, token yoksa sessizce atlama
 
 ---
 
@@ -41,18 +42,18 @@ src/
 ├── index.ts                  # Tek seferlik calistirma
 └── services/
     ├── agentFlow.ts          # Hava durumu + Excel akis mantigi
-    ├── llm.ts                # Perplexity arastirma + OpenRouter (Gemini 2.5 Pro) icerik
+    ├── llm.ts                # Perplexity arastirma + OpenRouter (Gemini 2.5 Pro) icerik + gorsel prompt
     ├── google.ts             # Google Sheets (GEO) entegrasyonu
     ├── rss.ts                # Google News RSS okuma + parse
     ├── gemini_image.ts       # Gemini ile gorsel uretim + kayit
-    ├── linkedin.ts           # LinkedIn ugcPosts API
-    ├── x.ts                  # X (Twitter) API v2
+    ├── linkedin.ts           # LinkedIn ugcPosts API + Supabase token fallback
+    ├── x.ts                  # X (Twitter) API v2 + URL takibi
     ├── optimizer.ts          # LinkedIn skorlama + self-improve
     ├── x_optimizer.ts        # X skorlama + self-improve
     ├── rules.ts              # LinkedIn algoritma kurallari
     ├── x_rules.ts            # X algoritma kurallari
     ├── weather.ts            # Istanbul hava durumu servisi
-    ├── supabase.ts           # Supabase client + CRUD
+    ├── supabase.ts           # Supabase client + CRUD + LinkedIn token persistence
     ├── telegram.ts           # Telegram bildirim servisi
     └── imageHosting.ts       # ImgBB gorsel barindirma
 ```
@@ -61,13 +62,17 @@ src/
 
 ## Supabase Tablolari
 
-### env_config (API Key Deposu)
+### env_config (API Key Deposu + LinkedIn Token)
 | Kolon | Tip | Aciklama |
 |-------|-----|----------|
 | id | UUID | Primary key |
 | key_name | TEXT | Degisken adi (unique) |
 | key_value | TEXT | Deger |
 | created_at | TIMESTAMPTZ | Olusturma tarihi |
+
+**Ozel Kayitlar:**
+- `LINKEDIN_TOKEN_JSON`: LinkedIn OAuth token JSON (access_token + expiresAt)
+- API key'ler: OPENROUTER_API_KEY, GOOGLE_API_KEY, TELEGRAM_BOT_TOKEN vb.
 
 ### linkedin+x (Yayin Takibi)
 | Kolon | Tip | Aciklama |
@@ -84,6 +89,54 @@ src/
 | source | TEXT | Kaynak: excel / weather / rss |
 | status | TEXT | published / failed |
 | published_at | TIMESTAMPTZ | Yayin tarihi |
+
+---
+
+## LinkedIn Token Yonetimi
+
+### Token Persistence
+LinkedIn token Supabase `env_config` tablosunda saklanir. Redeploy sonrasi otomatik yuklenir.
+
+1. `linkedin_auth.ts` token'i hem dosyaya hem Supabase'e kaydeder
+2. `linkedin.ts` once dosyadan okur, yoksa Supabase'ten yukler
+3. Supabase'ten yuklenen token dosyaya da yazilir (sonraki okuma hizli olur)
+
+### Ilkez Token Alma
+```bash
+docker ps --format "{{.Names}}" | head -5
+docker exec -it <CONTAINER_ADI> npx tsx src/linkedin_auth.ts
+```
+Tarayicida linki ac, LinkedIn'de onayla, yonlendirme URL'sini yapistir. Token 60 gun gecerli.
+
+### Token Suresi Dolunca
+Telegram'a bildirim gelir. Ayni komutu tekrar calistir.
+```bash
+docker ps --format "{{.Names}}" | head -5
+docker exec -it <CONTAINER_ADI> npx tsx src/linkedin_auth.ts
+```
+
+### Token Yoksa Davranis
+Token yoksa LinkedIn paylasimi sessizce atlanir (ban koruması). Hata bildirimi gonderilmez. Sadece log'a yazilir.
+
+---
+
+## Gorsel Uretim Motorlari (v2.6)
+
+Sistem, yuksek etkilesimli LinkedIn paylasimlari icin iki ana gorsel motoru kullanir:
+
+### 1. Dinamik Hava Durumu Motoru
+Istanbul hava durumuna gore her sabah ozel, markali ve atmosferik manzaralar uretir.
+- **Dinamik Prompt:** Sicakliga gore degisen cay buhari, havaya gore pencere buğusu/yagmur/kar efektleri.
+- **Turkce Panel:** Gorsel uzerinde 'HAVA DURUMU', 'NEM', 'RÜZGAR' gibi veriler Turkce glass-morphism panelde sunulur.
+- **Branding:** Her gorselde zarif bir `botfusions` logotype bulunur.
+- **Manzara:** Bogazici, Kiz Kulesi ve tarihi yarimada manzaralariyla kurumsal ve sanatsal denge.
+
+### 2. Kurumsal Infografik Motoru
+Excel veya RSS konularini profesyonel teknoloji haritalarina donusturur.
+- **4 Farkli Stil:** `blueprint`, `cyberpunk`, `minimalist` ve `3d infrastructure` stilleri arasinda rotasyon yapar.
+- **Yüksek Yoğunluklu Bilgi:** 6-8 farkli bilgi kutucugu ve 3-4 detayli alt madde ile "hallucination-free" teknik semalar.
+- **Dil Kontrolü:** Tum basliklar, metrikler ve detaylar Turkce olarak uretilir.
+- **Kurumsal Estetik:** `botfusions` watermark ve profesyonel ikonografi (guvenlik icin kalkan, AI icin cip vb.).
 
 ---
 
@@ -109,20 +162,6 @@ Redeploy sonrasi container adi degisir. Her zaman once bul:
 docker ps --format "{{.Names}}" | head -5
 ```
 `dgecwxjms61k579zpew9y0rd-XXXXXXXXX` formatindaki satir senin container'in.
-
-### 4. LinkedIn Token Alma (Ilkez)
-Container adini bulduktan sonra:
-```bash
-docker exec -it <CONTAINER_ADI> npx tsx src/linkedin_auth.ts
-```
-Tarayicida linki ac, LinkedIn'de onayla, yonlendirme URL'sini yapistir. Token 60 gun gecerli.
-
-### 5. Token Suresi Dolunca
-Telegram'a bildirim gelir. Container adini tekrar bulup:
-```bash
-docker ps --format "{{.Names}}" | head -5
-docker exec -it <CONTAINER_ADI> npx tsx src/linkedin_auth.ts
-```
 
 ---
 
@@ -195,6 +234,18 @@ Aciklama...
 
 ---
 
+## Ban Korumasi
+
+| Senaryo | Koruma |
+|---------|--------|
+| Scheduler tetikleme | 2 dakika rastgele erteleme |
+| RSS haberler arasi | 3-5 dakika rastgele bekleme |
+| Token yoksa | LinkedIn sessizce atlanir, hata bildirimi yok |
+| Bos metin | Post gonderilmez (guvenlik bariyeri) |
+| Gorsel uretilemezse | Post gonderilmez, sonraki habere gecilir |
+
+---
+
 ## Kurallar
 
 - Tum infografikler **TURKCE** (basliklar, etiketler, metrikler dahil)
@@ -202,6 +253,7 @@ Aciklama...
 - Bos metin veya hatali gorselle **ASLA** paylasim yapilmasin
 - "Detay icin ilk yorum" gibi cumleler **YOK**
 - Her yayin Supabase'e kayit + Telegram'a bildirim
+- Post URL'leri (LinkedIn/X) Supabase'e kaydedilir
 
 ---
 
@@ -231,6 +283,31 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 - **Neden:** Tek kayit `find()` ile bulunuyordu, hata durumunda `continue` calismiyordu
 - **Cozum:** `filter()` + `for...of` dongusune cevrildi, bos/hatali satirlar atlanir
 
+### 5. LinkedIn False Positive (v2.4)
+- **Sorun:** Token yokken bile "LinkedIn yayinlandi" raporlaniyordu
+- **Neden:** `createLinkedInPost()` boolean donuyordu ama cagiran taraf kontrol etmiyordu
+- **Cozum:** Fonksiyon `string | null` doner (URL veya null), tum cagiranlar null check yapar
+
+### 6. LinkedIn Token Redeploy Sonrasi Siliniyor
+- **Sorun:** Her Coolify redeploy'da token dosyasi siliniyordu, tekrar auth gerekiyordu
+- **Neden:** Token container dosya sisteminde saklaniyordu
+- **Cozum:** Token Supabase `env_config` tablosunda saklanir, dosya yoksa otomatik yuklenir
+
+### 7. RSS Agent Calismiyordu (v2.5)
+- **Sorun:** `npx tsx src/rss_agent.ts` calismiyordu, hicbir cikti uretmiyordu
+- **Neden:** `runRSSNewsWorkflow()` sadece `export` edilmisti, self-executing call yoktu
+- **Cozum:** Dosya sonuna `runRSSNewsWorkflow()` cagrisi eklendi
+
+### 8. Arka Arkaya Post Ban Riski
+- **Sorun:** RSS 2 haberi 1-2 dk icinde arka arkaya atiyordu
+- **Neden:** Postlar arasi bekleme yoktu
+- **Cozum:** RSS haberler arasi 3-5 dakika rastgele bekleme eklendi
+
+### 9. Hava Durumu Gorselinde Yagmur/Gunes Karisikligi
+- **Sorun:** Hava acik olmasina ragmen gorselde yagmur damlalari vardi
+- **Neden:** Gorsel prompt sablonunda "raindrops on glass" ornegini Gemini ornek aliyordu
+- **Cozum:** Her hava durumu icin ayri kural eklendi (clear/cloudy/rainy)
+
 ### Test Onerileri
 
 | Senaryo | Test Yontemi |
@@ -241,6 +318,9 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 | Durum guncelleme | Yayin sonrasi Excel'de "Done" yazildigini dogrula |
 | Gorselsiz post | Gemini API'yi gecici olarak kapali tut, post gonderilmedigini dogrula |
 | Tekrar calisma | Ayni satir iki kez islenmiyor mu kontrol et |
+| Token persistence | Redepoy sonrasi LinkedIn token Supabase'ten yukleniyor mu dogrula |
+| Ban koruması | RSS agent calisirken postlar arasi 3-5dk bekleme var mi kontrol et |
+| LinkedIn false positive | Token yokken "yayinlandi" raporlanmiyor mu dogrula |
 
 ---
 
