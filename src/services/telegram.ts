@@ -53,7 +53,7 @@ export async function sendPublishNotification(report: PublishReport): Promise<vo
     `${report.linkedinSuccess ? "✅" : "❌"} *LinkedIn:* ${report.linkedinSuccess ? "Yayinlandi" : `Hata: ${report.linkedinError ?? "Bilinmiyor"}`}`,
     `${report.xSuccess ? "✅" : "❌"} *X:* ${report.xSuccess ? "Yayinlandi" : `Hata: ${report.xError ?? "Bilinmiyor"}`}`,
     `📅 ${now}`,
-    `📍 Kaynak: ${report.source === "weather" ? "Hava Durumu" : "Excel Konu"}`,
+    `📍 Kaynak: ${report.source === "weather" ? "Hava Durumu" : report.source === "rss" ? "RSS Haber" : "Excel Konu"}`,
   ];
 
   await sendTelegramMessage(lines.join("\n"));

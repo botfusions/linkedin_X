@@ -25,8 +25,8 @@ export interface PublishedPostData {
   image_url?: string;
   linkedin_score?: number;
   x_score?: number;
-  linkedin_url?: string;
-  x_url?: string;
+  linkedin_url?: string | undefined;
+  x_url?: string | undefined;
   source?: "excel" | "weather" | "rss";
   status?: "published" | "failed";
 }

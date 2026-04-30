@@ -134,14 +134,16 @@ export async function runWeatherPostFlow(
     // LinkedIn Paylaşımı
     let linkedinSuccess = false;
     let linkedinError = "";
+    let linkedinUrl = "";
     try {
       const liResult = await createLinkedInPost(linkedinPost, imagePath);
       if (liResult) {
         console.log("✅ LinkedIn hava durumu postu yayınlandı.");
         linkedinSuccess = true;
+        linkedinUrl = liResult;
       } else {
-        linkedinError = "createLinkedInPost false dondu (token hatasi veya gorsel hatasi)";
-        console.error("❌ LinkedIn hava durumu postu basarisiz (false dondu).");
+        linkedinError = "createLinkedInPost null dondu (token hatasi veya gorsel hatasi)";
+        console.error("❌ LinkedIn hava durumu postu basarisiz (null dondu).");
       }
     } catch (err: any) {
       linkedinError = err.message;
@@ -151,10 +153,17 @@ export async function runWeatherPostFlow(
     // X Paylaşımı
     let xSuccess = false;
     let xError = "";
+    let xUrl = "";
     try {
-      await createXPost(xPost, imagePath);
-      console.log("✅ X (Twitter) hava durumu postu yayınlandı.");
-      xSuccess = true;
+      const xResult = await createXPost(xPost, imagePath);
+      if (xResult) {
+        console.log("✅ X (Twitter) hava durumu postu yayınlandı.");
+        xSuccess = true;
+        xUrl = xResult;
+      } else {
+        xError = "createXPost null dondu";
+        console.error("❌ X hava durumu postu basarisiz (null dondu).");
+      }
     } catch (err: any) {
       xError = err.message;
       console.error("❌ X paylaşım hatası:", xError);
@@ -166,6 +175,8 @@ export async function runWeatherPostFlow(
       linkedin_post: linkedinPost,
       x_post: xPost,
       image_url: imagePath,
+      linkedin_url: linkedinUrl || undefined,
+      x_url: xUrl || undefined,
       source: "weather",
       status: linkedinSuccess || xSuccess ? "published" : "failed",
     });

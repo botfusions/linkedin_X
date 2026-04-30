@@ -19,11 +19,11 @@ const REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI || "http://localhost:8080
 export async function createLinkedInPost(
   text: string,
   imagePath: string,
-): Promise<boolean> {
+): Promise<string | null> {
   // --- GÜVENLİK BARİYERİ ---
   if (!text || text.trim().length < 10) {
     console.error("❌ GÜVENLİK BARİYERİ: Boş veya çok kısa LinkedIn metni paylaşılamaz!");
-    return false;
+    return null;
   }
   // -------------------------
   try {
@@ -104,21 +104,28 @@ export async function createLinkedInPost(
       },
     };
 
-    await axios.post("https://api.linkedin.com/v2/ugcPosts", ugcBody, {
+    const ugcResponse = await axios.post("https://api.linkedin.com/v2/ugcPosts", ugcBody, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "X-Restli-Protocol-Version": "2.0.0",
       },
     });
 
-    console.log("🚀 LinkedIn UGC Gönderisi Başarıyla Yayına Alındı!");
-    return true;
+    const postUrn = ugcResponse.headers["x-restli-id"] || ugcResponse.data?.id;
+    let postUrl = "";
+    if (postUrn) {
+      const postId = String(postUrn).replace("urn:li:ugcPost:", "").replace("urn:li:share:", "");
+      postUrl = `https://www.linkedin.com/feed/update/${postId}`;
+    }
+
+    console.log("🚀 LinkedIn UGC Gönderisi Başarıyla Yayına Alındı!", postUrl || "(URL alınamadı)");
+    return postUrl || "published";
   } catch (error: any) {
     console.error(
       "❌ LinkedIn Paylaşım Hatası (UGC):",
       error.response?.data || error.message,
     );
-    return false;
+    return null;
   }
 }
 

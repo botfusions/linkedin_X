@@ -105,14 +105,16 @@ export async function runAutonomousWorkflow() {
 
         let linkedinSuccess = false;
         let linkedinError = "";
+        let linkedinUrl = "";
         try {
           const liResult = await createLinkedInPost(optimizedLinkedIn.finalPost, imagePath);
           if (liResult) {
             console.log("✅ LinkedIn paylasimi basarili.");
             linkedinSuccess = true;
+            linkedinUrl = liResult;
           } else {
-            linkedinError = "createLinkedInPost false dondu (token hatasi veya gorsel hatasi)";
-            console.error("❌ LinkedIn paylasimi basarisiz (false dondu).");
+            linkedinError = "createLinkedInPost null dondu (token hatasi veya gorsel hatasi)";
+            console.error("❌ LinkedIn paylasimi basarisiz (null dondu).");
           }
         } catch (err: any) {
           linkedinError = err.message;
@@ -121,10 +123,17 @@ export async function runAutonomousWorkflow() {
 
         let xSuccess = false;
         let xError = "";
+        let xUrl = "";
         try {
-          await createXPost(optimizedX.finalPost, imagePath);
-          console.log("✅ X (Twitter) paylasimi basarili.");
-          xSuccess = true;
+          const xResult = await createXPost(optimizedX.finalPost, imagePath);
+          if (xResult) {
+            console.log("✅ X (Twitter) paylasimi basarili.");
+            xSuccess = true;
+            xUrl = xResult;
+          } else {
+            xError = "createXPost null dondu";
+            console.error("❌ X paylasimi basarisiz (null dondu).");
+          }
         } catch (err: any) {
           xError = err.message;
           console.error("❌ X paylasim hatasi:", xError);
@@ -142,6 +151,8 @@ export async function runAutonomousWorkflow() {
           image_url: imagePath,
           linkedin_score: optimizedLinkedIn.finalScore,
           x_score: optimizedX.finalScore,
+          linkedin_url: linkedinUrl || undefined,
+          x_url: xUrl || undefined,
           source: "excel",
           status: linkedinSuccess || xSuccess ? "published" : "failed",
         });

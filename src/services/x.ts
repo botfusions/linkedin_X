@@ -11,11 +11,11 @@ dotenv.config();
 export async function createXPost(
   text: string,
   imagePath?: string,
-): Promise<boolean> {
+): Promise<string | null> {
   // --- GÜVENLİK BARİYERİ ---
   if (!text || text.trim().length < 10) {
     console.error("❌ BAN KORUMASI: Boş veya çok kısa metin X'te paylaşılamaz!");
-    return false;
+    return null;
   }
 
   // Aynı içeriği üst üste paylaşmayı engellemek için basit bir kontrol (geçici hafıza gerekebilir)
@@ -50,9 +50,9 @@ export async function createXPost(
     const tweet = await rwClient.v2.tweet(tweetPayload);
 
     console.log("🚀 X Gönderisi Başarıyla Yayına Alındı! Tweet ID:", tweet.data.id);
-    return true;
+    return `https://x.com/i/status/${tweet.data.id}`;
   } catch (error: any) {
     console.error("❌ X Paylaşım Hatası:", error.data || error.message);
-    return false;
+    return null;
   }
 }
