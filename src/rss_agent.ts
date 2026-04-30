@@ -113,3 +113,5 @@ export async function runRSSNewsWorkflow() {
     await sendErrorNotification("RSS Haber Akisi", error.message);
   }
 }
+
+runRSSNewsWorkflow();
