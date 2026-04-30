@@ -109,6 +109,14 @@ export async function runRSSNewsWorkflow() {
         xError: xError || undefined,
         source: "rss",
       });
+
+      // Ban koruması: postlar arası 3-5 dakika rastgele bekleme
+      const delayMin = 3;
+      const delayMax = 5;
+      const delayMinutes = delayMin + Math.random() * (delayMax - delayMin);
+      const delayMs = Math.round(delayMinutes * 60 * 1000);
+      console.log(`⏳ Ban koruması: ${Math.round(delayMinutes)} dakika bekleniyor...`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
 
     console.log("\n✨ RSS haber akisi tamamlandi.");
