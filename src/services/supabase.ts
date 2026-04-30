@@ -58,6 +58,35 @@ export async function initEnvFromSupabase(): Promise<void> {
   }
 }
 
+export async function saveLinkedInToken(tokenData: { access_token: string; expiresAt: number }): Promise<void> {
+  try {
+    const client = getClient();
+    const json = JSON.stringify(tokenData);
+    const { error } = await client.from("env_config").upsert(
+      { key_name: "LINKEDIN_TOKEN_JSON", key_value: json },
+      { onConflict: "key_name" },
+    );
+    if (error) {
+      console.error("❌ Supabase token kayit hatasi:", error.message);
+    } else {
+      console.log("✅ LinkedIn token Supabase'e kaydedildi.");
+    }
+  } catch (error: any) {
+    console.error("❌ Supabase token kayit hatasi:", error.message);
+  }
+}
+
+export async function loadLinkedInToken(): Promise<{ access_token: string; expiresAt: number } | null> {
+  try {
+    const client = getClient();
+    const { data, error } = await client.from("env_config").select("key_value").eq("key_name", "LINKEDIN_TOKEN_JSON").single();
+    if (error || !data?.key_value) return null;
+    return JSON.parse(data.key_value);
+  } catch {
+    return null;
+  }
+}
+
 export async function insertPublishedPost(postData: PublishedPostData): Promise<void> {
   try {
     const client = getClient();

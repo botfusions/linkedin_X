@@ -3,7 +3,7 @@ import path from "path";
 import readline from "readline";
 import axios from "axios";
 import dotenv from "dotenv";
-import { initEnvFromSupabase } from "./services/supabase.js";
+import { initEnvFromSupabase, saveLinkedInToken } from "./services/supabase.js";
 
 dotenv.config();
 await initEnvFromSupabase();
@@ -78,6 +78,8 @@ async function main() {
 
     await fs.mkdir(path.dirname(TOKEN_PATH), { recursive: true });
     await fs.writeFile(TOKEN_PATH, JSON.stringify({ access_token: accessToken, expiresAt }, null, 2), "utf-8");
+
+    await saveLinkedInToken({ access_token: accessToken, expiresAt });
 
     console.log(`\n✅ Token basariyla alindi ve kaydedildi!`);
     console.log(`📅 Token bitis tarihi: ${expiresDate}`);

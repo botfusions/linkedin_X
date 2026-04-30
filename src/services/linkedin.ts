@@ -3,6 +3,7 @@ import path from "path";
 import axios from "axios";
 import dotenv from "dotenv";
 import { sendErrorNotification } from "./telegram.js";
+import { loadLinkedInToken } from "./supabase.js";
 
 dotenv.config();
 
@@ -144,9 +145,25 @@ async function getAccessToken(): Promise<string> {
       throw new Error("LinkedIn token suresi dolmus. Yenileyin.");
     }
     return tokenInfo.access_token;
-  } catch (error) {
-    console.log("ℹ️ LinkedIn Token bulunamadi.");
-    await sendErrorNotification("LinkedIn Token", "Token dosyasi bulunamadi! VPS'te 'npm run linkedin-auth' calistirin.");
+  } catch (fileError) {
+    // 2. Dosya yoksa Supabase'ten yükle
+    console.log("ℹ️ Token dosyasi bulunamadi, Supabase'e bakiliyor...");
+    const supabaseToken = await loadLinkedInToken();
+    if (supabaseToken) {
+      if (supabaseToken.expiresAt && Date.now() > supabaseToken.expiresAt) {
+        console.log("⚠️ LinkedIn Token suresi dolmus (Supabase).");
+        await sendErrorNotification("LinkedIn Token", "Token suresi doldu! Yenileme gerekli.");
+        throw new Error("LinkedIn token suresi dolmus. Yenileyin.");
+      }
+      // Dosyaya da yaz ki sonraki sefer dosyadan okunsun
+      const { default: fsp } = await import("fs/promises");
+      await fsp.mkdir(path.dirname(TOKEN_PATH), { recursive: true });
+      await fsp.writeFile(TOKEN_PATH, JSON.stringify(supabaseToken, null, 2), "utf-8");
+      console.log("✅ LinkedIn token Supabase'ten yuklendi ve dosyaya yazildi.");
+      return supabaseToken.access_token;
+    }
+    console.log("ℹ️ Supabase'te de token bulunamadi.");
+    await sendErrorNotification("LinkedIn Token", "Token bulunamadi! VPS'te 'npm run linkedin-auth' calistirin.");
     throw new Error("LinkedIn token bulunamadi. Once yetkilendirme yapin.");
   }
 }
