@@ -1,12 +1,22 @@
-import { fetchNewsFromRSS, fetchArticleContent, pickRandom } from "./services/rss.js";
+import {
+  fetchNewsFromRSS,
+  fetchArticleContent,
+  pickRandom,
+} from "./services/rss.js";
 import { generateNewsContent } from "./services/llm.js";
 import { generateGeminiImage } from "./services/gemini_image.js";
 import { createLinkedInPost } from "./services/linkedin.js";
 import { createXPost } from "./services/x.js";
 import { optimizeWithSelfImprove } from "./services/optimizer.js";
 import { optimizeXWithSelfImprove } from "./services/x_optimizer.js";
-import { initEnvFromSupabase, insertPublishedPost } from "./services/supabase.js";
-import { sendPublishNotification, sendErrorNotification } from "./services/telegram.js";
+import {
+  initEnvFromSupabase,
+  insertPublishedPost,
+} from "./services/supabase.js";
+import {
+  sendPublishNotification,
+  sendErrorNotification,
+} from "./services/telegram.js";
 
 export async function runRSSNewsWorkflow() {
   console.log("\n📰 RSS Haber Akisi Baslatiliyor...");
@@ -34,15 +44,24 @@ export async function runRSSNewsWorkflow() {
       }
 
       console.log("⚖️ Icerikler optimize ediliyor...");
-      const optimizedLI = await optimizeWithSelfImprove(generated.linkedinPost, article.title);
-      const optimizedX = await optimizeXWithSelfImprove(generated.xPost, article.title);
+      const optimizedLI = await optimizeWithSelfImprove(
+        generated.linkedinPost,
+        article.title,
+      );
+      const optimizedX = await optimizeXWithSelfImprove(
+        generated.xPost,
+        article.title,
+      );
 
       console.log("🎨 Turkce infografik uretiliyor...");
       let imagePath: string | undefined;
       try {
         imagePath = await generateGeminiImage(generated.imagePrompt);
       } catch (imgErr: any) {
-        console.error("⚠️ Görsel üretilemedi, bu haber atlanıyor:", imgErr.message);
+        console.error(
+          "⚠️ Görsel üretilemedi, bu haber atlanıyor:",
+          imgErr.message,
+        );
         continue;
       }
 
@@ -50,13 +69,17 @@ export async function runRSSNewsWorkflow() {
       let linkedinError = "";
       let linkedinUrl = "";
       try {
-        const liResult = await createLinkedInPost(optimizedLI.finalPost, imagePath);
+        const liResult = await createLinkedInPost(
+          optimizedLI.finalPost,
+          imagePath,
+        );
         if (liResult) {
           console.log("✅ LinkedIn haber paylasimi basarili.");
           linkedinSuccess = true;
           linkedinUrl = liResult;
         } else {
-          linkedinError = "createLinkedInPost null dondu (token hatasi veya gorsel hatasi)";
+          linkedinError =
+            "createLinkedInPost null dondu (token hatasi veya gorsel hatasi)";
           console.error("❌ LinkedIn paylasimi basarisiz (null dondu).");
         }
       } catch (err: any) {
@@ -115,7 +138,9 @@ export async function runRSSNewsWorkflow() {
       const delayMax = 5;
       const delayMinutes = delayMin + Math.random() * (delayMax - delayMin);
       const delayMs = Math.round(delayMinutes * 60 * 1000);
-      console.log(`⏳ Ban koruması: ${Math.round(delayMinutes)} dakika bekleniyor...`);
+      console.log(
+        `⏳ Ban koruması: ${Math.round(delayMinutes)} dakika bekleniyor...`,
+      );
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
 
@@ -126,4 +151,12 @@ export async function runRSSNewsWorkflow() {
   }
 }
 
-runRSSNewsWorkflow();
+// Sadece bu dosya doğrudan çalıştırıldığında (npm run rss) tetiklenir.
+// Scheduler import ettiğinde otomatik çalışmaz.
+if (
+  process.argv[1] &&
+  (process.argv[1].endsWith("rss_agent.ts") ||
+    process.argv[1].endsWith("rss_agent.js"))
+) {
+  runRSSNewsWorkflow();
+}

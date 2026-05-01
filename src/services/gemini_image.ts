@@ -13,7 +13,7 @@ export async function generateGeminiImage(prompt: string): Promise<string> {
     const base64Data = await generateImageWithGemini(prompt);
 
     const tempDir = path.join(process.cwd(), "temp_images");
-    
+
     // Klasör yoksa oluştur
     try {
       await fs.access(tempDir);
@@ -25,7 +25,7 @@ export async function generateGeminiImage(prompt: string): Promise<string> {
     const filePath = path.join(tempDir, fileName);
 
     await fs.writeFile(filePath, Buffer.from(base64Data, "base64"));
-    
+
     console.log(`✅ Görsel başarıyla kaydedildi: ${filePath}`);
     return filePath;
   } catch (error: any) {

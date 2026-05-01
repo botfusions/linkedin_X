@@ -14,7 +14,9 @@ export async function createXPost(
 ): Promise<string | null> {
   // --- GÜVENLİK BARİYERİ ---
   if (!text || text.trim().length < 10) {
-    console.error("❌ BAN KORUMASI: Boş veya çok kısa metin X'te paylaşılamaz!");
+    console.error(
+      "❌ BAN KORUMASI: Boş veya çok kısa metin X'te paylaşılamaz!",
+    );
     return null;
   }
 
@@ -49,7 +51,10 @@ export async function createXPost(
 
     const tweet = await rwClient.v2.tweet(tweetPayload);
 
-    console.log("🚀 X Gönderisi Başarıyla Yayına Alındı! Tweet ID:", tweet.data.id);
+    console.log(
+      "🚀 X Gönderisi Başarıyla Yayına Alındı! Tweet ID:",
+      tweet.data.id,
+    );
     return `https://x.com/i/status/${tweet.data.id}`;
   } catch (error: any) {
     console.error("❌ X Paylaşım Hatası:", error.data || error.message);

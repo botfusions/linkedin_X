@@ -12,7 +12,8 @@ const TOKEN_PATH = path.join(process.cwd(), "data", ".linkedin_token.json");
 
 const CLIENT_ID = process.env.LINKEDIN_CLIENT_ID || "";
 const CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET || "";
-const REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI || "http://localhost:8080/callback";
+const REDIRECT_URI =
+  process.env.LINKEDIN_REDIRECT_URI || "http://localhost:8080/callback";
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -24,7 +25,9 @@ const questionAsync = (query: string): Promise<string> =>
 
 async function main() {
   if (!CLIENT_ID || !CLIENT_SECRET) {
-    console.error("❌ .env dosyasinda LINKEDIN_CLIENT_ID ve LINKEDIN_CLIENT_SECRET eksik!");
+    console.error(
+      "❌ .env dosyasinda LINKEDIN_CLIENT_ID ve LINKEDIN_CLIENT_SECRET eksik!",
+    );
     process.exit(1);
   }
 
@@ -42,7 +45,9 @@ async function main() {
 
   let authCode = answer.trim();
   if (authCode.includes("code=")) {
-    const urlParams = new URLSearchParams(authCode.substring(authCode.indexOf("?")));
+    const urlParams = new URLSearchParams(
+      authCode.substring(authCode.indexOf("?")),
+    );
     authCode = urlParams.get("code") || authCode;
   }
 
@@ -77,7 +82,11 @@ async function main() {
     const expiresDate = new Date(expiresAt).toLocaleDateString("tr-TR");
 
     await fs.mkdir(path.dirname(TOKEN_PATH), { recursive: true });
-    await fs.writeFile(TOKEN_PATH, JSON.stringify({ access_token: accessToken, expiresAt }, null, 2), "utf-8");
+    await fs.writeFile(
+      TOKEN_PATH,
+      JSON.stringify({ access_token: accessToken, expiresAt }, null, 2),
+      "utf-8",
+    );
 
     await saveLinkedInToken({ access_token: accessToken, expiresAt });
 
@@ -87,7 +96,10 @@ async function main() {
 
     rl.close();
   } catch (error: any) {
-    console.error("❌ Token alma hatasi:", error.response?.data?.error_description || error.message);
+    console.error(
+      "❌ Token alma hatasi:",
+      error.response?.data?.error_description || error.message,
+    );
     rl.close();
     process.exit(1);
   }

@@ -71,7 +71,9 @@ export async function runExcelPostFlow() {
 
     // --- GÜVENLİK BARİYERİ ---
     if (!finalPostText || finalPostText.trim().length < 10) {
-      console.error("❌ HATA: Post metni boş veya çok kısa! Paylaşım iptal edildi.");
+      console.error(
+        "❌ HATA: Post metni boş veya çok kısa! Paylaşım iptal edildi.",
+      );
       return;
     }
     if (!base64Image || base64Image.length < 100) {
@@ -112,12 +114,14 @@ export async function runWeatherPostFlow(
     const { linkedinPost, xPost } = generated;
 
     // 3. Görsel Üretimi
-    console.log("\n🎨 Görsel promptu optimize ediliyor (Gemini 2.5 Pro - OpenRouter)...");
+    console.log(
+      "\n🎨 Görsel promptu optimize ediliyor (Gemini 2.5 Pro - OpenRouter)...",
+    );
     const optimizedPrompt = await generateOptimizedImagePrompt(
       researchData,
-      imageVisualPrompt
+      imageVisualPrompt,
     );
-    
+
     console.log("\n🎨 Hava durumu görseli üretiliyor...");
     const imagePath = await generateGeminiImage(optimizedPrompt);
 
@@ -142,7 +146,8 @@ export async function runWeatherPostFlow(
         linkedinSuccess = true;
         linkedinUrl = liResult;
       } else {
-        linkedinError = "createLinkedInPost null dondu (token hatasi veya gorsel hatasi)";
+        linkedinError =
+          "createLinkedInPost null dondu (token hatasi veya gorsel hatasi)";
         console.error("❌ LinkedIn hava durumu postu basarisiz (null dondu).");
       }
     } catch (err: any) {
@@ -194,7 +199,6 @@ export async function runWeatherPostFlow(
       xError: xError || undefined,
       source: "weather",
     });
-
   } catch (error: any) {
     console.error("🔥 Hava Durumu Akış Hatası:", error.message);
     await sendErrorNotification("Hava Durumu Akışı", error.message);

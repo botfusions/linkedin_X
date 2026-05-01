@@ -30,7 +30,8 @@ export async function researchTopicWithPerplexity(
         messages: [
           {
             role: "system",
-            content: "Sen son derece detaylı araştırma yapan ve güncel, kesin istatistiksel, analitik teknoloji bilgileri derleyen bir uzmansın.",
+            content:
+              "Sen son derece detaylı araştırma yapan ve güncel, kesin istatistiksel, analitik teknoloji bilgileri derleyen bir uzmansın.",
           },
           {
             role: "user",
@@ -57,15 +58,19 @@ export async function researchTopicWithPerplexity(
 
 function cleanJsonString(str: string): string {
   // Remove markdown code blocks if present
-  let cleaned = str.trim().replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
-  
+  let cleaned = str
+    .trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/```$/i, "")
+    .trim();
+
   // Find the first { and last }
   const firstBrace = cleaned.indexOf("{");
   const lastBrace = cleaned.lastIndexOf("}");
   if (firstBrace !== -1 && lastBrace !== -1) {
     cleaned = cleaned.substring(firstBrace, lastBrace + 1);
   }
-  
+
   // Remove truly problematic control characters (0-31) except \n, \r, \t
   // then handle potential raw newlines inside string values by escaping them
   // A simpler approach that often works for LLM outputs:
@@ -113,12 +118,19 @@ export async function generateContentWithGemini(
       2. YASAKLI AI: "Günümüzde", "Önemli bir konudur", "Özetle", "Sonuç olarak".
       3. KESİN KURAL: Hiçbir İngilizce terim veya slogan (Precision in every byte gibi) metin içinde İngilizce olarak yer almamalıdır. Her şey Türkçe olmalıdır.
 
+      ━━━ VISUAL STYLE ROTATION (CRITICAL) ━━━
+      Her paylasimda su 4 stilden birini RASTGELE sec ve promptu ona gore hazirla:
+      1. BLUEPRINT: Deep navy background, white clinical lines, engineering look.
+      2. CYBERPUNK: Dark mode, neon cyan/magenta accents, glowing nodes.
+      3. MINIMALIST: Clean white background, premium typography, gold connectors.
+      4. 3D MATRIX: 3D floating modules, glass tubes, professional lighting.
+
       ━━━ ÇIKTI FORMATI (JSON) ━━━
       Cevabını SADECE şu JSON formatında ver:
       {
         "linkedinPost": "Metin",
         "xPost": "Vurucu X Metni",
-        "imagePrompt": "Technological infographic prompt (English)"
+        "imagePrompt": "Detailed prompt for the CHOSEN STYLE (English)"
       }
     `;
 
@@ -131,7 +143,9 @@ export async function generateContentWithGemini(
         messages: [
           {
             role: "system",
-            content: finalSystemMessage + (agentRules ? `\n\nEk Kurallar:\n${agentRules}` : ""),
+            content:
+              finalSystemMessage +
+              (agentRules ? `\n\nEk Kurallar:\n${agentRules}` : ""),
           },
           {
             role: "user",
@@ -164,7 +178,10 @@ export async function generateContentWithGemini(
   }
 }
 
-export async function generateShortContentWithGemini(researchData: string, systemPrompt: string) {
+export async function generateShortContentWithGemini(
+  researchData: string,
+  systemPrompt: string,
+) {
   try {
     const finalSystemPrompt = `
       ${systemPrompt}
@@ -185,17 +202,32 @@ export async function generateShortContentWithGemini(researchData: string, syste
       }
     `;
 
-    const response = await axios.post("https://openrouter.ai/api/v1/chat/completions", {
-      model: "google/gemini-2.5-pro",
-      messages: [
-        { role: "system", content: finalSystemPrompt + "\n\nÖnemli: JSON içinde tırnak işaretlerini ve yeni satırları doğru şekilde kaçır (escape). linkedinPost ve xPost alanları TAMAMEN AYNI metni içermelidir." },
-        { role: "user", content: `Güncel Bilgi: ${researchData}\n\nLütfen sadece istenen JSON objesini döndür.` },
-      ],
-      max_tokens: 2000,
-      temperature: 0.1, // Daha kararlı çıktı için düşürüldü
-    }, {
-      headers: { Authorization: `Bearer ${OPENROUTER_API_KEY}`, "Content-Type": "application/json" },
-    });
+    const response = await axios.post(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        model: "google/gemini-2.5-pro",
+        messages: [
+          {
+            role: "system",
+            content:
+              finalSystemPrompt +
+              "\n\nÖnemli: JSON içinde tırnak işaretlerini ve yeni satırları doğru şekilde kaçır (escape). linkedinPost ve xPost alanları TAMAMEN AYNI metni içermelidir.",
+          },
+          {
+            role: "user",
+            content: `Güncel Bilgi: ${researchData}\n\nLütfen sadece istenen JSON objesini döndür.`,
+          },
+        ],
+        max_tokens: 2000,
+        temperature: 0.1, // Daha kararlı çıktı için düşürüldü
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
 
     const choice = response.data.choices[0];
     const responseText = choice.message.content;
@@ -219,10 +251,20 @@ export async function generateShortContentWithGemini(researchData: string, syste
   }
 }
 
-export async function generateOptimizedImagePrompt(researchData: string, basePrompt: string) {
+export async function generateOptimizedImagePrompt(
+  researchData: string,
+  basePrompt: string,
+) {
   try {
     const now = new Date();
-    const formattedDate = now.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric', weekday: 'long', hour: '2-digit', minute: '2-digit' });
+    const formattedDate = now.toLocaleDateString("tr-TR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      weekday: "long",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
     const systemPrompt = `
 Sen profesyonel bir görsel prompt mühendisisin. 
@@ -248,26 +290,45 @@ A minimalist 1:1 square weather infographic. A close-up view through a window fr
 12. Mutlaka --ar 1:1 ifadesini koru.
 `;
 
-    const response = await axios.post("https://openrouter.ai/api/v1/chat/completions", {
-      model: "google/gemini-2.5-pro",
-      messages: [
-        { role: "system", content: systemPrompt + "\n\nZORUNLU: Tüm şablonu eksiksiz doldur. Cümleyi yarım bırakma. Sonuna mutlaka Türkçe özetini ekle." },
-        { role: "user", content: `**Zaman:** ${formattedDate}\n**Hava Verisi:** ${researchData}\n\nLütfen promptu oluştur.` },
-      ],
-      max_tokens: 1000,
-      temperature: 0.3,
-    }, {
-      headers: { Authorization: `Bearer ${OPENROUTER_API_KEY}`, "Content-Type": "application/json" },
-    });
-    
+    const response = await axios.post(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        model: "google/gemini-2.5-pro",
+        messages: [
+          {
+            role: "system",
+            content:
+              systemPrompt +
+              "\n\nZORUNLU: Tüm şablonu eksiksiz doldur. Cümleyi yarım bırakma. Sonuna mutlaka Türkçe özetini ekle.",
+          },
+          {
+            role: "user",
+            content: `**Zaman:** ${formattedDate}\n**Hava Verisi:** ${researchData}\n\nLütfen promptu oluştur.`,
+          },
+        ],
+        max_tokens: 1000,
+        temperature: 0.3,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
     let result = response.data.choices[0].message.content.trim();
     result = result.replace(/^["']|["']$/g, "");
-    
+
     // Debug için dosyaya kaydet
     const scratchDir = path.join(process.cwd(), "scratch");
-    try { await fs.access(scratchDir); } catch { await fs.mkdir(scratchDir, { recursive: true }); }
+    try {
+      await fs.access(scratchDir);
+    } catch {
+      await fs.mkdir(scratchDir, { recursive: true });
+    }
     await fs.writeFile(path.join(scratchDir, "last_prompt.txt"), result);
-    
+
     return result;
   } catch (error: any) {
     console.error("❌ Prompt Optimizasyon Hatası:", error.message);
@@ -283,42 +344,63 @@ export async function generateImageWithGemini(prompt: string): Promise<string> {
 KRITIK KURALLAR:
 1. Tum basliklar, etiketler, label'lar ve metin TURKCE OLMALIDIR. Ingilizce terim kullanma.
 2. Metinler BUYUK ve BOLD olsun - mobilde okunabilir olmali (minimum 24pt).
-3. Temiz, modern, minimalist tasarim. Beyaz arka plan, koyu mavi (#1a365d) basliklar.
-4. Flat design ikonlar kullan. Gercekci foto degil, vektor tarzi.
-5. Maksimum 4-5 kisa metin kutusu. Asiri kalabalik yapma.
-6. Her metin kutusunda en fazla 5-6 kelime. Kisa ve oz.
-7. Asla yazim hatasi yapma. Turkce karakterleri dogru kullan (ş,ğ,ı,ö,ü,ç).
+3. Flat design ikonlar kullan. Gercekci foto degil, vektor tarzi.
+4. Maksimum 4-5 kisa metin kutusu. Asiri kalabalik yapma.
+5. Her metin kutusunda en fazla 5-6 kelime. Kisa ve oz.
+6. Asla yazim hatasi yapma. Turkce karakterleri dogru kullan (ş,ğ,ı,ö,ü,ç).
 `;
 
   try {
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GOOGLE_API_KEY}`,
       {
-        contents: [{ parts: [{ text: `Create a clean, professional infographic for social media. Square format (1:1). Modern flat design with bold readable Turkish text.\n\n${TURKISH_RULE}\n\nKonu: ${prompt}` }] }],
+        contents: [
+          {
+            parts: [
+              {
+                text: `Create a clean, professional infographic for social media. Square format (1:1). Modern flat design with bold readable Turkish text.\n\n${TURKISH_RULE}\n\nKonu: ${prompt}`,
+              },
+            ],
+          },
+        ],
       },
-      { headers: { "Content-Type": "application/json" }, timeout: 180_000 }
+      { headers: { "Content-Type": "application/json" }, timeout: 180_000 },
     );
 
     if (!response.data?.candidates?.[0]?.content?.parts) {
-      console.error("❌ Gemini API Yanıt Yapısı Hatalı:", JSON.stringify(response.data, null, 2));
+      console.error(
+        "❌ Gemini API Yanıt Yapısı Hatalı:",
+        JSON.stringify(response.data, null, 2),
+      );
       throw new Error("Görsel verisi alınamadı.");
     }
 
-    const part = response.data.candidates[0].content.parts.find((p: any) => p.inlineData);
+    const part = response.data.candidates[0].content.parts.find(
+      (p: any) => p.inlineData,
+    );
     if (!part) {
-      console.error("❌ Gemini API Yanıtında inlineData bulunamadı:", JSON.stringify(response.data.candidates[0].content, null, 2));
+      console.error(
+        "❌ Gemini API Yanıtında inlineData bulunamadı:",
+        JSON.stringify(response.data.candidates[0].content, null, 2),
+      );
       throw new Error("Görsel verisi (inlineData) bulunamadı.");
     }
 
     const base64Image = part.inlineData.data;
     return base64Image;
   } catch (error: any) {
-    console.error("❌ Görsel Üretme Hatası:", error.response?.data || error.message);
+    console.error(
+      "❌ Görsel Üretme Hatası:",
+      error.response?.data || error.message,
+    );
     throw error;
   }
 }
 
-export async function generateNewsContent(title: string, content: string): Promise<{
+export async function generateNewsContent(
+  title: string,
+  content: string,
+): Promise<{
   linkedinPost: string;
   xPost: string;
   imagePrompt: string;
@@ -382,6 +464,7 @@ AEO → AI yanıtlarında otorite
 - 4 panelli teknolojik infografik
 - KRITIK KURAL: TUM METINLER TURKCE OLMALIDIR. Basliklar, etiketler, label'lar, alt yazi, bilgi kutulari HEPSI Turkce. "Humidity" yerine "Nem", "Wind" yerine "Ruzgar Hizi", "Temperature" yerine "Sicaklik" gibi. Infografikte HICBIR Ingilizce kelime OLMAMALIDIR.
 - Modern, sade, profesyonel tasarim
+- VISUAL STYLE ROTATION: Her seferinde su stillerden birini sec: blueprint, cyberpunk, minimalist, 3d. Prompt basina hangi stili sectigini belirt (Ornek: "Style: Blueprint...").
 
 ━━━ CIKTI FORMATI (JSON) ━━━
 {
@@ -398,7 +481,10 @@ AEO → AI yanıtlarında otorite
         model: "google/gemini-2.5-pro",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Haber Basligi: ${title}\n\nHaber Icerigi:\n${content}\n\nSadece JSON olarak don.` },
+          {
+            role: "user",
+            content: `Haber Basligi: ${title}\n\nHaber Icerigi:\n${content}\n\nSadece JSON olarak don.`,
+          },
         ],
         max_tokens: 6000,
         temperature: 0.7,
@@ -408,7 +494,7 @@ AEO → AI yanıtlarında otorite
           Authorization: `Bearer ${OPENROUTER_API_KEY}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     const responseText = response.data.choices[0].message.content;

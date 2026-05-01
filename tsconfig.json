@@ -42,5 +42,11 @@
     "skipLibCheck": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "scratch", "out", "temp_images", "repo_analysis_tmp"]
+  "exclude": [
+    "node_modules",
+    "scratch",
+    "out",
+    "temp_images",
+    "repo_analysis_tmp"
+  ]
 }

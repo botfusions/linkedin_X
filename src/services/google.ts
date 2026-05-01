@@ -9,11 +9,11 @@ const SPREADSHEET_ID = "1w-RqIicfrQlw2tM0Z9XJtuNCtrSCY9ALbbo4PEN7-B0";
 
 const SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || "";
 let formattedKey = (process.env.GOOGLE_PRIVATE_KEY || "")
-  .replace(/"/g, '')
-  .replace(/'/g, '')
-  .replace(/\\n/gm, '\n')
-  .replace(/\\\//g, '/')
-  .replace(/\r/g, '');
+  .replace(/"/g, "")
+  .replace(/'/g, "")
+  .replace(/\\n/gm, "\n")
+  .replace(/\\\//g, "/")
+  .replace(/\r/g, "");
 
 const PRIVATE_KEY = formattedKey.trim();
 
@@ -84,7 +84,9 @@ export async function updateRowStatus(row: any, status: string = "Yayınlandı")
   try {
     const data = row.toObject();
     const statusKey =
-      Object.keys(data).find((k) => k.toLowerCase() === "durum" || k.toLowerCase() === "status") || "Durum";
+      Object.keys(data).find(
+        (k) => k.toLowerCase() === "durum" || k.toLowerCase() === "status",
+      ) || "Durum";
 
     row.assign({ [statusKey]: status });
     await row.save();

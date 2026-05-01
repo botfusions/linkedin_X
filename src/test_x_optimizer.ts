@@ -1,4 +1,7 @@
-import { scoreXPost, optimizeXWithSelfImprove } from "./services/x_optimizer.js";
+import {
+  scoreXPost,
+  optimizeXWithSelfImprove,
+} from "./services/x_optimizer.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -15,10 +18,17 @@ async function testXOptimizer() {
 
   const initialScore = scoreXPost(badXPost);
   console.log(`\n📊 İlk Skor: ${initialScore.percentage}/100`);
-  console.log("❌ Başarısız Kurallar:", initialScore.ruleResults.filter(r => !r.result.passed).map(r => r.rule).join(", "));
+  console.log(
+    "❌ Başarısız Kurallar:",
+    initialScore.ruleResults
+      .filter((r) => !r.result.passed)
+      .map((r) => r.rule)
+      .join(", "),
+  );
 
   console.log("\n🚀 AI Optimizasyon Başlatılıyor...");
-  const { finalPost, finalScore, revisionCount } = await optimizeXWithSelfImprove(badXPost, "GEO Devrimi");
+  const { finalPost, finalScore, revisionCount } =
+    await optimizeXWithSelfImprove(badXPost, "GEO Devrimi");
 
   console.log("\n✅ Optimize Edilmiş Post:");
   console.log("------------------------------------------");

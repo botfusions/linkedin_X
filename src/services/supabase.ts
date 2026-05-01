@@ -11,7 +11,9 @@ let supabase: SupabaseClient | null = null;
 function getClient(): SupabaseClient {
   if (!supabase) {
     if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-      throw new Error("SUPABASE_URL ve SUPABASE_SERVICE_KEY .env'de tanimli olmali!");
+      throw new Error(
+        "SUPABASE_URL ve SUPABASE_SERVICE_KEY .env'de tanimli olmali!",
+      );
     }
     supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
   }
@@ -34,10 +36,15 @@ export interface PublishedPostData {
 export async function initEnvFromSupabase(): Promise<void> {
   try {
     const client = getClient();
-    const { data, error } = await client.from("env_config").select("key_name, key_value");
+    const { data, error } = await client
+      .from("env_config")
+      .select("key_name, key_value");
 
     if (error) {
-      console.warn("⚠️ Supabase env_config okunamadi, .env kullaniuluyor:", error.message);
+      console.warn(
+        "⚠️ Supabase env_config okunamadi, .env kullaniuluyor:",
+        error.message,
+      );
       return;
     }
 
@@ -58,14 +65,19 @@ export async function initEnvFromSupabase(): Promise<void> {
   }
 }
 
-export async function saveLinkedInToken(tokenData: { access_token: string; expiresAt: number }): Promise<void> {
+export async function saveLinkedInToken(tokenData: {
+  access_token: string;
+  expiresAt: number;
+}): Promise<void> {
   try {
     const client = getClient();
     const json = JSON.stringify(tokenData);
-    const { error } = await client.from("env_config").upsert(
-      { key_name: "LINKEDIN_TOKEN_JSON", key_value: json },
-      { onConflict: "key_name" },
-    );
+    const { error } = await client
+      .from("env_config")
+      .upsert(
+        { key_name: "LINKEDIN_TOKEN_JSON", key_value: json },
+        { onConflict: "key_name" },
+      );
     if (error) {
       console.error("❌ Supabase token kayit hatasi:", error.message);
     } else {
@@ -76,10 +88,17 @@ export async function saveLinkedInToken(tokenData: { access_token: string; expir
   }
 }
 
-export async function loadLinkedInToken(): Promise<{ access_token: string; expiresAt: number } | null> {
+export async function loadLinkedInToken(): Promise<{
+  access_token: string;
+  expiresAt: number;
+} | null> {
   try {
     const client = getClient();
-    const { data, error } = await client.from("env_config").select("key_value").eq("key_name", "LINKEDIN_TOKEN_JSON").single();
+    const { data, error } = await client
+      .from("env_config")
+      .select("key_value")
+      .eq("key_name", "LINKEDIN_TOKEN_JSON")
+      .single();
     if (error || !data?.key_value) return null;
     return JSON.parse(data.key_value);
   } catch {
@@ -87,7 +106,9 @@ export async function loadLinkedInToken(): Promise<{ access_token: string; expir
   }
 }
 
-export async function insertPublishedPost(postData: PublishedPostData): Promise<void> {
+export async function insertPublishedPost(
+  postData: PublishedPostData,
+): Promise<void> {
   try {
     const client = getClient();
     const { error } = await client.from("linkedin+x").insert({

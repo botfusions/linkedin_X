@@ -26,7 +26,9 @@ const parser = new XMLParser({
   trimValues: true,
 });
 
-export async function fetchNewsFromRSS(maxItems: number = 5): Promise<NewsArticle[]> {
+export async function fetchNewsFromRSS(
+  maxItems: number = 5,
+): Promise<NewsArticle[]> {
   try {
     console.log("📡 Google News AI RSS çekiliyor...");
     const response = await axios.get(RSS_URL, {
@@ -68,7 +70,12 @@ export async function fetchArticleContent(url: string): Promise<string> {
     const bodyMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
     const rawText = bodyMatch
       ? bodyMatch[1]
-      : html.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      : html
+          .replace(/<script[\s\S]*?<\/script>/gi, "")
+          .replace(/<style[\s\S]*?<\/style>/gi, "")
+          .replace(/<[^>]+>/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
     const text = rawText || "";
 
     return text.substring(0, 4000);

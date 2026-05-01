@@ -19,15 +19,20 @@ async function randomDelay() {
   const minutes = Math.floor(Math.random() * 6);
   const ms = minutes * 60 * 1000;
   if (ms > 0) {
-    console.log(`⏳ Ban Korumasi: Paylasim ${minutes} dakika rastgele erteleniyor...`);
-    await new Promise(resolve => setTimeout(resolve, ms));
+    console.log(
+      `⏳ Ban Korumasi: Paylasim ${minutes} dakika rastgele erteleniyor...`,
+    );
+    await new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 
 function safeCron(fn: () => Promise<void>): () => void {
   return () => {
     fn().catch((err) => {
-      console.error("❌ Cron job hatasi (process korundu):", err?.message || err);
+      console.error(
+        "❌ Cron job hatasi (process korundu):",
+        err?.message || err,
+      );
     });
   };
 }

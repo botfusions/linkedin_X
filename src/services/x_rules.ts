@@ -1,6 +1,11 @@
 import type { Rule, RuleResult, PostAnalysis } from "./rules.js";
-import { extractHashtags, extractLinks, countEmojis, countBulletPoints, detectCTA } from "./rules.js";
-
+import {
+  extractHashtags,
+  extractLinks,
+  countEmojis,
+  countBulletPoints,
+  detectCTA,
+} from "./rules.js";
 
 /**
  * X (Twitter) Algoritma Kuralları (2025-2026)
@@ -52,7 +57,7 @@ export const X_RULES: Rule[] = [
           message: "Karakter sınırı aşıldı (25k+)",
           suggestion: "İçeriği kısaltın.",
         };
-      // 258 karakterden sonrası "Show more" olur. 
+      // 258 karakterden sonrası "Show more" olur.
       // 280-1000 arası X Premium için profesyonel durur.
       if (len >= 200 && len <= 600)
         return {
@@ -81,7 +86,8 @@ export const X_RULES: Rule[] = [
       if (hook.length < 10) score -= 40;
       if (hook.length > 100) score -= 20; // Çok uzun kanca X'te bölünür
       if (/\d+%|!|\?/.test(hook)) score += 25;
-      if (/ölmedi|devrim|gerçek|sırrı|fark|kayb|dikkat/i.test(hook)) score += 25;
+      if (/ölmedi|devrim|gerçek|sırrı|fark|kayb|dikkat/i.test(hook))
+        score += 25;
 
       score = Math.max(0, Math.min(100, score));
 
@@ -89,7 +95,8 @@ export const X_RULES: Rule[] = [
         passed: score >= 70,
         score,
         message: `X Hook: ${score >= 85 ? "Mükemmel" : score >= 70 ? "İyi" : "Zayıf"}`,
-        suggestion: score < 70 ? "İlk satırı daha kısa ve çarpıcı yapın." : undefined,
+        suggestion:
+          score < 70 ? "İlk satırı daha kısa ve çarpıcı yapın." : undefined,
       };
     },
   },
@@ -128,15 +135,26 @@ export const X_RULES: Rule[] = [
     weight: 6,
     check: (post: string): RuleResult => {
       const analysis = analyzeXPostText(post);
-      const avgParaLen = analysis.charCount / Math.max(1, analysis.paragraphs.length);
-      
-      if (analysis.paragraphs.length < 2) 
-        return { passed: false, score: 30, message: "Tek blok metin", suggestion: "Paragraflara bölün." };
-      
+      const avgParaLen =
+        analysis.charCount / Math.max(1, analysis.paragraphs.length);
+
+      if (analysis.paragraphs.length < 2)
+        return {
+          passed: false,
+          score: 30,
+          message: "Tek blok metin",
+          suggestion: "Paragraflara bölün.",
+        };
+
       if (avgParaLen > 280)
-        return { passed: false, score: 40, message: "Paragraflar çok uzun", suggestion: "Daha fazla boşluk bırakın." };
+        return {
+          passed: false,
+          score: 40,
+          message: "Paragraflar çok uzun",
+          suggestion: "Daha fazla boşluk bırakın.",
+        };
 
       return { passed: true, score: 100, message: "Okunabilirlik yüksek" };
     },
-  }
+  },
 ];

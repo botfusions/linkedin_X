@@ -292,39 +292,54 @@ export async function optimizeWithSelfImprove(
 export interface WeatherInfo {
   temp: number;
   condition: string; // 'yağmurlu', 'güneşli', 'parçalı bulutlu' vb.
-  time: string;      // '20:15', '08:00'
+  time: string; // '20:15', '08:00'
 }
 
 /**
  * Havadurumu Görseli için dinamik prompt üretir.
  */
 export function generateHavadurumuGorseliPrompt(data: WeatherInfo): string {
-  const baseComposition = "A professional wide-angle cinematic horizontal shot from an indoor perspective looking out of a rustic wooden window in Istanbul. The wooden frame perfectly frames the scene. On the wooden windowsill, there is a glass of hot Turkish tea and an open notebook with a pen. In the background, a panoramic and breathtaking Bosphorus view is visible along with iconic historical landmarks such as the Maiden's Tower, Hagia Sophia, or the Blue Mosque.";
-  
+  const baseComposition =
+    "A professional wide-angle cinematic horizontal shot from an indoor perspective looking out of a rustic wooden window in Istanbul. The wooden frame perfectly frames the scene. On the wooden windowsill, there is a glass of hot Turkish tea and an open notebook with a pen. In the background, a panoramic and breathtaking Bosphorus view is visible along with iconic historical landmarks such as the Maiden's Tower, Hagia Sophia, or the Blue Mosque.";
+
   let atmosphere = "";
   const condition = data.condition.toLowerCase();
   if (condition.includes("yağmur")) {
-    atmosphere = "The window pane is covered with realistic raindrops and slight mist. The sky is a moody, deep gray.";
+    atmosphere =
+      "The window pane is covered with realistic raindrops and slight mist. The sky is a moody, deep gray.";
   } else if (condition.includes("güneş") || condition.includes("açık")) {
-    atmosphere = "The sky is crystal clear with a vibrant golden hour glow reflecting off the Bosphorus.";
+    atmosphere =
+      "The sky is crystal clear with a vibrant golden hour glow reflecting off the Bosphorus.";
   } else if (condition.includes("kar")) {
-    atmosphere = "Light snow is falling outside, and white snow blankets the rooftops and the windowsill.";
+    atmosphere =
+      "Light snow is falling outside, and white snow blankets the rooftops and the windowsill.";
   } else {
-    atmosphere = "Soft, diffused daylight with balanced clouds and high visibility of the city skyline.";
+    atmosphere =
+      "Soft, diffused daylight with balanced clouds and high visibility of the city skyline.";
   }
 
-  const steamEffect = data.temp < 15 
-    ? "Thick, heavy steam rising noticeably from the tea glass, suggesting a cold exterior." 
-    : "Light, gentle steam rising from the tea glass.";
+  const steamEffect =
+    data.temp < 15
+      ? "Thick, heavy steam rising noticeably from the tea glass, suggesting a cold exterior."
+      : "Light, gentle steam rising from the tea glass.";
 
-  const isNight = parseInt(data.time.split(':')[0]) > 18 || parseInt(data.time.split(':')[0]) < 6;
-  const lighting = isNight 
-    ? "Night scene. A warm, glowing lantern on the sill casts long, cozy shadows. The city lights of Istanbul and distant ship lights on the Bosphorus are glowing." 
+  const hour = parseInt(data.time.split(":")[0] || "12");
+  const isNight = hour > 18 || hour < 6;
+
+  const lighting = isNight
+    ? "Night scene. A warm, glowing lantern on the sill casts long, cozy shadows. The city lights of Istanbul and distant ship lights on the Bosphorus are glowing."
     : "Daylight scene. Natural light highlights the texture of the wood and the shimmering water of the Bosphorus.";
 
   const uiPanel = `A modern, translucent floating glass UI panel displays information in Turkish language: 'HAVA DURUMU' as the title, followed by '${data.temp}°C', '${data.condition.toUpperCase()}', and 'NEM', 'RÜZGAR' stats. All text on the panel must be in Turkish. Branding: Place a subtle, elegant 'botfusions' logotype in the bottom right corner of the image.`;
 
-  return [baseComposition, atmosphere, steamEffect, lighting, uiPanel, "Photorealistic, 8k, cinematic color grading."].join(" ");
+  return [
+    baseComposition,
+    atmosphere,
+    steamEffect,
+    lighting,
+    uiPanel,
+    "Photorealistic, 8k, cinematic color grading.",
+  ].join(" ");
 }
 
 // ─── Dinamik İnfografik Motoru ───
@@ -391,28 +406,38 @@ export function formatResult(result: OptimizationResult): string {
 export interface InfographicData {
   title: string;
   keyStats: { label: string; value: string }[];
-  style?: 'blueprint' | 'cyberpunk' | 'minimalist' | '3d' | 'random';
+  style?: "blueprint" | "cyberpunk" | "minimalist" | "3d" | "random";
 }
 
 /**
- * Verilen verilere göre 'Enterprise Technology Map' (Kurumsal Teknoloji Haritası) yapısında, 
+ * Verilen verilere göre 'Enterprise Technology Map' (Kurumsal Teknoloji Haritası) yapısında,
  * yüksek yoğunluklu ve profesyonel bir şema promptu üretir.
  */
-export function generateDynamicInfographicPrompt(data: InfographicData): string {
+export function generateDynamicInfographicPrompt(
+  data: InfographicData,
+): string {
   const stylePool = {
-    blueprint: "Visual Style: 'Corporate Engineering Blueprint'. Deep navy background, clinical white architectural lines, precise technical measurements.",
-    cyberpunk: "Visual Style: 'Futuristic Command Center'. Dark mode with glowing data modules, vibrant cyan/magenta neon accents, interconnected glass UI nodes.",
-    minimalist: "Visual Style: 'Modern Enterprise Board'. Clean white/grey background, structured grid layout, premium typography, gold accent connectors.",
-    '3d': "Visual Style: '3D Infrastructure Matrix'. Realistic 3D floating modules connected by glass fiber-optic tubes, professional studio lighting."
+    blueprint:
+      "Visual Style: 'Corporate Engineering Blueprint'. Deep navy background, clinical white architectural lines, precise technical measurements.",
+    cyberpunk:
+      "Visual Style: 'Futuristic Command Center'. Dark mode with glowing data modules, vibrant cyan/magenta neon accents, interconnected glass UI nodes.",
+    minimalist:
+      "Visual Style: 'Modern Enterprise Board'. Clean white/grey background, structured grid layout, premium typography, gold accent connectors.",
+    "3d": "Visual Style: '3D Infrastructure Matrix'. Realistic 3D floating modules connected by glass fiber-optic tubes, professional studio lighting.",
   };
 
-  const selectedStyleKey = (data.style === 'random' || !data.style) 
-    ? 'cyberpunk' 
-    : data.style;
+  const keys = Object.keys(stylePool) as (keyof typeof stylePool)[];
+  const selectedStyleKey: keyof typeof stylePool =
+    data.style === "random" || !data.style
+      ? keys[Math.floor(Math.random() * keys.length)]!
+      : (data.style as any); // Cast because we know style is valid or handled by the check above
 
   // Veri Bölümü: Her başlığın altına teknik alt maddeler (hallucination-free) eklemesi için talimat
   const dataDetails = data.keyStats
-    .map(s => `[MODÜL: ${s.label.toUpperCase()}] -> Alt maddeler: ${s.value} ve ilgili teknik detaylar.`)
+    .map(
+      (s) =>
+        `[MODÜL: ${s.label.toUpperCase()}] -> Alt maddeler: ${s.value} ve ilgili teknik detaylar.`,
+    )
     .join("\n");
 
   return [
@@ -429,6 +454,6 @@ export function generateDynamicInfographicPrompt(data: InfographicData): string 
     `3. Corporate aesthetics: Use professional iconography for each module (e.g., shield for security, chip for AI).`,
     `4. NO SLOP: Clean, sharp lines. Text must be legible and professional.`,
     `5. BRANDING: Place a subtle 'botfusions' corporate logo in the bottom right corner.`,
-    `8k resolution, ultra-detailed, professional corporate presentation quality.`
+    `8k resolution, ultra-detailed, professional corporate presentation quality.`,
   ].join("\n");
 }

@@ -1,5 +1,10 @@
 import { runWeatherPostFlow } from "./services/agentFlow.js";
-import { researchTopicWithPerplexity, generateShortContentWithGemini, generateImageWithGemini, generateOptimizedImagePrompt } from "./services/llm.js";
+import {
+  researchTopicWithPerplexity,
+  generateShortContentWithGemini,
+  generateImageWithGemini,
+  generateOptimizedImagePrompt,
+} from "./services/llm.js";
 import fs from "fs/promises";
 import path from "path";
 import dotenv from "dotenv";
@@ -52,7 +57,7 @@ async function testWeatherDryRun() {
     // 1. Hava durumu araştırması
     console.log("🔍 Hava durumu araştırılıyor...");
     const researchData = await researchTopicWithPerplexity(
-      "İstanbul bugünkü hava durumu detayları (sıcaklık, gökyüzü durumu)"
+      "İstanbul bugünkü hava durumu detayları (sıcaklık, gökyüzü durumu)",
     );
     console.log("📝 Araştırma Verisi:", researchData);
 
@@ -60,7 +65,7 @@ async function testWeatherDryRun() {
     console.log("✍️ Post metni üretiliyor...");
     const finalPostText = await generateShortContentWithGemini(
       researchData,
-      WEATHER_TEXT_PROMPT
+      WEATHER_TEXT_PROMPT,
     );
     console.log("\n📄 Üretilen Post Metni:\n");
     console.log("------------------------------------------");
@@ -71,9 +76,11 @@ async function testWeatherDryRun() {
     console.log("🎨 Görsel promptu optimize ediliyor (Gemini Pro 2.5)...");
     const optimizedPrompt = await generateOptimizedImagePrompt(
       researchData,
-      WEATHER_IMAGE_PROMPT
+      WEATHER_IMAGE_PROMPT,
     );
-    console.log(`📝 Optimize Edilmiş Prompt: ${optimizedPrompt.substring(0, 100)}...`);
+    console.log(
+      `📝 Optimize Edilmiş Prompt: ${optimizedPrompt.substring(0, 100)}...`,
+    );
 
     console.log("🎨 Görsel üretiliyor...");
     const base64Image = await generateImageWithGemini(optimizedPrompt);
@@ -81,17 +88,16 @@ async function testWeatherDryRun() {
     // 4. out klasörüne kaydetme
     const outDir = path.join(process.cwd(), "out");
     await fs.mkdir(outDir, { recursive: true });
-    
+
     const timestamp = new Date().getTime();
     const fileName = `weather_test_${timestamp}.png`;
     const filePath = path.join(outDir, fileName);
-    
-    await fs.writeFile(filePath, Buffer.from(base64Image, 'base64'));
-    
+
+    await fs.writeFile(filePath, Buffer.from(base64Image, "base64"));
+
     console.log(`✅ Test Başarılı!`);
     console.log(`📁 Görsel kaydedildi: ${filePath}`);
     console.log(`⚠️ LinkedIn paylaşımı yapılmadı (DRY RUN).`);
-
   } catch (error: any) {
     console.error("🔥 Test Hatası:", error.message);
   }

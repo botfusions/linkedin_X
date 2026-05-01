@@ -244,7 +244,7 @@ export const RULES: Rule[] = [
         passed: false,
         score: 30,
         message: `${links.length} link — erişim düşüşü riski`,
-        suggestion: 'Linki ilk yoruma taşıyın.',
+        suggestion: "Linki ilk yoruma taşıyın.",
       };
     },
   },

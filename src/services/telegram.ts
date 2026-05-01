@@ -10,7 +10,9 @@ const BASE_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
 export async function sendTelegramMessage(text: string): Promise<void> {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-    console.warn("⚠️ Telegram: BOT_TOKEN veya CHAT_ID tanimli degil, bildirim atlandi.");
+    console.warn(
+      "⚠️ Telegram: BOT_TOKEN veya CHAT_ID tanimli degil, bildirim atlandi.",
+    );
     return;
   }
 
@@ -22,7 +24,10 @@ export async function sendTelegramMessage(text: string): Promise<void> {
     });
     console.log("✅ Telegram bildirimi gonderildi.");
   } catch (error: any) {
-    console.error("❌ Telegram bildirim hatasi:", error.response?.data?.description || error.message);
+    console.error(
+      "❌ Telegram bildirim hatasi:",
+      error.response?.data?.description || error.message,
+    );
   }
 }
 
@@ -37,7 +42,9 @@ export interface PublishReport {
   source?: string | undefined;
 }
 
-export async function sendPublishNotification(report: PublishReport): Promise<void> {
+export async function sendPublishNotification(
+  report: PublishReport,
+): Promise<void> {
   const now = new Date().toLocaleString("tr-TR", {
     timeZone: "Europe/Istanbul",
     dateStyle: "medium",
@@ -59,7 +66,10 @@ export async function sendPublishNotification(report: PublishReport): Promise<vo
   await sendTelegramMessage(lines.join("\n"));
 }
 
-export async function sendErrorNotification(context: string, error: string): Promise<void> {
+export async function sendErrorNotification(
+  context: string,
+  error: string,
+): Promise<void> {
   const now = new Date().toLocaleString("tr-TR", {
     timeZone: "Europe/Istanbul",
     dateStyle: "medium",

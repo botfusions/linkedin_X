@@ -107,7 +107,7 @@ SADECE düzeltilmiş post metnini döndür.`;
             Authorization: `Bearer ${OPENROUTER_API_KEY}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       const revised = response.data.choices[0].message.content?.trim();

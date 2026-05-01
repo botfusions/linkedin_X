@@ -1,4 +1,4 @@
-# Botfusions Autonomous Content Engine (v2.6)
+# Botfusions Autonomous Content Engine (v2.6.1)
 
 LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
@@ -20,13 +20,13 @@ LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
 ## Gunluk Program
 
-| Saat (TR) | Gorev | Kaynak |
-|:---|:---|:---|
-| **08:00** | Istanbul Hava Durumu + Gorsel | Weather API |
-| **10:00** | RSS Haber Akisi | Google News AI |
-| **13:00** | Excel Konu Akisi | Google Sheets (GEO) |
-| **16:00** | RSS Haber Akisi | Google News AI |
-| **17:00** | Excel Konu Akisi | Google Sheets (GEO) |
+| Saat (TR) | Gorev                         | Kaynak              |
+| :-------- | :---------------------------- | :------------------ |
+| **08:00** | Istanbul Hava Durumu + Gorsel | Weather API         |
+| **10:00** | RSS Haber Akisi               | Google News AI      |
+| **13:00** | Excel Konu Akisi              | Google Sheets (GEO) |
+| **16:00** | RSS Haber Akisi               | Google News AI      |
+| **17:00** | Excel Konu Akisi              | Google Sheets (GEO) |
 
 ---
 
@@ -63,38 +63,42 @@ src/
 ## Supabase Tablolari
 
 ### env_config (API Key Deposu + LinkedIn Token)
-| Kolon | Tip | Aciklama |
-|-------|-----|----------|
-| id | UUID | Primary key |
-| key_name | TEXT | Degisken adi (unique) |
-| key_value | TEXT | Deger |
-| created_at | TIMESTAMPTZ | Olusturma tarihi |
+
+| Kolon      | Tip         | Aciklama              |
+| ---------- | ----------- | --------------------- |
+| id         | UUID        | Primary key           |
+| key_name   | TEXT        | Degisken adi (unique) |
+| key_value  | TEXT        | Deger                 |
+| created_at | TIMESTAMPTZ | Olusturma tarihi      |
 
 **Ozel Kayitlar:**
+
 - `LINKEDIN_TOKEN_JSON`: LinkedIn OAuth token JSON (access_token + expiresAt)
 - API key'ler: OPENROUTER_API_KEY, GOOGLE_API_KEY, TELEGRAM_BOT_TOKEN vb.
 
 ### linkedin+x (Yayin Takibi)
-| Kolon | Tip | Aciklama |
-|-------|-----|----------|
-| id | UUID | Primary key |
-| topic | TEXT | Konu/haber basligi |
-| linkedin_post | TEXT | LinkedIn post metni |
-| x_post | TEXT | X post metni |
-| image_url | TEXT | Gorsel dosya yolu |
-| linkedin_score | INTEGER | LinkedIn optimizer skoru |
-| x_score | INTEGER | X optimizer skoru |
-| linkedin_url | TEXT | LinkedIn post URL |
-| x_url | TEXT | X post URL |
-| source | TEXT | Kaynak: excel / weather / rss |
-| status | TEXT | published / failed |
-| published_at | TIMESTAMPTZ | Yayin tarihi |
+
+| Kolon          | Tip         | Aciklama                      |
+| -------------- | ----------- | ----------------------------- |
+| id             | UUID        | Primary key                   |
+| topic          | TEXT        | Konu/haber basligi            |
+| linkedin_post  | TEXT        | LinkedIn post metni           |
+| x_post         | TEXT        | X post metni                  |
+| image_url      | TEXT        | Gorsel dosya yolu             |
+| linkedin_score | INTEGER     | LinkedIn optimizer skoru      |
+| x_score        | INTEGER     | X optimizer skoru             |
+| linkedin_url   | TEXT        | LinkedIn post URL             |
+| x_url          | TEXT        | X post URL                    |
+| source         | TEXT        | Kaynak: excel / weather / rss |
+| status         | TEXT        | published / failed            |
+| published_at   | TIMESTAMPTZ | Yayin tarihi                  |
 
 ---
 
 ## LinkedIn Token Yonetimi
 
 ### Token Persistence
+
 LinkedIn token Supabase `env_config` tablosunda saklanir. Redeploy sonrasi otomatik yuklenir.
 
 1. `linkedin_auth.ts` token'i hem dosyaya hem Supabase'e kaydeder
@@ -102,20 +106,25 @@ LinkedIn token Supabase `env_config` tablosunda saklanir. Redeploy sonrasi otoma
 3. Supabase'ten yuklenen token dosyaya da yazilir (sonraki okuma hizli olur)
 
 ### Ilkez Token Alma
+
 ```bash
 docker ps --format "{{.Names}}" | head -5
 docker exec -it <CONTAINER_ADI> npx tsx src/linkedin_auth.ts
 ```
+
 Tarayicida linki ac, LinkedIn'de onayla, yonlendirme URL'sini yapistir. Token 60 gun gecerli.
 
 ### Token Suresi Dolunca
+
 Telegram'a bildirim gelir. Ayni komutu tekrar calistir.
+
 ```bash
 docker ps --format "{{.Names}}" | head -5
 docker exec -it <CONTAINER_ADI> npx tsx src/linkedin_auth.ts
 ```
 
 ### Token Yoksa Davranis
+
 Token yoksa LinkedIn paylasimi sessizce atlanir (ban koruması). Hata bildirimi gonderilmez. Sadece log'a yazilir.
 
 ---
@@ -125,15 +134,19 @@ Token yoksa LinkedIn paylasimi sessizce atlanir (ban koruması). Hata bildirimi 
 Sistem, yuksek etkilesimli LinkedIn paylasimlari icin iki ana gorsel motoru kullanir:
 
 ### 1. Dinamik Hava Durumu Motoru
+
 Istanbul hava durumuna gore her sabah ozel, markali ve atmosferik manzaralar uretir.
+
 - **Dinamik Prompt:** Sicakliga gore degisen cay buhari, havaya gore pencere buğusu/yagmur/kar efektleri.
 - **Turkce Panel:** Gorsel uzerinde 'HAVA DURUMU', 'NEM', 'RÜZGAR' gibi veriler Turkce glass-morphism panelde sunulur.
 - **Branding:** Her gorselde zarif bir `botfusions` logotype bulunur.
 - **Manzara:** Bogazici, Kiz Kulesi ve tarihi yarimada manzaralariyla kurumsal ve sanatsal denge.
 
 ### 2. Kurumsal Infografik Motoru
+
 Excel veya RSS konularini profesyonel teknoloji haritalarina donusturur.
-- **4 Farkli Stil:** `blueprint`, `cyberpunk`, `minimalist` ve `3d infrastructure` stilleri arasinda rotasyon yapar.
+
+- **Dinamik Stil Rotasyonu:** `blueprint`, `cyberpunk`, `minimalist` ve `3d matrix` stilleri arasinda her paylasimda otomatik ve gercek zamanli rotasyon yapar.
 - **Yüksek Yoğunluklu Bilgi:** 6-8 farkli bilgi kutucugu ve 3-4 detayli alt madde ile "hallucination-free" teknik semalar.
 - **Dil Kontrolü:** Tum basliklar, metrikler ve detaylar Turkce olarak uretilir.
 - **Kurumsal Estetik:** `botfusions` watermark ve profesyonel ikonografi (guvenlik icin kalkan, AI icin cip vb.).
@@ -143,11 +156,14 @@ Excel veya RSS konularini profesyonel teknoloji haritalarina donusturur.
 ## Coolify Deployment (VPS)
 
 ### 1. GitHub'dan Deploy
+
 Coolify Dashboard → **New Resource** → **Public Repository**
+
 - Repository: `botfusions/linkedin_X`
 - Branch: `main`
 
 ### 2. Environment Variables (Sadece 3)
+
 ```
 SUPABASE_URL=https://vvssjczexbrhrqtkdhmb.supabase.co
 SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -157,10 +173,13 @@ TZ=Europe/Istanbul
 Tum diger API key'ler Supabase `env_config` tablosundan otomatik yuklenir.
 
 ### 3. Container Adini Bul
+
 Redeploy sonrasi container adi degisir. Her zaman once bul:
+
 ```bash
 docker ps --format "{{.Names}}" | head -5
 ```
+
 `dgecwxjms61k579zpew9y0rd-XXXXXXXXX` formatindaki satir senin container'in.
 
 ---
@@ -191,18 +210,18 @@ npm run scheduler
 
 ## Teknik Stack
 
-| Bilesen | Teknoloji |
-|---------|-----------|
-| Core | Node.js 20+, TypeScript |
-| LLM | OpenRouter (Gemini 2.5 Pro) |
-| Arastirma | Perplexity Sonar |
-| Gorsel | Gemini 3.1 Flash Image |
-| Veri Kaynagi | Google Sheets API |
-| Haber Kaynagi | Google News AI RSS |
-| Veritabani | Supabase (PostgreSQL) |
-| Bildirim | Telegram Bot API |
-| Zamanlama | node-cron |
-| Deployment | Docker + Coolify |
+| Bilesen       | Teknoloji                   |
+| ------------- | --------------------------- |
+| Core          | Node.js 20+, TypeScript     |
+| LLM           | OpenRouter (Gemini 2.5 Pro) |
+| Arastirma     | Perplexity Sonar            |
+| Gorsel        | Gemini 3.1 Flash Image      |
+| Veri Kaynagi  | Google Sheets API           |
+| Haber Kaynagi | Google News AI RSS          |
+| Veritabani    | Supabase (PostgreSQL)       |
+| Bildirim      | Telegram Bot API            |
+| Zamanlama     | node-cron                   |
+| Deployment    | Docker + Coolify            |
 
 ---
 
@@ -236,13 +255,13 @@ Aciklama...
 
 ## Ban Korumasi
 
-| Senaryo | Koruma |
-|---------|--------|
-| Scheduler tetikleme | 2 dakika rastgele erteleme |
-| RSS haberler arasi | 3-5 dakika rastgele bekleme |
-| Token yoksa | LinkedIn sessizce atlanir, hata bildirimi yok |
-| Bos metin | Post gonderilmez (guvenlik bariyeri) |
-| Gorsel uretilemezse | Post gonderilmez, sonraki habere gecilir |
+| Senaryo             | Koruma                                        |
+| ------------------- | --------------------------------------------- |
+| Scheduler tetikleme | 2 dakika rastgele erteleme                    |
+| RSS haberler arasi  | 3-5 dakika rastgele bekleme                   |
+| Token yoksa         | LinkedIn sessizce atlanir, hata bildirimi yok |
+| Bos metin           | Post gonderilmez (guvenlik bariyeri)          |
+| Gorsel uretilemezse | Post gonderilmez, sonraki habere gecilir      |
 
 ---
 
@@ -262,65 +281,88 @@ Aciklama...
 Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya debug gerektiginde referans olarak kullanilir.
 
 ### 1. Gemini Gorsel Timeout
+
 - **Sorun:** Gemini 3.1 Flash Image API 90s icinde yanit vermiyordu
 - **Neden:** API yuku saatlere gore degisiyor, testte hizli yanit vermis olabilir
 - **Cozum:** Timeout 180s'ye cikarildi (`src/services/llm.ts`)
 - **Not:** Gorsel uretilemezse post gonderilmez (ban riski), akis sonraki habere gecer
 
 ### 2. Excel Konu Sutunu Eslesmemesi
+
 - **Sorun:** Satir 40'taki konu bulundugu halde "konu sutunu bulunamadi" hatasi
 - **Neden:** Sutun adi sabit listeyle (`"konu"`, `"topic"`, `"title"`) eslestiriliyordu, Excel'deki gercek sutun adı listede yoktu
 - **Cozum:** "Durum" harici ilk dolu sutunu konu olarak alan akilli fallback eklendi (`src/autonomous_agent.ts`)
 - **Debug:** Tum sutun adlari ve degerleri loglanir
 
 ### 3. Excel Durum "Done" Yazmama
+
 - **Sorun:** Yayinlanan satirlar tekrar tekrar isleniyordu
 - **Neden:** Kod "Yayinlandi (LI X)" yaziyordu ama filtre sadece "done" ve "bitti" ariyordu
-- **Cozum:** Yayin sonrasi Excel'e "Done" yazilir, filtre "done"/"bitti"/"yayinlandi*" ile eslesir
+- **Cozum:** Yayin sonrasi Excel'e "Done" yazilir, filtre "done"/"bitti"/"yayinlandi\*" ile eslesir
 
 ### 4. Bos Satirlar Kritik Hata Firlatiyordu
+
 - **Sorun:** Excel'de bos bir satir tum akisi durduruyordu
 - **Neden:** Tek kayit `find()` ile bulunuyordu, hata durumunda `continue` calismiyordu
 - **Cozum:** `filter()` + `for...of` dongusune cevrildi, bos/hatali satirlar atlanir
 
 ### 5. LinkedIn False Positive (v2.4)
+
 - **Sorun:** Token yokken bile "LinkedIn yayinlandi" raporlaniyordu
 - **Neden:** `createLinkedInPost()` boolean donuyordu ama cagiran taraf kontrol etmiyordu
 - **Cozum:** Fonksiyon `string | null` doner (URL veya null), tum cagiranlar null check yapar
 
 ### 6. LinkedIn Token Redeploy Sonrasi Siliniyor
+
 - **Sorun:** Her Coolify redeploy'da token dosyasi siliniyordu, tekrar auth gerekiyordu
 - **Neden:** Token container dosya sisteminde saklaniyordu
 - **Cozum:** Token Supabase `env_config` tablosunda saklanir, dosya yoksa otomatik yuklenir
 
 ### 7. RSS Agent Calismiyordu (v2.5)
+
 - **Sorun:** `npx tsx src/rss_agent.ts` calismiyordu, hicbir cikti uretmiyordu
 - **Neden:** `runRSSNewsWorkflow()` sadece `export` edilmisti, self-executing call yoktu
 - **Cozum:** Dosya sonuna `runRSSNewsWorkflow()` cagrisi eklendi
 
 ### 8. Arka Arkaya Post Ban Riski
+
 - **Sorun:** RSS 2 haberi 1-2 dk icinde arka arkaya atiyordu
 - **Neden:** Postlar arasi bekleme yoktu
 - **Cozum:** RSS haberler arasi 3-5 dakika rastgele bekleme eklendi
 
 ### 9. Hava Durumu Gorselinde Yagmur/Gunes Karisikligi
+
 - **Sorun:** Hava acik olmasina ragmen gorselde yagmur damlalari vardi
 - **Neden:** Gorsel prompt sablonunda "raindrops on glass" ornegini Gemini ornek aliyordu
 - **Cozum:** Her hava durumu icin ayri kural eklendi (clear/cloudy/rainy)
 
 ### Test Onerileri
 
-| Senaryo | Test Yontemi |
-|---------|-------------|
-| Gemini timeout | API'yi bilerek yavas promptla test et, 180s asilmasini simule et |
-| Sutun eslesme | Farkli sutun adlari olan bir test sheet'i kullan (ornegin "Post Konusu") |
-| Bos satir | Sheet'e bos satirlar ekle, atlanip atlanmadigini kontrol et |
-| Durum guncelleme | Yayin sonrasi Excel'de "Done" yazildigini dogrula |
-| Gorselsiz post | Gemini API'yi gecici olarak kapali tut, post gonderilmedigini dogrula |
-| Tekrar calisma | Ayni satir iki kez islenmiyor mu kontrol et |
-| Token persistence | Redepoy sonrasi LinkedIn token Supabase'ten yukleniyor mu dogrula |
-| Ban koruması | RSS agent calisirken postlar arasi 3-5dk bekleme var mi kontrol et |
-| LinkedIn false positive | Token yokken "yayinlandi" raporlanmiyor mu dogrula |
+| Senaryo                 | Test Yontemi                                                             |
+| ----------------------- | ------------------------------------------------------------------------ |
+| Gemini timeout          | API'yi bilerek yavas promptla test et, 180s asilmasini simule et         |
+| Sutun eslesme           | Farkli sutun adlari olan bir test sheet'i kullan (ornegin "Post Konusu") |
+| Bos satir               | Sheet'e bos satirlar ekle, atlanip atlanmadigini kontrol et              |
+| Durum guncelleme        | Yayin sonrasi Excel'de "Done" yazildigini dogrula                        |
+| Gorselsiz post          | Gemini API'yi gecici olarak kapali tut, post gonderilmedigini dogrula    |
+| Tekrar calisma          | Ayni satir iki kez islenmiyor mu kontrol et                              |
+| Token persistence       | Redepoy sonrasi LinkedIn token Supabase'ten yukleniyor mu dogrula        |
+| Ban koruması            | RSS agent calisirken postlar arasi 3-5dk bekleme var mi kontrol et       |
+| LinkedIn false positive | Token yokken "yayinlandi" raporlanmiyor mu dogrula                       |
+| Hayalet Paylasim (Ghost) | Import sırasında RSS workflow tetiklenmiyor mu dogrula (v2.6.1 fix)      |
+| Stil Rotasyonu          | Her postta farkli stil (3D, Cyber, vb.) uretiliyor mu dogrula            |
+
+### 10. Hayalet Paylasim (Ghost Posting) - v2.6.1
+
+- **Sorun:** RSS haberleri bazen scheduler tetiklemeden kendi kendine (mükerrer) paylasiliyordu.
+- **Neden:** `rss_agent.ts` dosyası scheduler tarafından import edildiğinde, dosya sonundaki self-executing call tetikleniyordu.
+- **Cozum:** `require.main === module` kontrolü (veya TS eşdeğeri) eklenerek, sadece dosya doğrudan çalıştırıldığında (`npm run rss`) tetikleme yapılması sağlandı.
+
+### 11. Gorsel Stil Sabitligi
+
+- **Sorun:** AI hep ayni (minimalist) stilde gorsel uretiyordu.
+- **Neden:** Sistem promptunda "minimalist" anahtar kelimesi baskındı ve rotasyon mantığı statikti.
+- **Cozum:** Prompt kuralları esnetildi ve `optimizer.ts` içinde `Math.random()` ile her seferinde zorunlu stil rotasyonu eklendi.
 
 ---
 

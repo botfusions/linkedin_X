@@ -16,10 +16,7 @@
       },
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [
-        -816,
-        -256
-      ],
+      "position": [-816, -256],
       "id": "f7c4ba44-701c-4755-9b24-39d464562fca",
       "name": "Schedule Trigger"
     },
@@ -31,10 +28,7 @@
       },
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
-      "position": [
-        592,
-        -256
-      ],
+      "position": [592, -256],
       "id": "82636f2c-c4b1-4e88-9ddd-ace9881a10f5",
       "name": "Loop Over Items",
       "executeOnce": false,
@@ -71,10 +65,7 @@
       },
       "name": "Filter RSS Data",
       "type": "n8n-nodes-base.set",
-      "position": [
-        864,
-        -736
-      ],
+      "position": [864, -736],
       "typeVersion": 1,
       "id": "56b08177-d823-4dc5-abee-05e9f74d218c"
     },
@@ -85,10 +76,7 @@
       },
       "type": "n8n-nodes-base.limit",
       "typeVersion": 1,
-      "position": [
-        16,
-        -256
-      ],
+      "position": [16, -256],
       "id": "11be83b8-e3a5-4e9a-a5b2-82f07007be5b",
       "name": "Limit"
     },
@@ -98,10 +86,7 @@
       },
       "type": "n8n-nodes-base.sort",
       "typeVersion": 1,
-      "position": [
-        -192,
-        -256
-      ],
+      "position": [-192, -256],
       "id": "46f308b9-9fda-4260-8011-53401895136c",
       "name": "Sort"
     },
@@ -112,10 +97,7 @@
       },
       "type": "n8n-nodes-base.rssFeedRead",
       "typeVersion": 1.1,
-      "position": [
-        -496,
-        -256
-      ],
+      "position": [-496, -256],
       "id": "fc862615-ee2c-452f-acbe-bac9ec9c65d9",
       "name": "AI News",
       "executeOnce": true
@@ -137,10 +119,7 @@
       "id": "2ad9cbba-1882-4ecc-ace8-8fcfc6ec205a",
       "name": "Decoded url",
       "type": "n8n-nodes-base.set",
-      "position": [
-        32,
-        112
-      ],
+      "position": [32, 112],
       "typeVersion": 3.4
     },
     {
@@ -186,10 +165,7 @@
       "id": "4475d842-2228-43da-90c7-802d85850440",
       "name": "Call decoding URL",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        -288,
-        112
-      ],
+      "position": [-288, 112],
       "typeVersion": 4.2
     },
     {
@@ -199,10 +175,7 @@
       "id": "8a150339-cb59-4a03-9c03-c4658ac39d7c",
       "name": "Prepare decoding variables",
       "type": "n8n-nodes-base.code",
-      "position": [
-        -592,
-        112
-      ],
+      "position": [-592, 112],
       "typeVersion": 2
     },
     {
@@ -213,10 +186,7 @@
       "id": "c7c52894-69d2-44ca-8618-3f363c5baa70",
       "name": "Get encoded news URL",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        1344,
-        -240
-      ],
+      "position": [1344, -240],
       "typeVersion": 4.2
     },
     {
@@ -248,10 +218,7 @@
       "id": "7edef4c8-86ee-42da-97ad-9dae0dcb83ed",
       "name": "Map needed keys",
       "type": "n8n-nodes-base.set",
-      "position": [
-        -896,
-        112
-      ],
+      "position": [-896, 112],
       "typeVersion": 3.4
     },
     {
@@ -278,10 +245,7 @@
       "id": "6d058136-3a8b-4c0c-a458-ea8a5d7528a9",
       "name": "Extract decoding keys",
       "type": "n8n-nodes-base.html",
-      "position": [
-        1584,
-        -240
-      ],
+      "position": [1584, -240],
       "typeVersion": 1.2
     },
     {
@@ -292,10 +256,7 @@
       "id": "5a82d87d-292f-44fa-87be-70dfc4e6ba16",
       "name": "Aggregate results in a single object",
       "type": "n8n-nodes-base.aggregate",
-      "position": [
-        448,
-        112
-      ],
+      "position": [448, 112],
       "typeVersion": 1
     },
     {
@@ -307,10 +268,7 @@
       "id": "90276ba3-7138-4c91-befc-f48043b4ab3a",
       "name": "Sticky Note11",
       "type": "n8n-nodes-base.stickyNote",
-      "position": [
-        768,
-        -512
-      ],
+      "position": [768, -512],
       "typeVersion": 1
     },
     {
@@ -322,10 +280,7 @@
       "id": "ad4b7020-0c02-4b40-a83a-4ca719846d9e",
       "name": "Sticky Note12",
       "type": "n8n-nodes-base.stickyNote",
-      "position": [
-        1008,
-        -512
-      ],
+      "position": [1008, -512],
       "typeVersion": 1
     },
     {
@@ -338,10 +293,7 @@
       "id": "4f1ce3bf-a720-43ee-bbb2-4ecf640c0b99",
       "name": "Sticky Note14",
       "type": "n8n-nodes-base.stickyNote",
-      "position": [
-        1248,
-        -512
-      ],
+      "position": [1248, -512],
       "typeVersion": 1
     },
     {
@@ -353,10 +305,7 @@
       "id": "ef3c6040-2e47-4428-b653-e74103631c03",
       "name": "Sticky Note15",
       "type": "n8n-nodes-base.stickyNote",
-      "position": [
-        1488,
-        -512
-      ],
+      "position": [1488, -512],
       "typeVersion": 1
     },
     {
@@ -367,10 +316,7 @@
       "id": "35656d78-63a0-412d-a258-94f7075b7ec2",
       "name": "Gemini",
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-      "position": [
-        656,
-        576
-      ],
+      "position": [656, 576],
       "typeVersion": 1,
       "credentials": {
         "googlePalmApi": {
@@ -386,10 +332,7 @@
       "id": "84159013-ab22-4829-8b37-8be183653832",
       "name": "Limit1",
       "type": "n8n-nodes-base.limit",
-      "position": [
-        1088,
-        -240
-      ],
+      "position": [1088, -240],
       "typeVersion": 1
     },
     {
@@ -401,10 +344,7 @@
       },
       "type": "n8n-nodes-base.linkedIn",
       "typeVersion": 1,
-      "position": [
-        2704,
-        32
-      ],
+      "position": [2704, 32],
       "id": "83f57c3d-52ca-4071-ae33-d175a69ac65a",
       "name": "Create a post",
       "alwaysOutputData": true,
@@ -436,10 +376,7 @@
       },
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
-      "position": [
-        2512,
-        240
-      ],
+      "position": [2512, 240],
       "id": "ff9f7199-9ed0-4665-8cc3-9624b6717be7",
       "name": "Upload file",
       "credentials": {
@@ -465,10 +402,7 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        2880,
-        240
-      ],
+      "position": [2880, 240],
       "id": "99449418-2d37-4a78-b046-b81b6c89d048",
       "name": "Edit Fields"
     },
@@ -483,10 +417,7 @@
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2.2,
-      "position": [
-        1408,
-        864
-      ],
+      "position": [1408, 864],
       "id": "96114943-299e-4cb4-92da-09938fa3d2d2",
       "name": "X Platform",
       "disabled": true
@@ -505,10 +436,7 @@
       },
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1,
-      "position": [
-        2096,
-        112
-      ],
+      "position": [2096, 112],
       "id": "a8061d3c-7f97-4c09-9c11-30563abd1187",
       "name": "Generate an image",
       "credentials": {
@@ -529,10 +457,7 @@
       "id": "6ed3002d-f4d5-4a6c-8f41-8f919a47ec4a",
       "name": "GENERATE PROMPT",
       "type": "@n8n/n8n-nodes-langchain.agent",
-      "position": [
-        1712,
-        112
-      ],
+      "position": [1712, 112],
       "typeVersion": 1.8
     },
     {
@@ -557,9 +482,7 @@
           "value": {
             "LİNKED": "={{ $('LINKED POST AI').item.json.post_text }}"
           },
-          "matchingColumns": [
-            "LİNKED"
-          ],
+          "matchingColumns": ["LİNKED"],
           "schema": [
             {
               "id": "LİNKED",
@@ -579,10 +502,7 @@
       },
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
-      "position": [
-        3184,
-        240
-      ],
+      "position": [3184, 240],
       "id": "717cfb65-9f49-4b8d-af45-6efbf685502e",
       "name": "Append or update row in sheet",
       "credentials": {
@@ -604,10 +524,7 @@
       },
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
-      "position": [
-        3056,
-        688
-      ],
+      "position": [3056, 688],
       "id": "98879a74-b8d0-478b-9e04-300f89869264",
       "name": "Download file",
       "credentials": {
@@ -654,10 +571,7 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        2784,
-        656
-      ],
+      "position": [2784, 656],
       "id": "1838e452-c8bb-4d4e-ab31-6ad317eeea86",
       "name": "HTTP Request",
       "credentials": {
@@ -680,10 +594,7 @@
       },
       "type": "n8n-nodes-base.twitter",
       "typeVersion": 2,
-      "position": [
-        2768,
-        1008
-      ],
+      "position": [2768, 1008],
       "id": "98a98f6c-c36e-4661-b1f9-26597eb80d95",
       "name": "Create Tweet",
       "credentials": {
@@ -704,10 +615,7 @@
       },
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
-      "position": [
-        2240,
-        1008
-      ],
+      "position": [2240, 1008],
       "id": "6bfca758-37a6-4afc-a101-56bf227119e1",
       "name": "Merge",
       "disabled": true
@@ -718,10 +626,7 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        2512,
-        688
-      ],
+      "position": [2512, 688],
       "id": "dae38364-b161-476d-a9c3-8909edddb765",
       "name": "Code in JavaScript2"
     },
@@ -747,9 +652,7 @@
           "value": {
             "X PLATFORM": "={{ $json.text }}"
           },
-          "matchingColumns": [
-            "X PLATFORM"
-          ],
+          "matchingColumns": ["X PLATFORM"],
           "schema": [
             {
               "id": "X PLATFORM",
@@ -769,10 +672,7 @@
       },
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
-      "position": [
-        3040,
-        1008
-      ],
+      "position": [3040, 1008],
       "id": "2a761469-459e-4b7a-b7b7-1ab81f730a32",
       "name": "Append or update row in sheet1",
       "credentials": {
@@ -788,10 +688,7 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        1488,
-        112
-      ],
+      "position": [1488, 112],
       "id": "bff40d6c-8401-4a94-bc2b-01333c08d4ab",
       "name": "LINKED POST AI"
     },
@@ -821,9 +718,7 @@
             "Date": "={{ $json.Date }}",
             "content": "={{ $json.content }}"
           },
-          "matchingColumns": [
-            "Title"
-          ],
+          "matchingColumns": ["Title"],
           "schema": [
             {
               "id": "Title",
@@ -879,10 +774,7 @@
       },
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
-      "position": [
-        1200,
-        -736
-      ],
+      "position": [1200, -736],
       "id": "f12711e6-8058-4825-9e6e-ca55c9c23e3a",
       "name": "Append or update row in sheet2",
       "credentials": {
@@ -898,10 +790,7 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        320,
-        -256
-      ],
+      "position": [320, -256],
       "id": "3cb7f5e6-a3d5-43e7-9a1b-655755c67aff",
       "name": "Code in JavaScript1"
     },
@@ -912,10 +801,7 @@
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
-      "position": [
-        1536,
-        352
-      ],
+      "position": [1536, 352],
       "id": "9fbb422a-865b-4997-bf94-716f2405ed2b",
       "name": "Google Gemini Chat Model",
       "credentials": {
@@ -932,10 +818,7 @@
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
       "typeVersion": 1,
-      "position": [
-        1424,
-        1088
-      ],
+      "position": [1424, 1088],
       "id": "0e7f627d-c829-42a9-bfea-7030aac4f5b6",
       "name": "OpenRouter Chat Model",
       "credentials": {
@@ -951,10 +834,7 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        1264,
-        112
-      ],
+      "position": [1264, 112],
       "id": "5765a5e9-e373-4e6f-9c3b-7fef6150d91f",
       "name": "linked ps 1"
     },
@@ -964,10 +844,7 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        1040,
-        112
-      ],
+      "position": [1040, 112],
       "id": "46e67451-25bf-4e2a-9602-64528907a11c",
       "name": "Haberleri Formatla"
     },
@@ -987,10 +864,7 @@
       "id": "a42c6d5b-84ae-4ac5-b216-454ebf3b648c",
       "name": "Haber Editörü",
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "position": [
-        688,
-        112
-      ],
+      "position": [688, 112],
       "typeVersion": 1.5
     },
     {
@@ -999,10 +873,7 @@
       },
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [
-        2512,
-        1008
-      ],
+      "position": [2512, 1008],
       "id": "0e36ff00-9657-46a8-a162-9055ae709938",
       "name": "Wait",
       "webhookId": "959f24ff-dbff-4ef6-8955-1b3578b62601"
@@ -1013,10 +884,7 @@
       },
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [
-        2448,
-        32
-      ],
+      "position": [2448, 32],
       "id": "aa33c70d-5409-482d-bb20-da5f826e4756",
       "name": "Wait1",
       "webhookId": "65fb614c-ba75-4928-b05a-7712ac3d3299"
@@ -1333,9 +1201,7 @@
       ]
     },
     "Create a post": {
-      "main": [
-        []
-      ]
+      "main": [[]]
     },
     "Google Gemini Chat Model": {
       "ai_languageModel": [

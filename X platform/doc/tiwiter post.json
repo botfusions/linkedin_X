@@ -38,10 +38,7 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        -608,
-        -112
-      ],
+      "position": [-608, -112],
       "id": "072f7300-f66a-46ef-850d-e661b5407ecb",
       "name": "HTTP Request1",
       "credentials": {
@@ -61,10 +58,7 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        -288,
-        -112
-      ],
+      "position": [-288, -112],
       "id": "d977cd69-e5ef-422d-b7bc-40366342669a",
       "name": "Code in JavaScript"
     },
@@ -76,10 +70,7 @@
       },
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
-      "position": [
-        -640,
-        112
-      ],
+      "position": [-640, 112],
       "id": "10dfcf56-d3e5-4b18-bad0-78de6bdf3120",
       "name": "Merge1"
     },
@@ -92,10 +83,7 @@
       },
       "type": "n8n-nodes-base.twitter",
       "typeVersion": 2,
-      "position": [
-        -224,
-        112
-      ],
+      "position": [-224, 112],
       "id": "d32fd94d-77f5-4f20-acd8-610ff0b008df",
       "name": "Create Tweet1",
       "credentials": {
@@ -111,10 +99,7 @@
       },
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [
-        -432,
-        112
-      ],
+      "position": [-432, 112],
       "id": "42fc11f6-f8d4-4caa-98fc-eed5e9d264ab",
       "name": "Wait",
       "webhookId": "7174f3d9-4e37-4ca2-96ed-8a9ae7519175"

@@ -11,7 +11,8 @@ const TOKEN_PATH = path.join(process.cwd(), "data", ".linkedin_token.json");
 
 const CLIENT_ID = process.env.LINKEDIN_CLIENT_ID;
 const CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET;
-const REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI || "http://localhost:8080/callback";
+const REDIRECT_URI =
+  process.env.LINKEDIN_REDIRECT_URI || "http://localhost:8080/callback";
 
 /**
  * LinkedIn'de metin + Gerçek Görsel (Upload edilmiş) olan bir paylaşım oluşturur.
@@ -23,7 +24,9 @@ export async function createLinkedInPost(
 ): Promise<string | null> {
   // --- GÜVENLİK BARİYERİ ---
   if (!text || text.trim().length < 10) {
-    console.error("❌ GÜVENLİK BARİYERİ: Boş veya çok kısa LinkedIn metni paylaşılamaz!");
+    console.error(
+      "❌ GÜVENLİK BARİYERİ: Boş veya çok kısa LinkedIn metni paylaşılamaz!",
+    );
     return null;
   }
   // -------------------------
@@ -105,21 +108,30 @@ export async function createLinkedInPost(
       },
     };
 
-    const ugcResponse = await axios.post("https://api.linkedin.com/v2/ugcPosts", ugcBody, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "X-Restli-Protocol-Version": "2.0.0",
+    const ugcResponse = await axios.post(
+      "https://api.linkedin.com/v2/ugcPosts",
+      ugcBody,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "X-Restli-Protocol-Version": "2.0.0",
+        },
       },
-    });
+    );
 
     const postUrn = ugcResponse.headers["x-restli-id"] || ugcResponse.data?.id;
     let postUrl = "";
     if (postUrn) {
-      const postId = String(postUrn).replace("urn:li:ugcPost:", "").replace("urn:li:share:", "");
+      const postId = String(postUrn)
+        .replace("urn:li:ugcPost:", "")
+        .replace("urn:li:share:", "");
       postUrl = `https://www.linkedin.com/feed/update/${postId}`;
     }
 
-    console.log("🚀 LinkedIn UGC Gönderisi Başarıyla Yayına Alındı!", postUrl || "(URL alınamadı)");
+    console.log(
+      "🚀 LinkedIn UGC Gönderisi Başarıyla Yayına Alındı!",
+      postUrl || "(URL alınamadı)",
+    );
     return postUrl || "published";
   } catch (error: any) {
     console.error(
@@ -141,7 +153,10 @@ async function getAccessToken(): Promise<string> {
 
     if (tokenInfo.expiresAt && Date.now() > tokenInfo.expiresAt) {
       console.log("⚠️ LinkedIn Token suresi dolmus.");
-      await sendErrorNotification("LinkedIn Token", "Token suresi doldu! Yenileme gerekli. VPS'te 'npm run linkedin-auth' calistirin.");
+      await sendErrorNotification(
+        "LinkedIn Token",
+        "Token suresi doldu! Yenileme gerekli. VPS'te 'npm run linkedin-auth' calistirin.",
+      );
       throw new Error("LinkedIn token suresi dolmus. Yenileyin.");
     }
     return tokenInfo.access_token;
@@ -152,14 +167,23 @@ async function getAccessToken(): Promise<string> {
     if (supabaseToken) {
       if (supabaseToken.expiresAt && Date.now() > supabaseToken.expiresAt) {
         console.log("⚠️ LinkedIn Token suresi dolmus (Supabase).");
-        await sendErrorNotification("LinkedIn Token", "Token suresi doldu! Yenileme gerekli.");
+        await sendErrorNotification(
+          "LinkedIn Token",
+          "Token suresi doldu! Yenileme gerekli.",
+        );
         throw new Error("LinkedIn token suresi dolmus. Yenileyin.");
       }
       // Dosyaya da yaz ki sonraki sefer dosyadan okunsun
       const { default: fsp } = await import("fs/promises");
       await fsp.mkdir(path.dirname(TOKEN_PATH), { recursive: true });
-      await fsp.writeFile(TOKEN_PATH, JSON.stringify(supabaseToken, null, 2), "utf-8");
-      console.log("✅ LinkedIn token Supabase'ten yuklendi ve dosyaya yazildi.");
+      await fsp.writeFile(
+        TOKEN_PATH,
+        JSON.stringify(supabaseToken, null, 2),
+        "utf-8",
+      );
+      console.log(
+        "✅ LinkedIn token Supabase'ten yuklendi ve dosyaya yazildi.",
+      );
       return supabaseToken.access_token;
     }
     console.log("ℹ️ LinkedIn token yok, paylaşım atlanıyor (ban koruması).");
