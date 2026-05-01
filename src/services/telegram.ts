@@ -3,12 +3,16 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "";
-
-const BASE_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+function getTelegramToken(): string {
+  return process.env.TELEGRAM_BOT_TOKEN || "";
+}
+function getTelegramChatId(): string {
+  return process.env.TELEGRAM_CHAT_ID || "";
+}
 
 export async function sendTelegramMessage(text: string): Promise<void> {
+  const TELEGRAM_BOT_TOKEN = getTelegramToken();
+  const TELEGRAM_CHAT_ID = getTelegramChatId();
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
     console.warn(
       "⚠️ Telegram: BOT_TOKEN veya CHAT_ID tanimli degil, bildirim atlandi.",
@@ -17,7 +21,7 @@ export async function sendTelegramMessage(text: string): Promise<void> {
   }
 
   try {
-    await axios.post(`${BASE_URL}/sendMessage`, {
+    await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       chat_id: TELEGRAM_CHAT_ID,
       text,
       parse_mode: "Markdown",
