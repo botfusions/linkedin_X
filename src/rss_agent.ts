@@ -27,8 +27,8 @@ export async function runRSSNewsWorkflow() {
   await initEnvFromSupabase();
 
   try {
-    const news = await fetchNewsFromRSS(5);
-    const selected = pickRandom(news, 2);
+    const news = await fetchNewsFromRSS(3);
+    const selected = pickRandom(news, 1);
 
     for (const article of selected) {
       console.log(`\n📍 Isleniyor: ${article.title}`);
@@ -140,9 +140,9 @@ export async function runRSSNewsWorkflow() {
         source: "rss",
       });
 
-      // Ban koruması: postlar arası 3-5 dakika rastgele bekleme
-      const delayMin = 3;
-      const delayMax = 5;
+      // Ban koruması: tek haber, bekleme gerekmez
+      const delayMin = 1;
+      const delayMax = 2;
       const delayMinutes = delayMin + Math.random() * (delayMax - delayMin);
       const delayMs = Math.round(delayMinutes * 60 * 1000);
       console.log(
