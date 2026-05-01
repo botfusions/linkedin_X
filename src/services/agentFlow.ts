@@ -8,7 +8,11 @@ import {
 } from "./llm.js";
 import { createLinkedInPost } from "./linkedin.js";
 import { createXPost } from "./x.js";
-import { scorePost, optimizeWithSelfImprove } from "./optimizer.js";
+import {
+  scorePost,
+  optimizeWithSelfImprove,
+  generateDynamicInfographicPrompt,
+} from "./optimizer.js";
 import { generateGeminiImage } from "./gemini_image.js";
 import { getIstanbulWeather } from "./weather.js";
 import { initEnvFromSupabase, insertPublishedPost } from "./supabase.js";
@@ -52,7 +56,23 @@ export async function runExcelPostFlow() {
     );
 
     let finalPostText = processedContent.postText;
-    let imagePrompt = processedContent.imagePrompt;
+    let infographicData = processedContent.infographicData;
+
+    // Dinamik İnfografik Motorunu Kullan
+    let imagePrompt = "";
+    if (infographicData) {
+      console.log("🛠️ Dinamik İnfografik Motoru Çalıştırılıyor...");
+      imagePrompt = generateDynamicInfographicPrompt({
+        ...infographicData,
+        style: infographicData.style || "random",
+      });
+    } else {
+      console.warn(
+        "⚠️ Uyarı: infographicData bulunamadı, varsayılan prompt kullanılıyor.",
+      );
+      imagePrompt =
+        "Clean professional technology infographic, 4 panels, Turkish text.";
+    }
 
     const initialScore = scorePost(finalPostText);
     if (initialScore.percentage < SCORE_THRESHOLD) {

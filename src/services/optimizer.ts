@@ -452,8 +452,9 @@ export function generateDynamicInfographicPrompt(
     `1. Each module box must contain a header and 3-4 detailed bullet points in Turkish.`,
     `2. Central node: Place a symbolic icon representing '${data.title}' in the center, with connections radiating outwards.`,
     `3. Corporate aesthetics: Use professional iconography for each module (e.g., shield for security, chip for AI).`,
-    `4. NO SLOP: Clean, sharp lines. Text must be legible and professional.`,
     `5. BRANDING: Place a subtle 'botfusions' corporate logo in the bottom right corner.`,
+    `6. TYPOGRAPHY: Use bold, clean, sans-serif fonts. Main headers MUST be large (32pt+) and highly readable on mobile devices.`,
+    `7. NO SLOP: Clean, sharp lines. No blurry or messy elements.`,
     `8k resolution, ultra-detailed, professional corporate presentation quality.`,
   ].join("\n");
 }

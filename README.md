@@ -133,14 +133,16 @@ Token yoksa LinkedIn paylasimi sessizce atlanir (ban koruması). Hata bildirimi 
 
 Sistem, yuksek etkilesimli LinkedIn paylasimlari icin iki ana gorsel motoru kullanir:
 
-### 1. Dinamik Hava Durumu Motoru
+### 1. Dinamik Hava Durumu Motoru (v2.7 - Cinematic Glass Etched Style)
 
-Istanbul hava durumuna gore her sabah ozel, markali ve atmosferik manzaralar uretir.
+Istanbul hava durumuna göre her sabah yüksek sadakatli, sinematik ve modern manzaralar üretir.
 
-- **Dinamik Prompt:** Sicakliga gore degisen cay buhari, havaya gore pencere buğusu/yagmur/kar efektleri.
-- **Turkce Panel:** Gorsel uzerinde 'HAVA DURUMU', 'NEM', 'RÜZGAR' gibi veriler Turkce glass-morphism panelde sunulur.
-- **Branding:** Her gorselde zarif bir `botfusions` logotype bulunur.
-- **Manzara:** Bogazici, Kiz Kulesi ve tarihi yarimada manzaralariyla kurumsal ve sanatsal denge.
+- **Estetik Dil:** "Glass-Etched Projection". Bilgiler camın üzerine asitle yedirilmiş veya zarif bir dijital projeksiyon gibi doğrudan işlenir.
+- **Typography (Kritik):** Yazılar ve ikonlar pencere alanının **en fazla %15'ini** kaplayacak şekilde "küçük" (discreet) ama okunabilirlik için **"Semi-Bold / Medium"** kalınlıktadır.
+- **Minimalizm:** Kesinlikle kutu, çerçeve, opak arka plan veya konteyner kullanılmaz. Sadece ham metin ve ikonlar cam üzerinde yüzer.
+- **Atmosferik Senkronizasyon:** 30°C ve üzeri sıcaklıklarda "Altın sarısı ışık ve masmavi gökyüzü" (Golden Hour/Bright Daylight) zorunluluğu vardır. Gri/kasvetli hava sadece yağmurlu senaryolarda izinlidir.
+- **Branding:** Her görselde zarif bir `botfusions` logotype bulunur.
+- **Manzara:** Boğaziçi, Kız Kulesi ve tarihi yarımada manzaralarıyla kurumsal ve sanatsal denge.
 
 ### 2. Kurumsal Infografik Motoru
 
@@ -338,19 +340,19 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 
 ### Test Onerileri
 
-| Senaryo                 | Test Yontemi                                                             |
-| ----------------------- | ------------------------------------------------------------------------ |
-| Gemini timeout          | API'yi bilerek yavas promptla test et, 180s asilmasini simule et         |
-| Sutun eslesme           | Farkli sutun adlari olan bir test sheet'i kullan (ornegin "Post Konusu") |
-| Bos satir               | Sheet'e bos satirlar ekle, atlanip atlanmadigini kontrol et              |
-| Durum guncelleme        | Yayin sonrasi Excel'de "Done" yazildigini dogrula                        |
-| Gorselsiz post          | Gemini API'yi gecici olarak kapali tut, post gonderilmedigini dogrula    |
-| Tekrar calisma          | Ayni satir iki kez islenmiyor mu kontrol et                              |
-| Token persistence       | Redepoy sonrasi LinkedIn token Supabase'ten yukleniyor mu dogrula        |
-| Ban koruması            | RSS agent calisirken postlar arasi 3-5dk bekleme var mi kontrol et       |
-| LinkedIn false positive | Token yokken "yayinlandi" raporlanmiyor mu dogrula                       |
+| Senaryo                  | Test Yontemi                                                             |
+| ------------------------ | ------------------------------------------------------------------------ |
+| Gemini timeout           | API'yi bilerek yavas promptla test et, 180s asilmasini simule et         |
+| Sutun eslesme            | Farkli sutun adlari olan bir test sheet'i kullan (ornegin "Post Konusu") |
+| Bos satir                | Sheet'e bos satirlar ekle, atlanip atlanmadigini kontrol et              |
+| Durum guncelleme         | Yayin sonrasi Excel'de "Done" yazildigini dogrula                        |
+| Gorselsiz post           | Gemini API'yi gecici olarak kapali tut, post gonderilmedigini dogrula    |
+| Tekrar calisma           | Ayni satir iki kez islenmiyor mu kontrol et                              |
+| Token persistence        | Redepoy sonrasi LinkedIn token Supabase'ten yukleniyor mu dogrula        |
+| Ban koruması             | RSS agent calisirken postlar arasi 3-5dk bekleme var mi kontrol et       |
+| LinkedIn false positive  | Token yokken "yayinlandi" raporlanmiyor mu dogrula                       |
 | Hayalet Paylasim (Ghost) | Import sırasında RSS workflow tetiklenmiyor mu dogrula (v2.6.1 fix)      |
-| Stil Rotasyonu          | Her postta farkli stil (3D, Cyber, vb.) uretiliyor mu dogrula            |
+| Stil Rotasyonu           | Her postta farkli stil (3D, Cyber, vb.) uretiliyor mu dogrula            |
 
 ### 10. Hayalet Paylasim (Ghost Posting) - v2.6.1
 

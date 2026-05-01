@@ -85,7 +85,11 @@ export async function generateContentWithGemini(
   topic: string,
   researchData: string,
   customSystemPrompt?: string,
-) {
+): Promise<{
+  postText: string;
+  xPost: string;
+  infographicData: any;
+}> {
   if (!OPENROUTER_API_KEY) {
     throw new Error("❌ Hata: OPENROUTER_API_KEY eksik!");
   }
@@ -130,7 +134,16 @@ export async function generateContentWithGemini(
       {
         "linkedinPost": "Metin",
         "xPost": "Vurucu X Metni",
-        "imagePrompt": "Detailed prompt for the CHOSEN STYLE (English)"
+        "infographicData": {
+          "title": "İnfografik Başlığı (Türkçe)",
+          "style": "blueprint | cyberpunk | minimalist | 3d",
+          "keyStats": [
+            {"label": "Etiket 1", "value": "Değer"},
+            {"label": "Etiket 2", "value": "Değer"},
+            {"label": "Etiket 3", "value": "Değer"},
+            {"label": "Etiket 4", "value": "Değer"}
+          ]
+        }
       }
     `;
 
@@ -139,7 +152,7 @@ export async function generateContentWithGemini(
     const response = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "google/gemini-2.5-pro",
+        model: "google/gemini-2.0-flash-001",
         messages: [
           {
             role: "system",
@@ -170,7 +183,7 @@ export async function generateContentWithGemini(
     return {
       postText: compiledData.linkedinPost,
       xPost: compiledData.xPost,
-      imagePrompt: compiledData.imagePrompt,
+      infographicData: compiledData.infographicData,
     };
   } catch (error: any) {
     console.error("❌ OpenRouter Hatası:", error.message);
@@ -205,7 +218,7 @@ export async function generateShortContentWithGemini(
     const response = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "google/gemini-2.5-pro",
+        model: "google/gemini-2.0-flash-001",
         messages: [
           {
             role: "system",
@@ -266,34 +279,35 @@ export async function generateOptimizedImagePrompt(
       minute: "2-digit",
     });
 
+    // NOTE: Hava durumu görsel estetiği "Cinematic Glass Etched" stilindedir.
+    // Metinler küçük (%15 alan), medium-weight kalınlıkta ve cam üzerine doğrudan işlenmiş (box/container olmadan) olmalıdır.
+    // 30 derece üstünde gökyüzü her zaman güneşli ve altın sarısı ışıklı olmalıdır.
     const systemPrompt = `
 Sen profesyonel bir görsel prompt mühendisisin. 
 
 **GÖREV:**
-Aşağıdaki şablonu kullanarak, gelen hava durumu verilerine göre detaylı bir görsel üretim promptu oluştur. 
-
-**ŞABLON (ZORUNLU YAPI):**
-A minimalist 1:1 square weather infographic. A close-up view through a window from a cozy office in Istanbul, showing [LANDMARK] in the background. On the window glass, there is a simple, sleek, semi-transparent digital overlay displaying 'İSTANBUL' (in Turkish), the current temperature [TEMP]°C (NO DECIMALS, JUST INTEGER), a [DYNAMIC_WEATHER_ICON], and Humidity/Wind metrics. NO forecasts, NO bottom text. The scene is shot from a slight angle to show the depth of the window frame. The sky and lighting outside MUST strictly match the actual weather data provided: [ATMOSPHERE_DESCRIPTION]. Clean and premium aesthetic. --ar 1:1
+A majestic, high-fidelity cinematic photograph of Istanbul. A panoramic view through a window from a premium, cozy indoor office setting, looking towards [LANDMARK] in the distance. The lighting and sky MUST strictly match: [ATMOSPHERE_DESCRIPTION]. Small, elegant, and discreet weather data overlay FLOAT directly on the window pane, displaying 'İSTANBUL', the current temperature [TEMP]°C, and a minimalist [DYNAMIC_WEATHER_ICON]. The text and icons must be SMALL and occupy NO MORE than 15% of the window area. ABSOLUTELY NO BOXES, NO RECTANGLES, NO SEMI-TRANSPARENT BACKDROPS, NO CONTAINERS. The data MUST be rendered as if individual letters are etched directly into the glass or as a very subtle, faint digital projection without any background shape. ONLY THE WEATHER DATA SPECIFIED IS ALLOWED. NO OTHER LABELS, TITLES, OR ANNOTATIONS. The UI must be medium-weight (not thin), sophisticated, and NOT obstruct the view. Professional color grading, 8k resolution, photorealistic. --ar 1:1
 
 **KURALLAR:**
 1. SADECE İNGİLİZCE PROMPT döndür.
 2. [LANDMARK] kısmını İstanbul'un ikonik ve tarihi mekanlarından (Bosphorus Bridge, Maiden's Tower, Hagia Sophia, Blue Mosque, Rumeli Fortress veya Bosphorus view with ferries) birini rastgele seçerek doldur. GALATA TOWER KULLANMA. Her seferinde farklı mekanlar seçmeye çalış.
 3. [DYNAMIC_WEATHER_ICON] kısmını verideki duruma göre (rain icon, sun icon, cloud icon vb.) doldur.
 4. [TEMP] kısmına güncel sıcaklığı yaz.
-5. [ATMOSPHERE_DESCRIPTION] kısmını hava durumuna göre detaylandır (Örn: 'bright blue sky with golden sunlight' if clear, 'grey overcast sky with visible clouds' if cloudy, 'dark grey sky with heavy rain falling' if rainy).
-6. EĞER HAVA 'AÇIK' (CLEAR) İSE: Kesinlikle yağmur damlaları, bulut veya kasvetli hava OLMASIN. Gökyüzü masmavi ve güneşli olsun. Pencere camı TEMIZ ve kuru olsun, asla su damlaları olmasın.
-7. EĞER HAVA 'BULUTLU' (CLOUDY) İSE: Yağmur olmasın ama gökyüzü gri ve bulutlu olsun. Pencere camı kuru olsun.
-8. EĞER HAVA 'YAĞMURLU' İSE: O zaman pencerede su damlaları ve yağmur efekti olsun.
+5. [ATMOSPHERE_DESCRIPTION] kısmını hava durumuna göre detaylandır (Örn: 'bright blue sky with golden sunlight' if clear, 'bright blue sky with fluffy white aesthetic clouds and golden sunlight' if cloudy, 'cinematic dark sky with heavy rain and water droplets on glass' if rainy).
+6. EĞER HAVA 'AÇIK' (CLEAR) VEYA 'GÜNEŞLİ' İSE: Kesinlikle yağmur damlaları, bulut veya kasvetli hava OLMASIN. Gökyüzü masmavi, parlak ve güneşli olsun. Pencere camı TEMİZ ve kuru olsun, asla su damlaları olmasın. Altın sarısı gün ışığı odaya süzülsün.
+7. EĞER HAVA 'BULUTLU' VEYA 'PARÇALI BULUTLU' İSE: Hava hala AYDINLIK ve FERAH olsun. Gökyüzü masmavi kalsın ama üzerinde estetik beyaz bulutlar olsun. Güneş ışığı bulutların arasından parlasın (golden hour or bright daylight). Kasvetli veya gri bir hava ASLA olmasın.
+8. EĞER HAVA 'YAĞMURLU' İSE: O zaman pencerede su damlaları ve yağmur efekti olsun, hava daha dramatik ve sinematik bir tonda (cool blue or moody grey) olabilir.
 9. KRITIK: TUM ARAYUZ METINLERI TURKCE OLMALIDIR. "Nem", "Ruzgar Hizi", "Hissedilen" gibi Turkce terimler kullan.
 10. TEK BİR PARAGRAF olarak çıktı ver.
 11. Hiçbir giriş cümlesi (İşte promptunuz vb.) veya açıklama EKLEME. Sadece promptu döndür.
 12. Mutlaka --ar 1:1 ifadesini koru.
+13. FONT WEIGHT: Yazıların font kalınlığı "semi-bold" veya "medium" olmalıdır (çok ince olmamalıdır), ancak genel boyut hala küçük kalmalıdır. Okunabilirliği %10-20 oranında artıracak bir kalınlık tercih et.
 `;
 
     const response = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "google/gemini-2.5-pro",
+        model: "google/gemini-2.0-flash-001",
         messages: [
           {
             role: "system",
@@ -358,7 +372,7 @@ KRITIK KURALLAR:
           {
             parts: [
               {
-                text: `Create a clean, professional infographic for social media. Square format (1:1). Modern flat design with bold readable Turkish text.\n\n${TURKISH_RULE}\n\nKonu: ${prompt}`,
+                text: `${prompt}\n\n${TURKISH_RULE}`,
               },
             ],
           },
@@ -403,7 +417,7 @@ export async function generateNewsContent(
 ): Promise<{
   linkedinPost: string;
   xPost: string;
-  imagePrompt: string;
+  infographicData: any;
 }> {
   if (!OPENROUTER_API_KEY) {
     throw new Error("OPENROUTER_API_KEY eksik!");
@@ -470,7 +484,16 @@ AEO → AI yanıtlarında otorite
 {
   "linkedinPost": "...",
   "xPost": "...",
-  "imagePrompt": "English infographic prompt..."
+  "infographicData": {
+    "title": "Haber Başlığı (Türkçe)",
+    "style": "blueprint | cyberpunk | minimalist | 3d",
+    "keyStats": [
+      {"label": "Veri 1", "value": "Değer"},
+      {"label": "Veri 2", "value": "Değer"},
+      {"label": "Veri 3", "value": "Değer"},
+      {"label": "Veri 4", "value": "Değer"}
+    ]
+  }
 }`;
 
   try {
@@ -478,7 +501,7 @@ AEO → AI yanıtlarında otorite
     const response = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "google/gemini-2.5-pro",
+        model: "google/gemini-2.0-flash-001",
         messages: [
           { role: "system", content: systemPrompt },
           {
@@ -502,9 +525,9 @@ AEO → AI yanıtlarında otorite
     const parsed = JSON.parse(jsonString);
 
     return {
-      linkedinPost: parsed.linkedinPost,
+      linkedinPost: parsed.linkedinPost || parsed.postText,
       xPost: parsed.xPost,
-      imagePrompt: parsed.imagePrompt,
+      infographicData: parsed.infographicData,
     };
   } catch (error: any) {
     console.error("❌ Haber icerik uretim hatasi:", error.message);

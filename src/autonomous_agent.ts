@@ -6,7 +6,10 @@ import {
 import { generateGeminiImage } from "./services/gemini_image.js";
 import { createLinkedInPost } from "./services/linkedin.js";
 import { createXPost } from "./services/x.js";
-import { optimizeWithSelfImprove } from "./services/optimizer.js";
+import {
+  optimizeWithSelfImprove,
+  generateDynamicInfographicPrompt,
+} from "./services/optimizer.js";
 import { optimizeXWithSelfImprove } from "./services/x_optimizer.js";
 import {
   initEnvFromSupabase,
@@ -161,7 +164,11 @@ export async function runAutonomousWorkflow() {
         console.log("🎨 Ortak gorsel uretiliyor...");
         let imagePath: string | undefined;
         try {
-          imagePath = await generateGeminiImage(generated.imagePrompt || konu);
+          const infographicPrompt = generateDynamicInfographicPrompt({
+            ...generated.infographicData,
+            style: (generated.infographicData as any).style || "random",
+          });
+          imagePath = await generateGeminiImage(infographicPrompt);
         } catch (imgErr: any) {
           console.error(
             "⚠️ Görsel üretilemedi, bu haber atlanıyor:",
