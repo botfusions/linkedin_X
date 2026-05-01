@@ -412,6 +412,22 @@ export interface InfographicData {
   style?: "blueprint" | "cyberpunk" | "minimalist" | "3d" | "random";
 }
 
+// Stil rotasyon takibi - her çağrıda sıradaki stil kullanılır
+const STYLE_ORDER: Array<"blueprint" | "cyberpunk" | "minimalist" | "3d"> = [
+  "blueprint",
+  "cyberpunk",
+  "minimalist",
+  "3d",
+];
+let styleIndex = Math.floor(Math.random() * STYLE_ORDER.length);
+
+function getNextStyle(): "blueprint" | "cyberpunk" | "minimalist" | "3d" {
+  const style = STYLE_ORDER[styleIndex % STYLE_ORDER.length]!;
+  styleIndex++;
+  console.log(`🎨 İnfografik stili: ${style} (sıra: ${(styleIndex - 1) % STYLE_ORDER.length + 1}/${STYLE_ORDER.length})`);
+  return style;
+}
+
 /**
  * Verilen verilere göre 'Enterprise Technology Map' (Kurumsal Teknoloji Haritası) yapısında,
  * yüksek yoğunluklu ve profesyonel bir şema promptu üretir.
@@ -429,11 +445,8 @@ export function generateDynamicInfographicPrompt(
     "3d": "Visual Style: '3D Infrastructure Matrix'. Realistic 3D floating modules connected by glass fiber-optic tubes, professional studio lighting.",
   };
 
-  const keys = Object.keys(stylePool) as (keyof typeof stylePool)[];
-  const selectedStyleKey: keyof typeof stylePool =
-    data.style === "random" || !data.style
-      ? keys[Math.floor(Math.random() * keys.length)]!
-      : (data.style as any); // Cast because we know style is valid or handled by the check above
+  // LLM'den gelen style'ı yok say, kendi rotasyonumuzu kullan
+  const selectedStyleKey = getNextStyle();
 
   // Veri Bölümü: Her başlığın altına teknik alt maddeler (hallucination-free) eklemesi için talimat
   const dataDetails = data.keyStats
