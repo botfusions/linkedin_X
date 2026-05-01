@@ -3,7 +3,9 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const IMGBB_API_KEY = process.env.IMGBB_API_KEY || "";
+function getImgbbKey(): string {
+  return process.env.IMGBB_API_KEY || "";
+}
 
 /**
  * Gemini'den dönen Base64 piksellerini alır,
@@ -14,6 +16,7 @@ const IMGBB_API_KEY = process.env.IMGBB_API_KEY || "";
 export async function uploadBase64ToHosting(
   base64Data: string,
 ): Promise<string> {
+  const IMGBB_API_KEY = getImgbbKey();
   if (!IMGBB_API_KEY) {
     throw new Error(
       "❌ Hata: IMGBB_API_KEY .env dosyasında bulunamadı! Görsel internete açılamıyor.",

@@ -16,7 +16,9 @@ import axios from "axios";
 import dotenv from "dotenv";
 dotenv.config();
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "";
+function getOpenRouterKey(): string {
+  return process.env.OPENROUTER_API_KEY || "";
+}
 
 // ─── Skorlama Motoru ───
 
@@ -128,6 +130,7 @@ export async function autoRevisePost(
 ): Promise<string> {
   if (result.percentage >= 80) return post;
 
+  const OPENROUTER_API_KEY = getOpenRouterKey();
   if (!OPENROUTER_API_KEY) {
     console.warn(
       "OPENROUTER_API_KEY yok, AI revize atlanıyor. Manuel düzeltme gerekli.",

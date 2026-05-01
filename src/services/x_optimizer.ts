@@ -5,7 +5,9 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "";
+function getOpenRouterKey(): string {
+  return process.env.OPENROUTER_API_KEY || "";
+}
 
 export interface XOptimizationResult {
   totalScore: number;
@@ -94,6 +96,7 @@ GÖREV:
 SADECE düzeltilmiş post metnini döndür.`;
 
     try {
+      const OPENROUTER_API_KEY = getOpenRouterKey();
       const response = await axios.post(
         "https://openrouter.ai/api/v1/chat/completions",
         {

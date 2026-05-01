@@ -5,9 +5,13 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// API Anahtarları (env üzerinden)
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "";
-const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY || "";
+// API Anahtarları - her çağrıda process.env'den oku (Supabase late-load uyumlu)
+function getOpenRouterKey(): string {
+  return process.env.OPENROUTER_API_KEY || "";
+}
+function getPerplexityKey(): string {
+  return process.env.PERPLEXITY_API_KEY || "";
+}
 
 /**
  * 1. Adım: Perplexity ile Canlı, Güncel Online Araştırma Yapma
@@ -15,8 +19,9 @@ const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY || "";
 export async function researchTopicWithPerplexity(
   topic: string,
 ): Promise<string> {
+  const PERPLEXITY_API_KEY = getPerplexityKey();
   if (!PERPLEXITY_API_KEY) {
-    console.warn("⚠️ Uyarı: PERPLEXITY_API_KEY tanımlı değil.");
+    console.warn("⚠️ Uyarı: PERPLEXITY_API_KEY tanimli degil.");
     return `Bilgi bulunamadı. Lütfen '${topic}' hakkında genel geçer bilgileri kullan.`;
   }
 
@@ -90,8 +95,9 @@ export async function generateContentWithGemini(
   xPost: string;
   infographicData: any;
 }> {
+  const OPENROUTER_API_KEY = getOpenRouterKey();
   if (!OPENROUTER_API_KEY) {
-    throw new Error("❌ Hata: OPENROUTER_API_KEY eksik!");
+    throw new Error("OPENROUTER_API_KEY eksik!");
   }
 
   let agentRules = "";
@@ -195,6 +201,7 @@ export async function generateShortContentWithGemini(
   researchData: string,
   systemPrompt: string,
 ) {
+  const OPENROUTER_API_KEY = getOpenRouterKey();
   try {
     const finalSystemPrompt = `
       ${systemPrompt}
@@ -268,6 +275,7 @@ export async function generateOptimizedImagePrompt(
   researchData: string,
   basePrompt: string,
 ) {
+  const OPENROUTER_API_KEY = getOpenRouterKey();
   try {
     const now = new Date();
     const formattedDate = now.toLocaleDateString("tr-TR", {
@@ -419,6 +427,7 @@ export async function generateNewsContent(
   xPost: string;
   infographicData: any;
 }> {
+  const OPENROUTER_API_KEY = getOpenRouterKey();
   if (!OPENROUTER_API_KEY) {
     throw new Error("OPENROUTER_API_KEY eksik!");
   }
