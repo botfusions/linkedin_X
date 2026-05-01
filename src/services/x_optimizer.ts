@@ -91,7 +91,7 @@ GÖREV:
 4. "Precision in every byte" felsefesini hissettir.
 5. X Premium avantajını (uzun metin) kaliteyi artırmak için kullan (280-1000 karakter), ama boş laf kalabalığı yapma.
 6. İlk satırda (Hook) çok iddialı ol.
-7. Hashtag sayısını 1-2 yap.
+7. Hashtag sayısını 2-3 yap.
 
 SADECE düzeltilmiş post metnini döndür.`;
 

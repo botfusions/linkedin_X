@@ -121,7 +121,7 @@ export async function generateContentWithGemini(
 
       ━━━ AJAN 2: X VİZYONERİ (Antigravity Agent) ━━━
       Kişilik: Cyberpunk, vizyoner, "Her baytta hassasiyet" felsefesini savunan teknoloji lideri.
-      Görev: X (Twitter) için kısa, etkili ve merak uyandırıcı post hazırlar. Max 2 hashtag. TÜM METİN TÜRKÇE OLMALIDIR.
+      Görev: X (Twitter) için kısa, etkili ve merak uyandırıcı post hazırlar. Max 3 hashtag. TÜM METİN TÜRKÇE OLMALIDIR.
 
       ━━━ TÜRKÇE İNSANİ YAZIM KURALLARI ━━━
       1. TDK İMLA: de/da, ki, mı/mi hatasız. Unvanlar küçük harf.
@@ -480,7 +480,7 @@ AEO → AI yanıtlarında otorite
 ━━━ X (TWITTER) İÇERIGI ━━━
 - Maksimum 280 karakter
 - Kisa, vurucu, merak uyandiran
-- Max 2-3 hashtag
+- Max 3-4 hashtag
 - Ayni haberin Twitter versiyonu
 
 ━━━ GORSELIK PROMPTU (INGILIZCE) ━━━

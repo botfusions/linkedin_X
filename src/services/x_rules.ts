@@ -104,7 +104,7 @@ export const X_RULES: Rule[] = [
     id: "x_hashtag_limit",
     name: "X Hashtag Sayısı",
     category: "algorithm",
-    description: "X'te 1-2 hashtag idealdir",
+    description: "X'te 2-3 hashtag idealdir",
     weight: 8,
     check: (post: string): RuleResult => {
       const count = extractHashtags(post).length;
@@ -113,16 +113,16 @@ export const X_RULES: Rule[] = [
           passed: false,
           score: 40,
           message: "Hashtag yok",
-          suggestion: "En az 1-2 hashtag ekleyin.",
+          suggestion: "En az 2-3 hashtag ekleyin.",
         };
-      if (count > 3)
+      if (count > 4)
         return {
           passed: false,
           score: 20,
           message: `${count} hashtag — spam riski!`,
           suggestion: "Hashtag sayısını 2-3 ile sınırlayın.",
         };
-      if (count >= 1 && count <= 2)
+      if (count >= 2 && count <= 3)
         return { passed: true, score: 100, message: "İdeal hashtag sayısı" };
       return { passed: true, score: 80, message: `${count} hashtag` };
     },
