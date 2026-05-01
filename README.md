@@ -1,4 +1,4 @@
-# Botfusions Autonomous Content Engine (v2.6.1)
+# Botfusions Autonomous Content Engine (v2.7)
 
 LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
@@ -14,7 +14,7 @@ LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 - **Supabase:** API key deposu + LinkedIn token persistence + yayin takip tablosu
 - **Telegram Bildirim:** Her yayinda rapor, hatalarda alarm
 - **Docker + Coolify:** VPS'te 7/24 otonom calisma
-- **Ban Korumasi:** Postlar arasi 3-5dk bekleme, token yoksa sessizce atlama
+- **Ban Korumasi:** Postlar arasi 1-2dk bekleme, token yoksa sessizce atlama
 
 ---
 
@@ -42,7 +42,7 @@ src/
 ├── index.ts                  # Tek seferlik calistirma
 └── services/
     ├── agentFlow.ts          # Hava durumu + Excel akis mantigi
-    ├── llm.ts                # Perplexity arastirma + OpenRouter (Gemini 2.5 Pro) icerik + gorsel prompt
+    ├── llm.ts                # Perplexity arastirma + OpenRouter (Gemini 2.0 Flash) icerik + gorsel prompt
     ├── google.ts             # Google Sheets (GEO) entegrasyonu
     ├── rss.ts                # Google News RSS okuma + parse
     ├── gemini_image.ts       # Gemini ile gorsel uretim + kayit
@@ -148,7 +148,7 @@ Istanbul hava durumuna göre her sabah yüksek sadakatli, sinematik ve modern ma
 
 Excel veya RSS konularini profesyonel teknoloji haritalarina donusturur.
 
-- **Dinamik Stil Rotasyonu:** `blueprint`, `cyberpunk`, `minimalist` ve `3d matrix` stilleri arasinda her paylasimda otomatik ve gercek zamanli rotasyon yapar.
+- **Dinamik Stil Rotasyonu:** `blueprint`, `cyberpunk`, `minimalist` ve `3d matrix` stilleri arasinda sunucu-taraflı sıralı döngü (LLM'e bağımlı değil).
 - **Yüksek Yoğunluklu Bilgi:** 6-8 farkli bilgi kutucugu ve 3-4 detayli alt madde ile "hallucination-free" teknik semalar.
 - **Dil Kontrolü:** Tum basliklar, metrikler ve detaylar Turkce olarak uretilir.
 - **Kurumsal Estetik:** `botfusions` watermark ve profesyonel ikonografi (guvenlik icin kalkan, AI icin cip vb.).
@@ -215,7 +215,7 @@ npm run scheduler
 | Bilesen       | Teknoloji                   |
 | ------------- | --------------------------- |
 | Core          | Node.js 20+, TypeScript     |
-| LLM           | OpenRouter (Gemini 2.5 Pro) |
+| LLM           | OpenRouter (Gemini 2.0 Flash) |
 | Arastirma     | Perplexity Sonar            |
 | Gorsel        | Gemini 3.1 Flash Image      |
 | Veri Kaynagi  | Google Sheets API           |
@@ -260,7 +260,7 @@ Aciklama...
 | Senaryo             | Koruma                                        |
 | ------------------- | --------------------------------------------- |
 | Scheduler tetikleme | 2 dakika rastgele erteleme                    |
-| RSS haberler arasi  | 3-5 dakika rastgele bekleme                   |
+| RSS haberler arasi  | 1-2 dakika bekleme (tek haber)               |
 | Token yoksa         | LinkedIn sessizce atlanir, hata bildirimi yok |
 | Bos metin           | Post gonderilmez (guvenlik bariyeri)          |
 | Gorsel uretilemezse | Post gonderilmez, sonraki habere gecilir      |
@@ -353,6 +353,9 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 | LinkedIn false positive  | Token yokken "yayinlandi" raporlanmiyor mu dogrula                       |
 | Hayalet Paylasim (Ghost) | Import sırasında RSS workflow tetiklenmiyor mu dogrula (v2.6.1 fix)      |
 | Stil Rotasyonu           | Her postta farkli stil (3D, Cyber, vb.) uretiliyor mu dogrula            |
+| Supabase late-load       | Container redeploy sonrasi API key'ler Supabase'ten geliyor mu dogrula   |
+| Tek haber                | RSS agent her calismada sadece 1 haber isliyor mu dogrula                |
+| X hashtag                | X postlarinda 2-3 hashtag var mi dogrula                                  |
 
 ### 10. Hayalet Paylasim (Ghost Posting) - v2.6.1
 
@@ -363,8 +366,24 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 ### 11. Gorsel Stil Sabitligi
 
 - **Sorun:** AI hep ayni (minimalist) stilde gorsel uretiyordu.
-- **Neden:** Sistem promptunda "minimalist" anahtar kelimesi baskındı ve rotasyon mantığı statikti.
-- **Cozum:** Prompt kuralları esnetildi ve `optimizer.ts` içinde `Math.random()` ile her seferinde zorunlu stil rotasyonu eklendi.
+- **Neden:** LLM (Gemini) her seferinde aynı stili seciyordu, Math.random() rotasyonu yeterli degildi.
+- **Cozum:** `optimizer.ts`'de sunucu-taraflı sıralı stil döngüsü (blueprint → cyberpunk → minimalist → 3d) uygulandı. LLM'in stil secimine bagimlilik kaldirildi.
+
+### 12. Supabase Late-Load API Key Bug (v2.7)
+
+- **Sorun:** VPS'te `OPENROUTER_API_KEY eksik!` ve `Telegram: BOT_TOKEN tanimli degil` hatalari.
+- **Neden:** API key'ler modül import aninda `const KEY = process.env.KEY` seklinde okunuyordu. Supabase'den env yukleme (`initEnvFromSupabase()`) daha sonra calisiyordu, bu yüzden sabitler bos kaliyordu.
+- **Cozum:** Tum modül-seviye sabitler (llm, optimizer, x_optimizer, imageHosting, telegram) lazy getter fonksiyonlara cevrildi. Her cagrida `process.env`'den tekrar okunuyor.
+
+### 13. RSS Cift Haber → Tek Haber (v2.7)
+
+- **Sorun:** RSS her calismada 2 haber cekip paylasiyordu, spam riski.
+- **Cozum:** 3 haber cek, 1 tanesini sec. Ban koruması bekleme suresi 1-2 dakikaya dusuruldu.
+
+### 14. X Hashtag Sayisi Dusuk (v2.7)
+
+- **Sorun:** X postlarinda sadece 1 hashtag cikiyordu.
+- **Cozum:** X hashtag kurali 2-3 ideal olarak guncellendi, optimizer ve LLM prompt'lari guncellendi.
 
 ---
 
