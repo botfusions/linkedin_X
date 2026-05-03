@@ -40,10 +40,8 @@ function safeCron(fn: () => Promise<void>): () => void {
 console.log("⏰ Botfusions Zamanlayici Baslatildi...");
 console.log("📅 Gunluk Program (7/24 Aktif):");
 console.log("   - 08:00: Istanbul Hava Durumu (LinkedIn + X)");
-console.log("   - 10:00: RSS Haber (LinkedIn + X)");
-console.log("   - 13:00: Excel Otonom Icerik (LinkedIn + X)");
-console.log("   - 16:00: RSS Haber (LinkedIn + X)");
-console.log("   - 17:00: Excel Otonom Icerik (LinkedIn + X)");
+console.log("   - 10:00: Excel Otonom Icerik (LinkedIn + X)");
+console.log("   - 16:30: RSS Haber (LinkedIn + X)");
 
 const WEATHER_TEXT_PROMPT = `
 Sen Botfusions'in sosyal medya editorusun.
@@ -94,46 +92,24 @@ cron.schedule(
   { timezone: "Europe/Istanbul" },
 );
 
-// 10:00 - RSS Haber
+// 10:00 - Excel Postu
 cron.schedule(
   "0 10 * * *",
   safeCron(async () => {
-    console.log("🚀 [10:00] RSS haber postu hazirlaniyor...");
-    await randomDelay();
-    await runRSSNewsWorkflow();
-  }),
-  { timezone: "Europe/Istanbul" },
-);
-
-// 13:00 - Excel Postu
-cron.schedule(
-  "0 13 * * *",
-  safeCron(async () => {
-    console.log("🚀 [13:00] Gun ortasi postu (LinkedIn + X) hazirlaniyor...");
+    console.log("🚀 [10:00] Excel konu postu hazirlaniyor...");
     await randomDelay();
     await runAutonomousWorkflow();
   }),
   { timezone: "Europe/Istanbul" },
 );
 
-// 16:00 - RSS Haber
+// 16:30 - RSS Haber
 cron.schedule(
-  "0 16 * * *",
+  "30 16 * * *",
   safeCron(async () => {
-    console.log("🚀 [16:00] RSS haber postu hazirlaniyor...");
+    console.log("🚀 [16:30] RSS haber postu hazirlaniyor...");
     await randomDelay();
     await runRSSNewsWorkflow();
-  }),
-  { timezone: "Europe/Istanbul" },
-);
-
-// 17:00 - Excel Postu
-cron.schedule(
-  "0 17 * * *",
-  safeCron(async () => {
-    console.log("🚀 [17:00] Gun sonu postu (LinkedIn + X) hazirlaniyor...");
-    await randomDelay();
-    await runAutonomousWorkflow();
   }),
   { timezone: "Europe/Istanbul" },
 );

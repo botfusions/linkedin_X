@@ -184,7 +184,7 @@ export async function runWeatherPostFlow(
     let xError = "";
     let xUrl = "";
     try {
-      const xResult = await createXPost(xPost, imagePath);
+      const xResult = await createXPost(xPost, imagePath, "İstanbul Hava Durumu");
       if (xResult) {
         console.log("✅ X (Twitter) hava durumu postu yayınlandı.");
         xSuccess = true;

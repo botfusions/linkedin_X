@@ -209,7 +209,7 @@ export async function runAutonomousWorkflow() {
         let xError = "";
         let xUrl = "";
         try {
-          const xResult = await createXPost(optimizedX.finalPost, imagePath);
+          const xResult = await createXPost(optimizedX.finalPost, imagePath, konu);
           if (xResult) {
             console.log("✅ X (Twitter) paylasimi basarili.");
             xSuccess = true;

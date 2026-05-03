@@ -102,7 +102,7 @@ export async function runRSSNewsWorkflow() {
       let xError = "";
       let xUrl = "";
       try {
-        const xResult = await createXPost(optimizedX.finalPost, imagePath);
+        const xResult = await createXPost(optimizedX.finalPost, imagePath, article.title);
         if (xResult) {
           console.log("✅ X haber paylasimi basarili.");
           xSuccess = true;
