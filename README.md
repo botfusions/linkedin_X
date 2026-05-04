@@ -402,6 +402,17 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 - **Sonuc:** Risk skoru 60+ olan postlar otomatik reddedilir.
 - **Entegrasyon:** RSS, Excel ve Hava Durumu akislarinda gonderi oncesi denetim.
 
+### 17. Excel Sutun Eslestirme Fix - Meta Sutun Fallback (4 Mayis 2026)
+
+- **Sorun:** Excel akisinda konu "undefined" olarak kaydediliyordu, 10:00 postu hic paylasilmiyordu.
+- **Neden:** Google Sheets'in ilk sutun basligi `"n Görünmez Trafik Hırsızı: Proxy SEO Tehdidesi..."` seklinde uzun bir metindi. Kod `"konu"`, `"topic"`, `"başlık"` gibi sabit isimlerle eslestiriyordu, hicbiriyle eslesmiyordu.
+- **Cozum:** Meta sutunlar (Status, Content, URL, Link, Image) disindaki ilk dolu sutunu otomatik konu olarak tanimayan akilli fallback eklendi (`src/autonomous_agent.ts`). 55 bekleyen kayit artik dogru topic metniyle eslesiyor.
+
+### 18. X Gonderileri Tam Durdurma (4 Mayis 2026)
+
+- **Sorun:** X hesap kilitleme riski nedeniyle gecici olarak tum X paylasimlarinin durdurulmesi gerekiyordu.
+- **Cozum:** `X_PAUSED=true` Supabase `env_config` tablosuna eklendi. VPS'te scheduler yeniden basladiginda tum X gonderileri otomatik olarak atlanacak. `createXPost()` fonksiyonu `null` donecek, hicbir tweet gonderilmeyecek. Kaldirilmak istendiginde Supabase'ten deger silinmesi yeterli.
+
 ---
 
 © 2026 Botfusions. MIT Lisans.
