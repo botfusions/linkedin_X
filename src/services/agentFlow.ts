@@ -17,6 +17,7 @@ import { generateGeminiImage } from "./gemini_image.js";
 import { getIstanbulWeather } from "./weather.js";
 import { initEnvFromSupabase, insertPublishedPost } from "./supabase.js";
 import { sendPublishNotification, sendErrorNotification } from "./telegram.js";
+import { auditPost } from "./post_auditor.js";
 import fs from "fs/promises";
 
 const SCORE_THRESHOLD = 80;
@@ -151,6 +152,38 @@ export async function runWeatherPostFlow(
       return;
     }
     // -------------------------
+
+    // ─── AGENTIC DENETIM ───
+    console.log("🔍 Agentic denetim yapılıyor...");
+    const weatherAudit = await auditPost({
+      text: linkedinPost,
+      platform: "linkedin",
+      topic: "İstanbul Hava Durumu",
+      source: "weather",
+      useLlm: false,
+    });
+    const xWeatherAudit = await auditPost({
+      text: xPost,
+      platform: "x",
+      topic: "İstanbul Hava Durumu",
+      source: "weather",
+      useLlm: false,
+    });
+
+    if (weatherAudit.riskScore > 0 || xWeatherAudit.riskScore > 0) {
+      console.log(`🔍 Denetim Skorları — LinkedIn risk: ${weatherAudit.riskScore}/100, X risk: ${xWeatherAudit.riskScore}/100`);
+      for (const reason of [...weatherAudit.reasons, ...xWeatherAudit.reasons]) {
+        console.log(`   ⚠️ ${reason}`);
+      }
+    }
+
+    if (!weatherAudit.approved) {
+      console.error("🚫 LinkedIn hava durumu DENETİM RED: Atlanıyor.");
+    }
+    if (!xWeatherAudit.approved) {
+      console.error("🚫 X hava durumu DENETİM RED: Atlanıyor.");
+    }
+    // ─── DENETIM SONU ───
 
     // 4. Paylaşımlar
     console.log("🚀 Hava durumu paylaşımları yapılıyor...");

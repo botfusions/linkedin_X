@@ -1,4 +1,4 @@
-# Botfusions Autonomous Content Engine (v2.7)
+# Botfusions Autonomous Content Engine (v2.8)
 
 LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
@@ -11,10 +11,11 @@ LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 - **Self-Improving Optimizer:** 14+ kurala gore skorlama, 80/100 altindakiler otomatik revize
 - **Gorsel Uretim Motorlari:** Dinamik Hava Durumu ve Kurumsal Infografik motorlari
 - **Canli Arastirma:** Perplexity AI ile guncel veri toplama
+- **Agentic Auditor:** LLM tabanli gonderi denetim sistemi (ban riski, duplicate, kalite)
 - **Supabase:** API key deposu + LinkedIn token persistence + yayin takip tablosu
 - **Telegram Bildirim:** Her yayinda rapor, hatalarda alarm
 - **Docker + Coolify:** VPS'te 7/24 otonom calisma
-- **Ban Korumasi:** Postlar arasi 1-2dk bekleme, token yoksa sessizce atlama
+- **Ban Korumasi:** Gunluk limit, deduplication, kill switch, otomatik kilitleme algilama
 
 ---
 
@@ -23,10 +24,8 @@ LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 | Saat (TR) | Gorev                         | Kaynak              |
 | :-------- | :---------------------------- | :------------------ |
 | **08:00** | Istanbul Hava Durumu + Gorsel | Weather API         |
-| **10:00** | RSS Haber Akisi               | Google News AI      |
-| **13:00** | Excel Konu Akisi              | Google Sheets (GEO) |
-| **16:00** | RSS Haber Akisi               | Google News AI      |
-| **17:00** | Excel Konu Akisi              | Google Sheets (GEO) |
+| **10:00** | Excel Konu Akisi              | Google Sheets (GEO) |
+| **16:30** | RSS Haber Akisi               | Google News AI      |
 
 ---
 
@@ -35,7 +34,7 @@ LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 ```
 src/
 ├── bootstrap.ts              # Giris noktasi (Supabase env yukler)
-├── scheduler.ts              # Cron motoru (5 zamanlama)
+├── scheduler.ts              # Cron motoru (3 zamanlama)
 ├── autonomous_agent.ts       # Excel konu otonom akisi
 ├── rss_agent.ts              # RSS haber otonom akisi
 ├── linkedin_auth.ts          # LinkedIn OAuth token yenileme (CLI)
@@ -47,9 +46,10 @@ src/
     ├── rss.ts                # Google News RSS okuma + parse
     ├── gemini_image.ts       # Gemini ile gorsel uretim + kayit
     ├── linkedin.ts           # LinkedIn ugcPosts API + Supabase token fallback
-    ├── x.ts                  # X (Twitter) API v2 + URL takibi
+    ├── x.ts                  # X (Twitter) API v2 + kill switch + gunluk limit + dedup
     ├── optimizer.ts          # LinkedIn skorlama + self-improve
     ├── x_optimizer.ts        # X skorlama + self-improve
+    ├── post_auditor.ts       # Agentic gonderi denetim sistemi (LLM)
     ├── rules.ts              # LinkedIn algoritma kurallari
     ├── x_rules.ts            # X algoritma kurallari
     ├── weather.ts            # Istanbul hava durumu servisi
@@ -257,13 +257,17 @@ Aciklama...
 
 ## Ban Korumasi
 
-| Senaryo             | Koruma                                        |
-| ------------------- | --------------------------------------------- |
-| Scheduler tetikleme | 2 dakika rastgele erteleme                    |
-| RSS haberler arasi  | 1-2 dakika bekleme (tek haber)               |
-| Token yoksa         | LinkedIn sessizce atlanir, hata bildirimi yok |
-| Bos metin           | Post gonderilmez (guvenlik bariyeri)          |
-| Gorsel uretilemezse | Post gonderilmez, sonraki habere gecilir      |
+| Senaryo                  | Koruma                                               |
+| ------------------------ | ---------------------------------------------------- |
+| Gunluk X post limiti     | Max 3 post/gun (hava + excel + rss)                 |
+| X kill switch            | X_PAUSED=true ile tum X postlari durdurulur         |
+| Duplicate konu           | Memory + Supabase kontrolu ile ayni konu engellenir |
+| Otomatik kilitleme       | 403/locked hatasinda X_PAUSED otomatik true olur    |
+| Scheduler tetikleme      | 0-5 dakika rastgele erteleme                        |
+| Token yoksa              | LinkedIn sessizce atlanir, hata bildirimi yok        |
+| Bos metin                | Post gonderilmez (guvenlik bariyeri)                |
+| Gorsel uretilemezse      | Post gonderilmez, sonraki habere gecilir             |
+| Agentic denetim          | Her post oncesinde LLM denetimi (ban riski, kalite) |
 
 ---
 
@@ -384,6 +388,19 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 
 - **Sorun:** X postlarinda sadece 1 hashtag cikiyordu.
 - **Cozum:** X hashtag kurali 2-3 ideal olarak guncellendi, optimizer ve LLM prompt'lari guncellendi.
+
+### 15. X Hesap Kilitleme - Spam Algilama (v2.8)
+
+- **Sorun:** X hesabi 30 Nisan-1 Mayis arasi gunde 9-10 post nedeniyle kilitlendi.
+- **Neden:** RSS coklu post + duplicate konu + ghost posting. 4 gunde ~21 X post.
+- **Cozum:** Gunluk X post limiti (max 3), Supabase+memory deduplication, X_PAUSED kill switch, otomatik 403 algilama.
+
+### 16. Agentic Gonderi Denetim Sistemi (v2.8)
+
+- **Ozellik:** Her gonderi oncesinde LLM + kural tabanli denetim.
+- **Denetim Kriterleri:** Ban riski, duplicate konu, spam kelimeleri, AI kaliplari, hashtag cesitliligi, icerik kalitesi.
+- **Sonuc:** Risk skoru 60+ olan postlar otomatik reddedilir.
+- **Entegrasyon:** RSS, Excel ve Hava Durumu akislarinda gonderi oncesi denetim.
 
 ---
 

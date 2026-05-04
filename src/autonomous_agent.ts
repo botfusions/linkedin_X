@@ -19,6 +19,7 @@ import {
   sendPublishNotification,
   sendErrorNotification,
 } from "./services/telegram.js";
+import { auditPost } from "./services/post_auditor.js";
 
 export async function runAutonomousWorkflow() {
   console.log("\n🤖 Otonom Agent Is Akisi Baslatiliyor...");
@@ -65,22 +66,22 @@ export async function runAutonomousWorkflow() {
         (k) => k.toLowerCase() === "durum" || k.toLowerCase() === "status",
       );
 
-      const konuKey = Object.keys(data).find((k) => {
+      // Meta sütunlar (bunlar konu değil)
+      const metaCols = new Set([
+        (statusColKey || "").toLowerCase(),
+        "content", "url", "link", "image", "görsel", "resim",
+      ]);
+
+      // Önce bilinen isimlerle ara, bulamazsa ilk non-meta sütunu kullan
+      const konuKey = columnNames.find((k) => {
         const lower = k.toLowerCase().replace(/\s+/g, "").replace(/[-_]/g, "");
         return (
           lower === "konu" ||
           lower === "topic" ||
           lower === "başlık" ||
           lower === "baslik" ||
-          lower === "konubaslik" ||
           lower === "title" ||
-          lower === "başliklar" ||
-          lower === "basliklar" ||
-          lower === "içerik" ||
-          lower === "icerik" ||
           lower === "subject" ||
-          lower === "content" ||
-          lower === "başlık(türkçe)" ||
           lower === "postkonu"
         );
       });
@@ -89,11 +90,12 @@ export async function runAutonomousWorkflow() {
       if (konuKey) {
         konuRaw = String(data[konuKey]);
       } else {
-        const firstNonStatusCol = columnNames.find(
-          (k) => k !== statusColKey && String(data[k] || "").trim().length > 0,
+        // İlk non-meta sütunu konu olarak kullan
+        const firstTopicCol = columnNames.find(
+          (k) => !metaCols.has(k.toLowerCase()) && String(data[k] || "").trim().length > 0,
         );
-        konuRaw = firstNonStatusCol
-          ? String(data[firstNonStatusCol])
+        konuRaw = firstTopicCol
+          ? String(data[firstTopicCol])
           : undefined;
       }
 
@@ -176,6 +178,37 @@ export async function runAutonomousWorkflow() {
           );
           continue;
         }
+
+        // ─── AGENTIC DENETIM ───
+        console.log("🔍 Agentic denetim yapılıyor...");
+        const liAudit = await auditPost({
+          text: optimizedLinkedIn.finalPost,
+          platform: "linkedin",
+          topic: konu,
+          source: "excel",
+        });
+        const xAudit = await auditPost({
+          text: optimizedX.finalPost,
+          platform: "x",
+          topic: konu,
+          source: "excel",
+        });
+
+        if (liAudit.riskScore > 0 || xAudit.riskScore > 0) {
+          console.log(`🔍 Denetim Skorları — LinkedIn risk: ${liAudit.riskScore}/100, X risk: ${xAudit.riskScore}/100`);
+          for (const reason of [...liAudit.reasons, ...xAudit.reasons]) {
+            console.log(`   ⚠️ ${reason}`);
+          }
+        }
+
+        if (!liAudit.approved && !xAudit.approved) {
+          console.error("🚫 Her iki platform da DENETİM RED: Post atlanıyor.");
+          for (const s of [...liAudit.suggestions, ...xAudit.suggestions]) {
+            console.log(`   💡 ${s}`);
+          }
+          continue;
+        }
+        // ─── DENETIM SONU ───
 
         console.log("🚀 Paylasimlar yapiliyor...");
 

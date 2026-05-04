@@ -20,6 +20,7 @@ import {
   sendPublishNotification,
   sendErrorNotification,
 } from "./services/telegram.js";
+import { auditPost } from "./services/post_auditor.js";
 
 export async function runRSSNewsWorkflow() {
   console.log("\n📰 RSS Haber Akisi Baslatiliyor...");
@@ -55,6 +56,37 @@ export async function runRSSNewsWorkflow() {
         generated.xPost,
         article.title,
       );
+
+      // ─── AGENTIC DENETIM ───
+      console.log("🔍 Agentic denetim yapılıyor...");
+      const liAudit = await auditPost({
+        text: optimizedLI.finalPost,
+        platform: "linkedin",
+        topic: article.title,
+        source: "rss",
+      });
+      const xAudit = await auditPost({
+        text: optimizedX.finalPost,
+        platform: "x",
+        topic: article.title,
+        source: "rss",
+      });
+
+      if (liAudit.riskScore > 0 || xAudit.riskScore > 0) {
+        console.log(`🔍 Denetim Skorları — LinkedIn risk: ${liAudit.riskScore}/100, X risk: ${xAudit.riskScore}/100`);
+        for (const reason of [...liAudit.reasons, ...xAudit.reasons]) {
+          console.log(`   ⚠️ ${reason}`);
+        }
+      }
+
+      if (!liAudit.approved && !xAudit.approved) {
+        console.error("🚫 Her iki platform da DENETİM RED: Post atlanıyor.");
+        for (const s of [...liAudit.suggestions, ...xAudit.suggestions]) {
+          console.log(`   💡 ${s}`);
+        }
+        continue;
+      }
+      // ─── DENETIM SONU ───
 
       console.log("🎨 Dinamik Infografik Motoru Calistiriliyor...");
       let imagePath: string | undefined;
