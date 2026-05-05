@@ -10,6 +10,7 @@
     "agent": "tsx src/autonomous_agent.ts",
     "scheduler": "tsx src/scheduler.ts",
     "rss": "tsx src/rss_agent.ts",
+    "ready-post": "tsx src/ready_post_agent.ts",
     "linkedin-auth": "tsx src/linkedin_auth.ts"
   },
   "dependencies": {

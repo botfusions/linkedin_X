@@ -77,9 +77,14 @@ function cleanJsonString(str: string): string {
   }
 
   // Remove truly problematic control characters (0-31) except \n, \r, \t
-  // then handle potential raw newlines inside string values by escaping them
   // A simpler approach that often works for LLM outputs:
-  return cleaned.replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, "");
+  cleaned = cleaned.replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, "");
+
+  // Fix invalid Unicode escape sequences: \u not followed by exactly 4 hex digits
+  // LLM sometimes generates broken escapes like \u00b (missing digit) or \uİstanbul
+  cleaned = cleaned.replace(/\\u(?![0-9a-fA-F]{4})/g, "u");
+
+  return cleaned;
 }
 
 /**

@@ -77,6 +77,61 @@ export async function fetchContentFromSheet() {
 }
 
 /**
+ * "linkedin excel" sayfasından hazır post verilerini çeker.
+ * Postlar önceden yazılmış, direkt yayınlanacak durumda.
+ */
+export async function fetchReadyPosts() {
+  if (!SERVICE_ACCOUNT_EMAIL || !PRIVATE_KEY) {
+    throw new Error(
+      "❌ Hata: GOOGLE_SERVICE_ACCOUNT_EMAIL veya GOOGLE_PRIVATE_KEY .env dosyasında bulunamadı!",
+    );
+  }
+
+  const serviceAccountAuth = new JWT({
+    email: SERVICE_ACCOUNT_EMAIL,
+    key: PRIVATE_KEY,
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+  });
+
+  try {
+    console.log("📊 Google Sheets'e bağlanılıyor (linkedin excel)...");
+    const doc = new GoogleSpreadsheet(SPREADSHEET_ID, serviceAccountAuth);
+    await doc.loadInfo();
+
+    const sheet = doc.sheetsByTitle["linkedin excel"];
+    if (!sheet) {
+      throw new Error(
+        `❌ "${doc.title}" içerisinde "linkedin excel" adında bir sayfa bulunamadı. Mevcut sayfalar: ${Object.keys(doc.sheetsByTitle).join(", ")}`,
+      );
+    }
+
+    const rows = await sheet.getRows();
+    const records = rows.map((row) => ({
+      rowNumber: row.rowNumber,
+      data: row.toObject(),
+      _rawRow: row,
+    }));
+
+    console.log(
+      `📋 "linkedin excel" sayfasından toplam ${records.length} kayıt aktarıldı.`,
+    );
+
+    for (const r of records) {
+      const cols = Object.keys(r.data);
+      console.log(`   Satır ${r.rowNumber}: [${cols.join(", ")}]`);
+      for (const col of cols) {
+        console.log(`     → ${col}: "${String(r.data[col]).substring(0, 100)}"`);
+      }
+    }
+
+    return records;
+  } catch (error: any) {
+    console.error("❌ Google Sheets Okuma Hatası (linkedin excel):", error.message);
+    throw error;
+  }
+}
+
+/**
  * Belirli bir satırı "Yayınlandı" olarak işaretler.
  * @param row GoogleSpreadsheetRow nesnesi
  */

@@ -3,6 +3,7 @@ import cron from "node-cron";
 import { runWeatherPostFlow } from "./services/agentFlow.js";
 import { runAutonomousWorkflow } from "./autonomous_agent.js";
 import { runRSSNewsWorkflow } from "./rss_agent.js";
+import { runReadyPostWorkflow } from "./ready_post_agent.js";
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ console.log("⏰ Botfusions Zamanlayici Baslatildi...");
 console.log("📅 Gunluk Program (7/24 Aktif):");
 console.log("   - 08:00: Istanbul Hava Durumu (LinkedIn + X)");
 console.log("   - 10:00: Excel Otonom Icerik (LinkedIn + X)");
+console.log("   - 14:30: Hazir Post (LinkedIn)");
 console.log("   - 16:30: RSS Haber (LinkedIn + X)");
 
 const WEATHER_TEXT_PROMPT = `
@@ -99,6 +101,17 @@ cron.schedule(
     console.log("🚀 [10:00] Excel konu postu hazirlaniyor...");
     await randomDelay();
     await runAutonomousWorkflow();
+  }),
+  { timezone: "Europe/Istanbul" },
+);
+
+// 14:30 - Hazır Post (linkedin excel sayfası)
+cron.schedule(
+  "30 14 * * *",
+  safeCron(async () => {
+    console.log("🚀 [14:30] Hazır post paylaşılıyor (linkedin excel)...");
+    await randomDelay();
+    await runReadyPostWorkflow();
   }),
   { timezone: "Europe/Istanbul" },
 );

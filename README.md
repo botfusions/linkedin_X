@@ -1,4 +1,4 @@
-# Botfusions Autonomous Content Engine (v2.8)
+# Botfusions Autonomous Content Engine (v2.9)
 
 LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
@@ -25,6 +25,7 @@ LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 | :-------- | :---------------------------- | :------------------ |
 | **08:00** | Istanbul Hava Durumu + Gorsel | Weather API         |
 | **10:00** | Excel Konu Akisi              | Google Sheets (GEO) |
+| **14:30** | Hazir Post (LinkedIn)         | Google Sheets (linkedin excel) |
 | **16:30** | RSS Haber Akisi               | Google News AI      |
 
 ---
@@ -34,9 +35,10 @@ LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 ```
 src/
 ├── bootstrap.ts              # Giris noktasi (Supabase env yukler)
-├── scheduler.ts              # Cron motoru (3 zamanlama)
+├── scheduler.ts              # Cron motoru (4 zamanlama)
 ├── autonomous_agent.ts       # Excel konu otonom akisi
 ├── rss_agent.ts              # RSS haber otonom akisi
+├── ready_post_agent.ts       # Hazir post akisi (linkedin excel sayfasi)
 ├── linkedin_auth.ts          # LinkedIn OAuth token yenileme (CLI)
 ├── index.ts                  # Tek seferlik calistirma
 └── services/
@@ -412,6 +414,22 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 
 - **Sorun:** X hesap kilitleme riski nedeniyle gecici olarak tum X paylasimlarinin durdurulmesi gerekiyordu.
 - **Cozum:** `X_PAUSED=true` Supabase `env_config` tablosuna eklendi. VPS'te scheduler yeniden basladiginda tum X gonderileri otomatik olarak atlanacak. `createXPost()` fonksiyonu `null` donecek, hicbir tweet gonderilmeyecek. Kaldirilmak istendiginde Supabase'ten deger silinmesi yeterli.
+
+### 19. Hazir Post Akisi - LinkedIn (5 Mayis 2026)
+
+- **Ozellik:** "linkedin excel" Google Sheets sayfasindan hazir postlari otomatik LinkedIn'e paylasir.
+- **Zamanlama:** Her gun 14:30'da calisir.
+- **Akis:** Sheet'ten post metni + Google Drive gorsel URL'sini alir → gorseli indirir → LinkedIn'e gorsel olarak yukler → postu paylasir → durumu "Done" yapar.
+- **LLM Kullanmiyor:** Perplexity, Gemini veya optimizer adimlari yok. Postlar onceden yazilmis, direkt yayinlanir.
+- **Gorsel:** Google Drive `/file/d/ID/view` linkleri otomatik olarak `uc?export=download` direct URL'e cevrilir. Gorsel link olarak degil, gercek resim olarak paylasilir.
+- **Sutun Yapisi:** `linkedin post` (post metni), `url` (gorsel URL), `status` (durum: todo/done).
+- **Komut:** `npm run ready-post` ile tek seferlik calistirma.
+
+### 20. JSON Unicode Escape Fix (5 Mayis 2026)
+
+- **Sorun:** Hava durumu akisinda "Bad Unicode escape in JSON at position 109" hatasi.
+- **Neden:** LLM (Gemini) JSON ciktida gecersiz `\u` escape dizileri uretiyordu (`\u00b` gibi eksik haneli veya `\uIst` gibi gecersiz).
+- **Cozum:** `cleanJsonString()` fonksiyonuna invalid `\u` escape duzeltme regex'i eklendi: `/\\u(?![0-9a-fA-F]{4})/g`.
 
 ---
 
