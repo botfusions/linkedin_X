@@ -7,15 +7,18 @@ dotenv.config();
 // Kullanıcının bağlantısını ilettiği Spreadsheet ID'si:
 const SPREADSHEET_ID = "1w-RqIicfrQlw2tM0Z9XJtuNCtrSCY9ALbbo4PEN7-B0";
 
-const SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || "";
-let formattedKey = (process.env.GOOGLE_PRIVATE_KEY || "")
-  .replace(/"/g, "")
-  .replace(/'/g, "")
-  .replace(/\\n/gm, "\n")
-  .replace(/\\\//g, "/")
-  .replace(/\r/g, "");
+function getGoogleCredentials() {
+  const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || "";
+  const privateKey = (process.env.GOOGLE_PRIVATE_KEY || "")
+    .replace(/"/g, "")
+    .replace(/'/g, "")
+    .replace(/\\n/gm, "\n")
+    .replace(/\\\//g, "/")
+    .replace(/\r/g, "")
+    .trim();
 
-const PRIVATE_KEY = formattedKey.trim();
+  return { serviceAccountEmail, privateKey };
+}
 
 /**
  * Google Sheets'ten "GEO" sayfasındaki verileri çeker.
@@ -23,7 +26,8 @@ const PRIVATE_KEY = formattedKey.trim();
  * Botfusions n8n sürecindeki "Bağlantı Kontrolü & Veri Alma" adımına denk gelir.
  */
 export async function fetchContentFromSheet() {
-  if (!SERVICE_ACCOUNT_EMAIL || !PRIVATE_KEY) {
+  const { serviceAccountEmail, privateKey } = getGoogleCredentials();
+  if (!serviceAccountEmail || !privateKey) {
     throw new Error(
       "❌ Hata: GOOGLE_SERVICE_ACCOUNT_EMAIL veya GOOGLE_PRIVATE_KEY .env dosyasında bulunamadı!",
     );
@@ -31,8 +35,8 @@ export async function fetchContentFromSheet() {
 
   // 1. Service Account Yetkilendirmesi oluşturma
   const serviceAccountAuth = new JWT({
-    email: SERVICE_ACCOUNT_EMAIL,
-    key: PRIVATE_KEY,
+    email: serviceAccountEmail,
+    key: privateKey,
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
 
@@ -81,15 +85,16 @@ export async function fetchContentFromSheet() {
  * Postlar önceden yazılmış, direkt yayınlanacak durumda.
  */
 export async function fetchReadyPosts() {
-  if (!SERVICE_ACCOUNT_EMAIL || !PRIVATE_KEY) {
+  const { serviceAccountEmail, privateKey } = getGoogleCredentials();
+  if (!serviceAccountEmail || !privateKey) {
     throw new Error(
       "❌ Hata: GOOGLE_SERVICE_ACCOUNT_EMAIL veya GOOGLE_PRIVATE_KEY .env dosyasında bulunamadı!",
     );
   }
 
   const serviceAccountAuth = new JWT({
-    email: SERVICE_ACCOUNT_EMAIL,
-    key: PRIVATE_KEY,
+    email: serviceAccountEmail,
+    key: privateKey,
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
 

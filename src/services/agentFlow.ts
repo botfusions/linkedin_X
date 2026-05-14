@@ -1,118 +1,14 @@
-import { fetchContentFromSheet, updateRowStatus } from "./google.js";
 import {
-  researchTopicWithPerplexity,
-  generateContentWithGemini,
-  generateImageWithGemini,
   generateShortContentWithGemini,
   generateOptimizedImagePrompt,
 } from "./llm.js";
 import { createLinkedInPost } from "./linkedin.js";
 import { createXPost } from "./x.js";
-import {
-  scorePost,
-  optimizeWithSelfImprove,
-  generateDynamicInfographicPrompt,
-} from "./optimizer.js";
 import { generateGeminiImage } from "./gemini_image.js";
 import { getIstanbulWeather } from "./weather.js";
 import { initEnvFromSupabase, insertPublishedPost } from "./supabase.js";
 import { sendPublishNotification, sendErrorNotification } from "./telegram.js";
 import { auditPost } from "./post_auditor.js";
-import fs from "fs/promises";
-
-const SCORE_THRESHOLD = 80;
-
-export async function runExcelPostFlow() {
-  console.log("\n📊 Excel İçerik Akışı Başlatılıyor...");
-
-  try {
-    const records = await fetchContentFromSheet();
-    const targetRecord = records.find((r) => {
-      if (r.rowNumber < 38) return false;
-      const statusKey =
-        Object.keys(r.data).find((k) => k.toLowerCase() === "status") ||
-        "Status";
-      const statusValue = String(r.data[statusKey] || "")
-        .trim()
-        .toLowerCase();
-      return !(statusValue === "done" || statusValue === "bitti");
-    });
-
-    if (!targetRecord) {
-      console.log("✅ İşlenecek Excel konusu kalmadı!");
-      return;
-    }
-
-    const topicKey =
-      Object.keys(targetRecord.data).find((k) => k.toLowerCase() === "topic") ||
-      "Topic";
-    const topic = targetRecord.data[topicKey];
-
-    console.log(`\n🎯 Konu (Satır ${targetRecord.rowNumber}): "${topic}"\n`);
-
-    const researchData = await researchTopicWithPerplexity(topic);
-    const processedContent = await generateContentWithGemini(
-      topic,
-      researchData,
-    );
-
-    let finalPostText = processedContent.postText;
-    let infographicData = processedContent.infographicData;
-
-    // Dinamik İnfografik Motorunu Kullan
-    let imagePrompt = "";
-    if (infographicData) {
-      console.log("🛠️ Dinamik İnfografik Motoru Çalıştırılıyor...");
-      imagePrompt = generateDynamicInfographicPrompt({
-        ...infographicData,
-        style: infographicData.style || "random",
-      });
-    } else {
-      console.warn(
-        "⚠️ Uyarı: infographicData bulunamadı, varsayılan prompt kullanılıyor.",
-      );
-      imagePrompt =
-        "Clean professional technology infographic, 4 panels, Turkish text.";
-    }
-
-    const initialScore = scorePost(finalPostText);
-    if (initialScore.percentage < SCORE_THRESHOLD) {
-      console.log(
-        `\n🔄 Skor: ${initialScore.percentage}/100. İyileştiriliyor...`,
-      );
-      const optimized = await optimizeWithSelfImprove(
-        finalPostText,
-        String(topic),
-      );
-      finalPostText = optimized.finalPost;
-    }
-
-    console.log("\n🎨 Görsel üretiliyor...");
-    const base64Image = await generateImageWithGemini(imagePrompt);
-
-    // --- GÜVENLİK BARİYERİ ---
-    if (!finalPostText || finalPostText.trim().length < 10) {
-      console.error(
-        "❌ HATA: Post metni boş veya çok kısa! Paylaşım iptal edildi.",
-      );
-      return;
-    }
-    if (!base64Image || base64Image.length < 100) {
-      console.error("❌ HATA: Görsel üretilemedi! Paylaşım iptal edildi.");
-      return;
-    }
-    // -------------------------
-
-    const isSuccess = await createLinkedInPost(finalPostText, base64Image);
-
-    if (isSuccess) {
-      console.log(`\n🎉 "${topic}" yayınlandı!`);
-      await updateRowStatus(targetRecord._rawRow, "Done");
-    }
-  } catch (error: any) {
-    console.error("🔥 Excel Akış Hatası:", error.message);
-  }
-}
 
 export async function runWeatherPostFlow(
   weatherPrompt: string,

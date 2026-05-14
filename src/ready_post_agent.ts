@@ -4,6 +4,7 @@ import path from "path";
 import { fetchReadyPosts } from "./services/google.js";
 import { updateRowStatus } from "./services/google.js";
 import { createLinkedInPost } from "./services/linkedin.js";
+import { createXPost } from "./services/x.js";
 import { initEnvFromSupabase, insertPublishedPost } from "./services/supabase.js";
 import {
   sendPublishNotification,
@@ -168,6 +169,13 @@ export async function runReadyPostWorkflow() {
       return;
     }
 
+    // --- Konu Belirle (Supabase ve X için) ---
+    const topicKey =
+      detectColumn(data, [
+        "konu", "topic", "başlık", "baslik", "title", "subject",
+      ]) || postKey;
+    const topic = String(data[topicKey]).substring(0, 100);
+
     // --- LinkedIn Paylaşımı ---
     let linkedinSuccess = false;
     let linkedinError = "";
@@ -193,34 +201,51 @@ export async function runReadyPostWorkflow() {
       }
     }
 
+    // --- X Paylaşımı ---
+    let xSuccess = false;
+    let xError = "";
+    let xUrl = "";
+
+    try {
+      const xResult = await createXPost(postText, imagePath, topic || `Hazır Post (Satır ${rowNumber})`);
+      if (xResult) {
+        console.log("✅ X hazır post yayınlandı!");
+        xSuccess = true;
+        xUrl = xResult;
+      } else {
+        xError = "createXPost null döndü";
+        console.error("❌ X paylaşımı başarısız (null döndü).");
+      }
+    } catch (err: any) {
+      xError = err.message;
+      console.error("❌ X paylaşım hatası:", xError);
+    }
+
     // --- Durum Güncelle ---
-    if (linkedinSuccess) {
+    if (linkedinSuccess || xSuccess) {
       await updateRowStatus(pending._rawRow, "Done");
       console.log(`📊 Sheet güncellendi: Satır ${rowNumber} → Done`);
     }
 
     // --- Supabase Kayıt ---
-    const topicKey =
-      detectColumn(data, [
-        "konu", "topic", "başlık", "baslik", "title", "subject",
-      ]) || postKey;
-    const topic = String(data[topicKey]).substring(0, 100);
-
     await insertPublishedPost({
       topic: topic || `Hazır Post (Satır ${rowNumber})`,
       linkedin_post: postText,
+      x_post: postText,
       image_url: imagePath,
       linkedin_url: linkedinUrl || undefined,
+      x_url: xUrl || undefined,
       source: "excel",
-      status: linkedinSuccess ? "published" : "failed",
+      status: linkedinSuccess || xSuccess ? "published" : "failed",
     });
 
     // --- Telegram Bildirim ---
     await sendPublishNotification({
       topic: topic || `Hazır Post (Satır ${rowNumber})`,
       linkedinSuccess,
-      xSuccess: false,
+      xSuccess,
       linkedinError: linkedinError || undefined,
+      xError: xError || undefined,
       source: "ready_post",
     });
 
@@ -232,7 +257,7 @@ export async function runReadyPostWorkflow() {
       // Silinmezse sorun değil
     }
 
-    if (linkedinSuccess) {
+    if (linkedinSuccess || xSuccess) {
       console.log("\n✨ Hazır post akışı başarıyla tamamlandı.");
     } else {
       console.log("\n❌ Hazır post akışı başarısız.");

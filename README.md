@@ -1,4 +1,4 @@
-# Botfusions Autonomous Content Engine (v2.9)
+# Botfusions Autonomous Content Engine (v3.1)
 
 LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
@@ -25,7 +25,7 @@ LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 | :-------- | :---------------------------- | :------------------ |
 | **08:00** | Istanbul Hava Durumu + Gorsel | Weather API         |
 | **10:00** | Excel Konu Akisi              | Google Sheets (GEO) |
-| **14:30** | Hazir Post (LinkedIn)         | Google Sheets (linkedin excel) |
+| **14:30** | Hazir Post (LinkedIn + X)     | Google Sheets (linkedin excel) |
 | **16:30** | RSS Haber Akisi               | Google News AI      |
 
 ---
@@ -57,7 +57,6 @@ src/
     ├── weather.ts            # Istanbul hava durumu servisi
     ├── supabase.ts           # Supabase client + CRUD + LinkedIn token persistence
     ├── telegram.ts           # Telegram bildirim servisi
-    └── imageHosting.ts       # ImgBB gorsel barindirma
 ```
 
 ---
@@ -150,7 +149,7 @@ Istanbul hava durumuna göre her sabah yüksek sadakatli, sinematik ve modern ma
 
 Excel veya RSS konularini profesyonel teknoloji haritalarina donusturur.
 
-- **Dinamik Stil Rotasyonu:** `blueprint`, `cyberpunk`, `minimalist` ve `3d matrix` stilleri arasinda sunucu-taraflı sıralı döngü (LLM'e bağımlı değil).
+- **Dinamik Stil Rotasyonu:** `blueprint`, `cyberpunk`, `minimalist`, `3d matrix` ve `editorial` stilleri arasinda sunucu-taraflı sıralı döngü (LLM'e bağımlı değil).
 - **Yüksek Yoğunluklu Bilgi:** 6-8 farkli bilgi kutucugu ve 3-4 detayli alt madde ile "hallucination-free" teknik semalar.
 - **Dil Kontrolü:** Tum basliklar, metrikler ve detaylar Turkce olarak uretilir.
 - **Kurumsal Estetik:** `botfusions` watermark ve profesyonel ikonografi (guvenlik icin kalkan, AI icin cip vb.).
@@ -373,13 +372,13 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 
 - **Sorun:** AI hep ayni (minimalist) stilde gorsel uretiyordu.
 - **Neden:** LLM (Gemini) her seferinde aynı stili seciyordu, Math.random() rotasyonu yeterli degildi.
-- **Cozum:** `optimizer.ts`'de sunucu-taraflı sıralı stil döngüsü (blueprint → cyberpunk → minimalist → 3d) uygulandı. LLM'in stil secimine bagimlilik kaldirildi.
+- **Cozum:** `optimizer.ts`'de sunucu-taraflı sıralı stil döngüsü (blueprint → cyberpunk → minimalist → 3d → editorial) uygulandı. LLM'in stil secimine bagimlilik kaldirildi.
 
 ### 12. Supabase Late-Load API Key Bug (v2.7)
 
 - **Sorun:** VPS'te `OPENROUTER_API_KEY eksik!` ve `Telegram: BOT_TOKEN tanimli degil` hatalari.
 - **Neden:** API key'ler modül import aninda `const KEY = process.env.KEY` seklinde okunuyordu. Supabase'den env yukleme (`initEnvFromSupabase()`) daha sonra calisiyordu, bu yüzden sabitler bos kaliyordu.
-- **Cozum:** Tum modül-seviye sabitler (llm, optimizer, x_optimizer, imageHosting, telegram) lazy getter fonksiyonlara cevrildi. Her cagrida `process.env`'den tekrar okunuyor.
+- **Cozum:** Tum modül-seviye sabitler (llm, optimizer, x_optimizer, telegram) lazy getter fonksiyonlara cevrildi. Her cagrida `process.env`'den tekrar okunuyor.
 
 ### 13. RSS Cift Haber → Tek Haber (v2.7)
 
@@ -415,12 +414,13 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 - **Sorun:** X hesap kilitleme riski nedeniyle gecici olarak tum X paylasimlarinin durdurulmesi gerekiyordu.
 - **Cozum:** `X_PAUSED=true` Supabase `env_config` tablosuna eklendi. VPS'te scheduler yeniden basladiginda tum X gonderileri otomatik olarak atlanacak. `createXPost()` fonksiyonu `null` donecek, hicbir tweet gonderilmeyecek. Kaldirilmak istendiginde Supabase'ten deger silinmesi yeterli.
 
-### 19. Hazir Post Akisi - LinkedIn (5 Mayis 2026)
+### 19. Hazir Post Akisi - LinkedIn + X (5 Mayis 2026, v3.1 X destegi)
 
-- **Ozellik:** "linkedin excel" Google Sheets sayfasindan hazir postlari otomatik LinkedIn'e paylasir.
+- **Ozellik:** "linkedin excel" Google Sheets sayfasindan hazir postlari otomatik LinkedIn ve X'e paylasir.
 - **Zamanlama:** Her gun 14:30'da calisir.
-- **Akis:** Sheet'ten post metni + Google Drive gorsel URL'sini alir → gorseli indirir → LinkedIn'e gorsel olarak yukler → postu paylasir → durumu "Done" yapar.
+- **Akis:** Sheet'ten post metni + Google Drive gorsel URL'sini alir → gorseli indirir → LinkedIn'e ve X'e gorsel olarak yukler → postu paylasir → durumu "Done" yapar.
 - **LLM Kullanmiyor:** Perplexity, Gemini veya optimizer adimlari yok. Postlar onceden yazilmis, direkt yayinlanir.
+- **X Paylasimi (v3.1):** Ayni post metni ve gorsel X'e de gonderilir. Ban koruması (gunluk limit, kill switch, dedup) aktif. LinkedIn VEYA X basarili ise durumu "Done" olarak guncellenir.
 - **Gorsel:** Google Drive `/file/d/ID/view` linkleri otomatik olarak `uc?export=download` direct URL'e cevrilir. Gorsel link olarak degil, gercek resim olarak paylasilir.
 - **Sutun Yapisi:** `linkedin post` (post metni), `url` (gorsel URL), `status` (durum: todo/done).
 - **Komut:** `npm run ready-post` ile tek seferlik calistirma.
@@ -430,6 +430,31 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 - **Sorun:** Hava durumu akisinda "Bad Unicode escape in JSON at position 109" hatasi.
 - **Neden:** LLM (Gemini) JSON ciktida gecersiz `\u` escape dizileri uretiyordu (`\u00b` gibi eksik haneli veya `\uIst` gibi gecersiz).
 - **Cozum:** `cleanJsonString()` fonksiyonuna invalid `\u` escape duzeltme regex'i eklendi: `/\\u(?![0-9a-fA-F]{4})/g`.
+
+### 21. VPS Redeploy - Eski Kod Sorunu (6 Mayis 2026)
+
+- **Sorun:** 14:30 Hazir Post akisi VPS'te calismiyordu. Scheduler'da sadece 3 cron job vardi (08:00, 10:00, 16:30).
+- **Neden:** Coolify container 4 Mayis'ta build edilmisti (`d2b354f`). Hazir post akisi 5 Mayis'ta commit edildi (`82a36a8`) ama Coolify otomatik deploy yapmamisti. Container eski kodu calistiriyordu.
+- **Teshis:** VPS'e SSH ile baglanildi. `docker exec` ile container'daki `scheduler.ts` kontrol edildi — `ready_post` kelimesi 0 eslesme. Image tag ve `SOURCE_COMMIT` eski commit'i gosteriyordu.
+- **Cozum:** VPS'te GitHub'dan son kod cekildi, yeni Docker image build edildi (`82a36a8`), `docker-compose.yaml` guncellendi, container recreate edildi.
+- **Onlem:** Coolify auto-deploy (webhook) aktif edilmeli veya her push sonrasi manuel redeploy yapilmali.
+
+### 22. VPS Erisim Bilgileri (6 Mayis 2026)
+
+- **VPS IP:** `5.182.33.26`
+- **Coolify Dashboard:** `http://5.182.33.26:8000`
+- **Coolify Domain:** `https://lkdx.turklawai.com` (Botfusions app)
+- **Botfusions Container:** `dgecwxjms61k579zpew9y0rd-091328601982`
+- **SSH:** `ssh root@5.182.33.26` (key-based auth)
+- **Container Adres:** `https://lkdx.turklawai.com`
+- **Not:** VPS bilgileri Supabase'de saklanmiyor. SSH key bu makinede zaten kurulu.
+
+### 23. Cift Paylasim - Lokal + VPS Scheduler Carpismasi (6 Mayis 2026)
+
+- **Sorun:** 16:30 RSS haber postu LinkedIn'e 2 kez paylasildi.
+- **Neden:** Manuel test sirasinda lokal makinede `npm run scheduler` arka planda calistirilmisti. Ayni anda VPS container'inda da scheduler vardi. Her ikisi de 16:30'da RSS haber akisini tetikledi.
+- **Cozum:** Lokal scheduler prosesi durduruldu. Sadece VPS'teki scheduler aktif birakildi.
+- **Onlem:** L格尔el makinede `npm run scheduler` calistirilmamali — VPS 7/24 calisiyor. Lokalde sadece `npm run ready-post` gibi tek seferlik komutlar kullanilmali.
 
 ---
 

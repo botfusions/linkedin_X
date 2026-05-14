@@ -3,19 +3,19 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const SUPABASE_URL = process.env.SUPABASE_URL || "";
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || "";
-
 let supabase: SupabaseClient | null = null;
 
 function getClient(): SupabaseClient {
   if (!supabase) {
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    const supabaseUrl = process.env.SUPABASE_URL || "";
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || "";
+
+    if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error(
         "SUPABASE_URL ve SUPABASE_SERVICE_KEY .env'de tanimli olmali!",
       );
     }
-    supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    supabase = createClient(supabaseUrl, supabaseServiceKey);
   }
   return supabase;
 }
@@ -103,6 +103,52 @@ export async function loadLinkedInToken(): Promise<{
     return JSON.parse(data.key_value);
   } catch {
     return null;
+  }
+}
+
+export async function setEnvConfigValue(
+  keyName: string,
+  keyValue: string,
+): Promise<void> {
+  try {
+    const client = getClient();
+    const { error } = await client
+      .from("env_config")
+      .upsert(
+        { key_name: keyName, key_value: keyValue },
+        { onConflict: "key_name" },
+      );
+
+    if (error) {
+      console.error("❌ Supabase env_config kayit hatasi:", error.message);
+    }
+  } catch (error: any) {
+    console.error("❌ Supabase env_config kayit hatasi:", error.message);
+  }
+}
+
+export async function countXPostsBetween(
+  startIso: string,
+  endIso: string,
+): Promise<number> {
+  try {
+    const client = getClient();
+    const { count, error } = await client
+      .from("linkedin+x")
+      .select("id", { count: "exact", head: true })
+      .not("x_url", "is", null)
+      .gte("published_at", startIso)
+      .lt("published_at", endIso);
+
+    if (error) {
+      console.error("❌ Supabase X gunluk sayim hatasi:", error.message);
+      return 0;
+    }
+
+    return count || 0;
+  } catch (error: any) {
+    console.error("❌ Supabase X gunluk sayim hatasi:", error.message);
+    return 0;
   }
 }
 

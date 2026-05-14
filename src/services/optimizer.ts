@@ -413,15 +413,16 @@ export interface InfographicData {
 }
 
 // Stil rotasyon takibi - her çağrıda sıradaki stil kullanılır
-const STYLE_ORDER: Array<"blueprint" | "cyberpunk" | "minimalist" | "3d"> = [
+const STYLE_ORDER: Array<"blueprint" | "cyberpunk" | "minimalist" | "3d" | "editorial"> = [
   "blueprint",
   "cyberpunk",
   "minimalist",
   "3d",
+  "editorial",
 ];
 let styleIndex = Math.floor(Math.random() * STYLE_ORDER.length);
 
-function getNextStyle(): "blueprint" | "cyberpunk" | "minimalist" | "3d" {
+function getNextStyle(): "blueprint" | "cyberpunk" | "minimalist" | "3d" | "editorial" {
   const style = STYLE_ORDER[styleIndex % STYLE_ORDER.length]!;
   styleIndex++;
   console.log(`🎨 İnfografik stili: ${style} (sıra: ${(styleIndex - 1) % STYLE_ORDER.length + 1}/${STYLE_ORDER.length})`);
@@ -443,6 +444,8 @@ export function generateDynamicInfographicPrompt(
     minimalist:
       "Visual Style: 'Modern Enterprise Board'. Clean white/grey background, structured grid layout, premium typography, gold accent connectors.",
     "3d": "Visual Style: '3D Infrastructure Matrix'. Realistic 3D floating modules connected by glass fiber-optic tubes, professional studio lighting.",
+    editorial:
+      "Visual Style: 'Premium Dark Editorial Board'. Deep charcoal background #121212, modular horizontal/vertical zones with thin dividers. Pastel salmon-orange accents, cream-white text, soft muted purple, sage green tones. Premium bold title with minimalist UI icons. 8 rounded-square feature cards with line-art icons. Side-by-side comparison module. 5 vertical workflow columns with colorful circular badges. Comparative data table and 3-step getting started block. Sophisticated sans-serif typography, fashion-editorial aesthetic. --ar 4:3 --v 6.0",
   };
 
   // LLM'den gelen style'ı yok say, kendi rotasyonumuzu kullan

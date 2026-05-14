@@ -1,6 +1,7 @@
 import { TwitterApi } from "twitter-api-v2";
 import dotenv from "dotenv";
 import fs from "fs";
+import { countXPostsBetween, setEnvConfigValue } from "./supabase.js";
 
 dotenv.config();
 
@@ -19,15 +20,38 @@ const MAX_DAILY_X_POSTS = 3;
 let dailyXPostCount = 0;
 let dailyXPostDate = "";
 
-function checkDailyLimit(): boolean {
-  const today = new Date().toISOString().slice(0, 10);
-  if (dailyXPostDate !== today) {
+function getLocalDayRange(): { dateKey: string; startIso: string; endIso: string } {
+  const now = new Date();
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+
+  return {
+    dateKey: [
+      start.getFullYear(),
+      String(start.getMonth() + 1).padStart(2, "0"),
+      String(start.getDate()).padStart(2, "0"),
+    ].join("-"),
+    startIso: start.toISOString(),
+    endIso: end.toISOString(),
+  };
+}
+
+async function checkDailyLimit(): Promise<boolean> {
+  const { dateKey, startIso, endIso } = getLocalDayRange();
+  if (dailyXPostDate !== dateKey) {
     dailyXPostCount = 0;
-    dailyXPostDate = today;
+    dailyXPostDate = dateKey;
   }
-  if (dailyXPostCount >= MAX_DAILY_X_POSTS) {
+
+  const persistedCount = await countXPostsBetween(startIso, endIso);
+  const effectiveCount = Math.max(dailyXPostCount, persistedCount);
+
+  if (effectiveCount >= MAX_DAILY_X_POSTS) {
     console.log(
-      `⏸️ X GÜNLÜK LİMİT: ${dailyXPostCount}/${MAX_DAILY_X_POSTS} — bugünlük gönderi yapılmaz.`,
+      `⏸️ X GÜNLÜK LİMİT: ${effectiveCount}/${MAX_DAILY_X_POSTS} — bugünlük gönderi yapılmaz.`,
     );
     return true;
   }
@@ -95,7 +119,7 @@ export async function createXPost(
     return null;
   }
 
-  if (checkDailyLimit()) return null;
+  if (await checkDailyLimit()) return null;
 
   if (topic) {
     if (isDuplicateTopicLocal(topic)) return null;
@@ -139,6 +163,7 @@ export async function createXPost(
     if (errData?.status === 403 || errData?.detail?.includes("locked")) {
       console.error("🔒 X HESAP KİLİTLİ! X_PAUSED=true olarak işaretleniyor.");
       process.env.X_PAUSED = "true";
+      await setEnvConfigValue("X_PAUSED", "true");
     }
     console.error("❌ X Paylaşım Hatası:", errData || error.message);
     return null;

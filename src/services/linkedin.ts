@@ -9,10 +9,12 @@ dotenv.config();
 
 const TOKEN_PATH = path.join(process.cwd(), "data", ".linkedin_token.json");
 
-const CLIENT_ID = process.env.LINKEDIN_CLIENT_ID;
-const CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET;
-const REDIRECT_URI =
-  process.env.LINKEDIN_REDIRECT_URI || "http://localhost:8080/callback";
+function getImageContentType(imagePath: string): string {
+  const ext = path.extname(imagePath).toLowerCase();
+  if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg";
+  if (ext === ".webp") return "image/webp";
+  return "image/png";
+}
 
 /**
  * LinkedIn'de metin + Gerçek Görsel (Upload edilmiş) olan bir paylaşım oluşturur.
@@ -74,7 +76,7 @@ export async function createLinkedInPost(
     await axios.put(uploadUrl, imageBuffer, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "image/png",
+        "Content-Type": getImageContentType(imagePath),
       },
     });
 
@@ -134,6 +136,9 @@ export async function createLinkedInPost(
     );
     return postUrl || "published";
   } catch (error: any) {
+    if (error.message === "SKIP_LINKEDIN") {
+      throw error;
+    }
     console.error(
       "❌ LinkedIn Paylaşım Hatası (UGC):",
       error.response?.data || error.message,
