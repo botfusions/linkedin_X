@@ -1,4 +1,4 @@
-# Botfusions Autonomous Content Engine (v3.1)
+# Botfusions Autonomous Content Engine (v3.2)
 
 LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
@@ -261,7 +261,7 @@ Aciklama...
 | Senaryo                  | Koruma                                               |
 | ------------------------ | ---------------------------------------------------- |
 | Gunluk X post limiti     | Max 3 post/gun (hava + excel + rss)                 |
-| X kill switch            | X_PAUSED=true ile tum X postlari durdurulur         |
+| X kill switch            | X_PAUSED=false ile X postlari aktif (Supabase env_config) |
 | Duplicate konu           | Memory + Supabase kontrolu ile ayni konu engellenir |
 | Otomatik kilitleme       | 403/locked hatasinda X_PAUSED otomatik true olur    |
 | Scheduler tetikleme      | 0-5 dakika rastgele erteleme                        |
@@ -444,10 +444,18 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 - **VPS IP:** `5.182.33.26`
 - **Coolify Dashboard:** `http://5.182.33.26:8000`
 - **Coolify Domain:** `https://lkdx.turklawai.com` (Botfusions app)
-- **Botfusions Container:** `dgecwxjms61k579zpew9y0rd-091328601982`
+- **Botfusions Container:** `dgecwxjms61k579zpew9y0rd-090546729781`
 - **SSH:** `ssh root@5.182.33.26` (key-based auth)
 - **Container Adres:** `https://lkdx.turklawai.com`
 - **Not:** VPS bilgileri Supabase'de saklanmiyor. SSH key bu makinede zaten kurulu.
+
+### 24. X Paylasimi Yeniden Aktif (15 Mayis 2026, v3.2)
+
+- **Sorun:** X paylasimlari `X_PAUSED=true` nedeniyle durdurulmustu. `createXPost()` her cagrida `null` donuyordu.
+- **Teshis:** Lokal makinede Node.js v24.12.0 TLS sertifikasi dogrulama hatasi (`UNABLE_TO_VERIFY_LEAF_SIGNATURE`) nedeniyle API hatalari aliniyordu. VPS'te Node.js v20.20.2 ile bu sorun yok.
+- **Cozum:** Supabase `env_config` tablosunda `X_PAUSED` degeri `false` olarak guncellendi. Container yeniden baslatildi.
+- **Onemli:** Lokal makinede (Windows, Node v24) TLS sorunu varsa `NODE_TLS_REJECT_UNAUTHORIZED=0` ile calistirilmali. VPS'te sorun yok.
+- **X API Durumu:** Hesap aktif (@cenktk), OAuth 1.0a kimlik dogrulama calisiyor, tweet gonderimi basarili.
 
 ### 23. Cift Paylasim - Lokal + VPS Scheduler Carpismasi (6 Mayis 2026)
 
