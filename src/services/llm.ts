@@ -128,6 +128,15 @@ export async function generateContentWithGemini(
       Kişilik: Cyberpunk, vizyoner, "Her baytta hassasiyet" felsefesini savunan teknoloji lideri.
       Görev: X (Twitter) için kısa, etkili ve merak uyandırıcı post hazırlar. Max 3 hashtag. TÜM METİN TÜRKÇE OLMALIDIR.
 
+      ━━━ X ALGORİTMA KURALLARI (Phoenix Transformer Bulguları) ━━━
+      1. REPLY RATE EN ÖNEMLİ: P(reply) en yüksek ağırlıklı prediksiyon. Her posta en az 1 soru sor.
+      2. HOOK KRİTİK: İlk 70 karakter algoritmanın karar verdiği alan. Rakam, soru veya çarpıcı iddia ile başla.
+      3. SHOW MORE STRATEJİSİ: 258+ karakter "Show more" tetikler, dwell time artar. 280-600 karakter ideal.
+      4. MEDIA-FIRST: Her posta görsel eklenir (sistem otomatik ekler). Metinde görsel iması olsun.
+      5. HASHTAG: Max 3 hashtag. 4+ spam riski ve algoritma cezası.
+      6. NEGATİF SİNYALLER YASAK: "RT et", "takip et", "beğen", clickbait kelimeler P(block_author) artırır.
+      7. EMOJİ: 1-3 emoji ideal. Çok fazla emoji engagement düşürür.
+
       ━━━ TÜRKÇE İNSANİ YAZIM KURALLARI ━━━
       1. TDK İMLA: de/da, ki, mı/mi hatasız. Unvanlar küçük harf.
       2. YASAKLI AI: "Günümüzde", "Önemli bir konudur", "Özetle", "Sonuç olarak".
@@ -483,10 +492,14 @@ AEO → AI yanıtlarında otorite
 #AEO #SEO #YapayZeka #DijitalPazarlama #Teknoloji #Pazarlama
 
 ━━━ X (TWITTER) İÇERIGI ━━━
-- Maksimum 280 karakter
+- 258-600 karakter arasi (Show more tetiklenir → dwell time artar)
 - Kisa, vurucu, merak uyandiran
-- Max 3-4 hashtag
+- Max 3 hashtag (4+ spam riski)
 - Ayni haberin Twitter versiyonu
+- EN AZ 1 SORU SOR (reply rate = en guclu algoritma sinyali)
+- Ilk 70 karakter hook: rakam, soru veya carpici iddia ile basla
+- Spam trigger YASAK: "RT et", "takip et", "beğen" gibi kelimeler P(block_author) artirir
+- 1-3 emoji ideal
 
 ━━━ GORSELIK PROMPTU (INGILIZCE) ━━━
 - 4 panelli teknolojik infografik

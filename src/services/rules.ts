@@ -33,6 +33,14 @@ export interface PostAnalysis {
   questionCount: number;
   ctaDetected: boolean;
   bulletPoints: number;
+  hasMedia: boolean;
+  hasQuestion: boolean;
+  hasPoll: boolean;
+  hasMention: boolean;
+  threadReady: boolean;
+  dwellScore: number;
+  showMoreTrigger: boolean;
+  replyBaitScore: number;
 }
 
 export function extractHashtags(text: string): string[] {
@@ -71,10 +79,44 @@ export function detectCTA(text: string): boolean {
   return patterns.some((p) => p.test(text));
 }
 
+export function detectMediaReference(text: string): boolean {
+  return /\[görsel\]|\[resim\]|\[video\]|\[image\]|\[media\]|📷|🖼️|🎥|📹/i.test(text);
+}
+
+export function detectPoll(text: string): boolean {
+  return /anket|poll|oy\s*ver|hangisi|seçim|tercih/i.test(text);
+}
+
+export function detectMention(text: string): boolean {
+  return /@[\w]{1,15}/.test(text);
+}
+
+function calculateReplyBaitScore(text: string): number {
+  let score = 0;
+  if (/\?/.test(text)) score += 30;
+  if (/ne\s*düşün|yorum|katkı|deneyim|fikir|görüş|ekle|söyle/i.test(text)) score += 25;
+  if (detectPoll(text)) score += 20;
+  if (/@\w+/.test(text)) score += 10;
+  if (/\b(sence|sizce|bence|bizce)\b/i.test(text)) score += 15;
+  return Math.min(100, score);
+}
+
+function calculateDwellScore(text: string, paragraphs: string[]): number {
+  let score = 0;
+  if (text.length >= 258) score += 30;
+  if (paragraphs.length >= 3) score += 25;
+  if (paragraphs.length >= 5) score += 10;
+  const avgParaLen = text.length / Math.max(1, paragraphs.length);
+  if (avgParaLen >= 60 && avgParaLen <= 180) score += 20;
+  if (countBulletPoints(text) >= 2) score += 15;
+  return Math.min(100, score);
+}
+
 export function analyzePostText(text: string): PostAnalysis {
   const lines = text.split("\n").filter((l) => l.trim().length > 0);
   const firstLine = lines[0] || "";
   const paragraphs = text.split(/\n\s*\n/).filter((p) => p.trim().length > 0);
+  const questionCount = (text.match(/\?/g) || []).length;
 
   return {
     charCount: text.length,
@@ -87,9 +129,17 @@ export function analyzePostText(text: string): PostAnalysis {
     firstLine,
     paragraphs,
     emojiCount: countEmojis(text),
-    questionCount: (text.match(/\?/g) || []).length,
+    questionCount,
     ctaDetected: detectCTA(text),
     bulletPoints: countBulletPoints(text),
+    hasMedia: detectMediaReference(text),
+    hasQuestion: questionCount > 0,
+    hasPoll: detectPoll(text),
+    hasMention: detectMention(text),
+    threadReady: text.length > 1000,
+    dwellScore: calculateDwellScore(text, paragraphs),
+    showMoreTrigger: text.length > 258,
+    replyBaitScore: calculateReplyBaitScore(text),
   };
 }
 

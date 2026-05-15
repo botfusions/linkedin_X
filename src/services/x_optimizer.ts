@@ -48,6 +48,89 @@ export function scoreXPost(post: string): XOptimizationResult {
   };
 }
 
+// ═══════════════════════════════════════
+// THREAD BUILDER
+// ═══════════════════════════════════════
+
+const TWEET_CHAR_LIMIT = 280;
+
+export function buildXThread(longText: string): string[] {
+  const cleanText = longText.trim();
+  if (cleanText.length <= TWEET_CHAR_LIMIT) return [cleanText];
+
+  const tweets: string[] = [];
+  const paragraphs = cleanText.split(/\n\s*\n/).filter((p) => p.trim().length > 0);
+
+  let currentTweet = "";
+
+  for (const para of paragraphs) {
+    const trimmedPara = para.trim();
+
+    // Paragraf tek başına sığmıyorsa cümle cümle böl
+    if (trimmedPara.length > TWEET_CHAR_LIMIT - 10) {
+      const sentences = trimmedPara.split(/(?<=[.!?。])\s+/);
+      for (const sentence of sentences) {
+        const candidate = currentTweet ? `${currentTweet}\n${sentence}` : sentence;
+        if (candidate.length <= TWEET_CHAR_LIMIT - 10) {
+          currentTweet = candidate;
+        } else {
+          if (currentTweet.trim()) tweets.push(currentTweet.trim());
+          // Tek cümle çok uzunsa zorla böl
+          if (sentence.length > TWEET_CHAR_LIMIT - 10) {
+            const chunks = splitByLength(sentence, TWEET_CHAR_LIMIT - 10);
+            currentTweet = chunks.pop() || "";
+            tweets.push(...chunks);
+          } else {
+            currentTweet = sentence;
+          }
+        }
+      }
+    } else {
+      const candidate = currentTweet ? `${currentTweet}\n\n${trimmedPara}` : trimmedPara;
+      if (candidate.length <= TWEET_CHAR_LIMIT - 10) {
+        currentTweet = candidate;
+      } else {
+        if (currentTweet.trim()) tweets.push(currentTweet.trim());
+        currentTweet = trimmedPara;
+      }
+    }
+  }
+
+  if (currentTweet.trim()) tweets.push(currentTweet.trim());
+
+  // Thread numaralandırma ekle
+  const total = tweets.length;
+  if (total > 1) {
+    return tweets.map((t, i) => {
+      const numbering = `${i + 1}/${total} `;
+      // İlk tweet'e numara ekle
+      if (i === 0) return `${numbering}${t}`;
+      // Son tweet'e numara ekle
+      if (i === total - 1) return `${numbering}${t}`;
+      return `${numbering}${t}`;
+    });
+  }
+
+  return tweets;
+}
+
+function splitByLength(text: string, maxLen: number): string[] {
+  const chunks: string[] = [];
+  let remaining = text;
+  while (remaining.length > maxLen) {
+    const splitAt = remaining.lastIndexOf(" ", maxLen);
+    const cutPoint = splitAt > maxLen * 0.5 ? splitAt : maxLen;
+    chunks.push(remaining.substring(0, cutPoint).trim());
+    remaining = remaining.substring(cutPoint).trim();
+  }
+  if (remaining.trim()) chunks.push(remaining.trim());
+  return chunks;
+}
+
+// ═══════════════════════════════════════
+// AI-POWERED SELF-IMPROVEMENT
+// ═══════════════════════════════════════
+
 export async function optimizeXWithSelfImprove(
   post: string,
   topic: string,
@@ -72,8 +155,9 @@ export async function optimizeXWithSelfImprove(
       .map((r) => `- ${r.rule}: ${r.result.message} → ${r.result.suggestion}`)
       .join("\n");
 
-    const prompt = `Sen bir X (Twitter) içerik editörüsün. X Premium kurallarına göre bu postu optimize et.
-Skor: ${currentResult.percentage}/100 (Hedef: 80+).
+    const prompt = `Sen bir X (Twitter) içerik editörüsün. X'in açık kaynak algoritmasından (Phoenix transformer) elde edilen içgörülere göre bu postu optimize et.
+
+SKOR: ${currentResult.percentage}/100 (Hedef: 80+)
 
 BAŞARISIZ KURALLAR:
 ${failedRules}
@@ -83,15 +167,24 @@ MEVCUT POST:
 ${currentPost}
 """
 
-GÖREV:
-1. Kuralları düzelt.
-2. Botfusions## 🎨 Görsel Tasarım (Cyberpunk Infographic)
-![GEO Future Infographic](geo_future_infographic_1777147489401.jpg)
-3. Klişelerden KAÇIN: "X Premium gücüyle", "Günümüzde", "Yapay zeka sayesinde" gibi ifadeleri asla kullanma.
-4. "Precision in every byte" felsefesini hissettir.
-5. X Premium avantajını (uzun metin) kaliteyi artırmak için kullan (280-1000 karakter), ama boş laf kalabalığı yapma.
-6. İlk satırda (Hook) çok iddialı ol.
-7. Hashtag sayısını 2-3 yap.
+━━━ X ALGORİTMA İÇGÖRÜLERİ (Phoenix Model) ━━━
+1. REPLY RATE EN ÖNEMLİ SİNYAL: P(reply) en yüksek ağırlıklı prediksiyon. Her posta en az 1 soru ekle.
+2. HOOK KRİTİK: İlk 70 karakter algoritmanın karar verdiği alan. Rakam, soru veya çarpıcı iddia ile başla.
+3. SHOW MORE = DWELL TIME: 258+ karakter "Show more" tetikler, dwell time artar.
+4. MEDIA-FIRST: P(photo_expand) ayrı tracked. Her posta görsel eklenmeli (sistem otomatik ekler).
+5. NEGATİF SİNYALLERDEN KAÇIN: RT isteği, takip çağrısı, clickbait → P(block_author) artar.
+6. HASHTAG: 2-3 ideal, 4+ spam riski.
+7. AUTHOR DIVERSITY: Aynı yazar çok sık post → score azaltma.
+
+━━━ DÜZELTME TALİMATLARI ━━━
+1. Başarısız kuralları düzelt.
+2. Klişelerden KAÇIN: "Günümüzde", "Yapay zeka sayesinde", "X Premium gücüyle" gibi ifadeleri asla kullanma.
+3. İlk satırda (Hook) çok iddialı ol — rakam, soru veya şaşırtıcı iddia.
+4. 258-600 karakter arası hedefle (Show more + kısa kalite).
+5. En az 1 soru sor (reply rate için).
+6. Max 2-3 hashtag.
+7. Emoji ile metin oranı dengeli olsun (1-3 emoji).
+8. Eğer içerik 1000+ karakter ise thread formatına dönüştür.
 
 SADECE düzeltilmiş post metnini döndür.`;
 

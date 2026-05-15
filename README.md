@@ -1,4 +1,4 @@
-# Botfusions Autonomous Content Engine (v3.2)
+# Botfusions Autonomous Content Engine (v3.3)
 
 LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
@@ -8,7 +8,7 @@ LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
 - **Dual-Platform:** LinkedIn (kurumsal) + X (vizyoner) icerik uretimi
 - **3 Icerik Kaynagi:** Google Sheets konular, Google News AI RSS haberler, Istanbul hava durumu
-- **Self-Improving Optimizer:** 14+ kurala gore skorlama, 80/100 altindakiler otomatik revize
+- **Self-Improving Optimizer:** LinkedIn 14+ kural, X 10 kural (x-algorithm tabanli), 80/100 altindakiler otomatik revize
 - **Gorsel Uretim Motorlari:** Dinamik Hava Durumu ve Kurumsal Infografik motorlari
 - **Canli Arastirma:** Perplexity AI ile guncel veri toplama
 - **Agentic Auditor:** LLM tabanli gonderi denetim sistemi (ban riski, duplicate, kalite)
@@ -50,10 +50,10 @@ src/
     ├── linkedin.ts           # LinkedIn ugcPosts API + Supabase token fallback
     ├── x.ts                  # X (Twitter) API v2 + kill switch + gunluk limit + dedup
     ├── optimizer.ts          # LinkedIn skorlama + self-improve
-    ├── x_optimizer.ts        # X skorlama + self-improve
+    ├── x_optimizer.ts        # X skorlama (10 kural) + self-improve + thread builder
     ├── post_auditor.ts       # Agentic gonderi denetim sistemi (LLM)
-    ├── rules.ts              # LinkedIn algoritma kurallari
-    ├── x_rules.ts            # X algoritma kurallari
+    ├── rules.ts              # LinkedIn algoritma kurallari + X analiz yardimcilari
+    ├── x_rules.ts            # X algoritma kurallari (10 kural, Phoenix tabanli)
     ├── weather.ts            # Istanbul hava durumu servisi
     ├── supabase.ts           # Supabase client + CRUD + LinkedIn token persistence
     ├── telegram.ts           # Telegram bildirim servisi
@@ -276,6 +276,7 @@ Aciklama...
 
 - Tum infografikler **TURKCE** (basliklar, etiketler, metrikler dahil)
 - LinkedIn skoru **80/100** altindaysa otomatik revize
+- X skoru **80/100** altindaysa otomatik revize (x-algorithm tabanli 10 kural)
 - Bos metin veya hatali gorselle **ASLA** paylasim yapilmasin
 - "Detay icin ilk yorum" gibi cumleler **YOK**
 - Her yayin Supabase'e kayit + Telegram'a bildirim
@@ -466,4 +467,19 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 
 ---
 
+### 25. X Algoritma Skorlama Gelistirme (16 Mayis 2026, v3.3)
+
+- **Ozellik:** X (Twitter) skorlama sistemi X'in acik kaynak algoritmasindan (x-algorithm, Phoenix transformer) elde edilen Bulgularla gelistirildi.
+- **X Kurallari:** 4 → 10 kurala cikarildi:
+  - : P(photo_expand)/P(video_view) sinyali — gorselsiz post görünürlük kaybeder
+  - : P(reply) en yuksek agirlikli sinyal — soru, CTA, anket kontrolu
+  - : 258+ karakter = Show more → dwell time artar
+  - : 1000+ karakter → thread'e bolunmeli
+  - : emoji, soru, CTA dengesi
+  - : spam kalıplari (RT iste, takip et) → P(block_author) artar
+- **Thread Builder:** Uzun icerikleri otomatik 280 char tweet'lere bolen `buildXThread()` fonksiyonu.
+- **PostAnalysis:** 8 yeni alan (hasMedia, hasQuestion, replyBaitScore, dwellScore, showMoreTrigger vb.).
+- **LLM Prompt:** X post uretim prompt'una Phoenix algoritma Bulgulari eklendi.
+
+---
 © 2026 Botfusions. MIT Lisans.
