@@ -481,5 +481,13 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 - **PostAnalysis:** 8 yeni alan (hasMedia, hasQuestion, replyBaitScore, dwellScore, showMoreTrigger vb.).
 - **LLM Prompt:** X post uretim prompt'una Phoenix algoritma Bulgulari eklendi.
 
+### 26. X Hava Durumu Duplicate Fix (16 Mayis 2026, v3.3.1)
+
+- **Sorun:** X hava durumu postu `createXPost null dondu` hatasiyla yayinlanmiyordu. LinkedIn basarili, X basarisiz.
+- **Neden:** `isDuplicateTopicSupabase()` her gun ayni konu olan "Istanbul Hava Durumu"yu Supabase `linkedin+x` tablosunda eski kayitlarda bulup duplicate sayiyordu. Ilk gunden sonra her gun engellendi.
+- **Teshis:** VPS Docker loglari incelendi: `🔁 X DUPLICATE (Supabase): "i̇stanbul hava durumu..." daha önce paylaşılmış.`
+- **Cozum:** `createXPost()` fonksiyonuna `skipDuplicate` opsiyonu eklendi. Hava durumu akisinda (`agentFlow.ts`) bu opsiyon aktif edildi. Excel ve RSS haber konulari hala duplicate korumasinda.
+- **Dosyalar:** `src/services/x.ts`, `src/services/agentFlow.ts`
+
 ---
 © 2026 Botfusions. MIT Lisans.
