@@ -108,6 +108,7 @@ export async function createXPost(
   text: string,
   imagePath?: string,
   topic?: string,
+  options?: { skipDuplicate?: boolean },
 ): Promise<string | null> {
   // --- GÜVENLİK BARİYERLERİ ---
   if (isXPaused()) return null;
@@ -121,9 +122,12 @@ export async function createXPost(
 
   if (await checkDailyLimit()) return null;
 
-  if (topic) {
+  const skipDup = options?.skipDuplicate === true;
+  if (topic && !skipDup) {
     if (isDuplicateTopicLocal(topic)) return null;
     if (await isDuplicateTopicSupabase(topic)) return null;
+  } else if (skipDup) {
+    console.log("ℹ️ X duplicate koruması atlandı (tekrar eden konu).");
   }
   // -------------------------
 
