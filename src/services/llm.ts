@@ -13,6 +13,74 @@ function getPerplexityKey(): string {
   return process.env.PERPLEXITY_API_KEY || "";
 }
 
+// ── KESİN KURAL: Opus ve Sonnet modelleri ASLA çağrılmayacak ──
+// Kullanıcı açıkça yazmadıkça yalnızca flash/free modeller kullanılır.
+const BLOCKED_MODEL_PATTERNS = [
+  /opus/i,
+  /sonnet/i,
+  /claude-4/,
+  /claude-3\.5/,
+  /claude-3-opus/,
+  /claude-3-sonnet/,
+  /gpt-4o/,
+  /gpt-4-turbo/,
+  /o1-/i,
+  /o3-/i,
+];
+
+function isModelBlocked(model: string): boolean {
+  return BLOCKED_MODEL_PATTERNS.some((p) => p.test(model));
+}
+
+// ── Retry + Delay yardımcıları ──
+const MAX_RETRIES = 3;
+const RETRY_BASE_DELAY_MS = 30_000; // 30 saniye
+const INTER_CALL_DELAY_MS = 12_000;  // 12 saniye (OpenRouter çağrıları arası)
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function openRouterPost(
+  payload: any,
+): Promise<any> {
+  const key = getOpenRouterKey();
+  if (!key) throw new Error("OPENROUTER_API_KEY eksik!");
+
+  if (isModelBlocked(payload.model)) {
+    throw new Error(
+      `MODEL YASAKLI: "${payload.model}" — Opus/Sonnet modelleri kullanılamaz. Yalnızca flash/free modeller izinlidir.`,
+    );
+  }
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await axios.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${key}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      return response;
+    } catch (error: any) {
+      const status = error.response?.status;
+      if (status === 429 && attempt < MAX_RETRIES) {
+        const delay = RETRY_BASE_DELAY_MS * attempt; // 30s, 60s, 90s
+        console.warn(
+          `⏳ OpenRouter 429 — ${delay / 1000}s bekleniyor (deneme ${attempt}/${MAX_RETRIES})...`,
+        );
+        await sleep(delay);
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
 /**
  * 1. Adım: Perplexity ile Canlı, Güncel Online Araştırma Yapma
  */
@@ -100,11 +168,6 @@ export async function generateContentWithGemini(
   xPost: string;
   infographicData: any;
 }> {
-  const OPENROUTER_API_KEY = getOpenRouterKey();
-  if (!OPENROUTER_API_KEY) {
-    throw new Error("OPENROUTER_API_KEY eksik!");
-  }
-
   let agentRules = "";
   try {
     const agentPath = path.join(process.cwd(), "agent.md");
@@ -169,32 +232,23 @@ export async function generateContentWithGemini(
 
     const finalSystemMessage = customSystemPrompt || defaultSystemPrompt;
 
-    const response = await axios.post(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        model: "google/gemini-2.0-flash-001",
-        messages: [
-          {
-            role: "system",
-            content:
-              finalSystemMessage +
-              (agentRules ? `\n\nEk Kurallar:\n${agentRules}` : ""),
-          },
-          {
-            role: "user",
-            content: `Konu: ${topic}\nAraştırma: ${researchData}\n\nCevabı sadece JSON olarak döndür.`,
-          },
-        ],
-        max_tokens: 6000,
-        temperature: 0.7,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
+    const response = await openRouterPost({
+      model: "google/gemini-2.0-flash-001",
+      messages: [
+        {
+          role: "system",
+          content:
+            finalSystemMessage +
+            (agentRules ? `\n\nEk Kurallar:\n${agentRules}` : ""),
         },
-      },
-    );
+        {
+          role: "user",
+          content: `Konu: ${topic}\nAraştırma: ${researchData}\n\nCevabı sadece JSON olarak döndür.`,
+        },
+      ],
+      max_tokens: 6000,
+      temperature: 0.7,
+    });
 
     const responseText = response.data.choices[0].message.content;
     const jsonString = cleanJsonString(responseText);
@@ -215,11 +269,10 @@ export async function generateShortContentWithGemini(
   researchData: string,
   systemPrompt: string,
 ) {
-  const OPENROUTER_API_KEY = getOpenRouterKey();
   try {
     const finalSystemPrompt = `
       ${systemPrompt}
-      
+
       ━━━ ÖNEMLİ KURALLAR ━━━
       1. LİNKEDİN VE X (TWITTER) METİNLERİ BİRE BİR AYNI OLMALIDIR.
       2. Metin kısa, öz ve etkileyici olmalıdır.
@@ -227,7 +280,7 @@ export async function generateShortContentWithGemini(
       4. SICAKLIK DEĞERLERİNİ ASLA ONDALIKLI YAZMA. SADECE TAM SAYI KULLAN (Örn: 13°C, 14 derece).
       5. Profesyonel ve vizyoner bir dil kullan.
       6. Tüm metin TÜRKÇE olmalıdır.
-      
+
       ━━━ ÇIKTI FORMATI (JSON) ━━━
       Cevabını SADECE şu JSON formatında ver:
       {
@@ -236,32 +289,23 @@ export async function generateShortContentWithGemini(
       }
     `;
 
-    const response = await axios.post(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        model: "google/gemini-2.0-flash-001",
-        messages: [
-          {
-            role: "system",
-            content:
-              finalSystemPrompt +
-              "\n\nÖnemli: JSON içinde tırnak işaretlerini ve yeni satırları doğru şekilde kaçır (escape). linkedinPost ve xPost alanları TAMAMEN AYNI metni içermelidir.",
-          },
-          {
-            role: "user",
-            content: `Güncel Bilgi: ${researchData}\n\nLütfen sadece istenen JSON objesini döndür.`,
-          },
-        ],
-        max_tokens: 2000,
-        temperature: 0.1, // Daha kararlı çıktı için düşürüldü
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
+    const response = await openRouterPost({
+      model: "google/gemini-2.0-flash-001",
+      messages: [
+        {
+          role: "system",
+          content:
+            finalSystemPrompt +
+            "\n\nÖnemli: JSON içinde tırnak işaretlerini ve yeni satırları doğru şekilde kaçır (escape). linkedinPost ve xPost alanları TAMAMEN AYNI metni içermelidir.",
         },
-      },
-    );
+        {
+          role: "user",
+          content: `Güncel Bilgi: ${researchData}\n\nLütfen sadece istenen JSON objesini döndür.`,
+        },
+      ],
+      max_tokens: 2000,
+      temperature: 0.1, // Daha kararlı çıktı için düşürüldü
+    });
 
     const choice = response.data.choices[0];
     const responseText = choice.message.content;
@@ -289,8 +333,8 @@ export async function generateOptimizedImagePrompt(
   researchData: string,
   basePrompt: string,
 ) {
-  const OPENROUTER_API_KEY = getOpenRouterKey();
   try {
+    await sleep(INTER_CALL_DELAY_MS); // Önceki OpenRouter çağrısıyla araya delay
     const now = new Date();
     const formattedDate = now.toLocaleDateString("tr-TR", {
       day: "2-digit",
@@ -326,32 +370,23 @@ A majestic, high-fidelity cinematic photograph of Istanbul. A panoramic view thr
 13. FONT WEIGHT: Yazıların font kalınlığı "semi-bold" veya "medium" olmalıdır (çok ince olmamalıdır), ancak genel boyut hala küçük kalmalıdır. Okunabilirliği %10-20 oranında artıracak bir kalınlık tercih et.
 `;
 
-    const response = await axios.post(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        model: "google/gemini-2.0-flash-001",
-        messages: [
-          {
-            role: "system",
-            content:
-              systemPrompt +
-              "\n\nZORUNLU: Tüm şablonu eksiksiz doldur. Cümleyi yarım bırakma. Sonuna mutlaka Türkçe özetini ekle.",
-          },
-          {
-            role: "user",
-            content: `**Zaman:** ${formattedDate}\n**Hava Verisi:** ${researchData}\n\nLütfen promptu oluştur.`,
-          },
-        ],
-        max_tokens: 1000,
-        temperature: 0.3,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
+    const response = await openRouterPost({
+      model: "google/gemini-2.0-flash-001",
+      messages: [
+        {
+          role: "system",
+          content:
+            systemPrompt +
+            "\n\nZORUNLU: Tüm şablonu eksiksiz doldur. Cümleyi yarım bırakma. Sonuna mutlaka Türkçe özetini ekle.",
         },
-      },
-    );
+        {
+          role: "user",
+          content: `**Zaman:** ${formattedDate}\n**Hava Verisi:** ${researchData}\n\nLütfen promptu oluştur.`,
+        },
+      ],
+      max_tokens: 1000,
+      temperature: 0.3,
+    });
 
     let result = response.data.choices[0].message.content.trim();
     result = result.replace(/^["']|["']$/g, "");
@@ -394,11 +429,14 @@ KRITIK KURALLAR:
           {
             parts: [
               {
-                text: `${prompt}\n\n${TURKISH_RULE}`,
+                text: `${prompt}\n\nOutput resolution: 1024x1024 pixels (1K).\n\n${TURKISH_RULE}`,
               },
             ],
           },
         ],
+        generationConfig: {
+          responseModalities: ["TEXT", "IMAGE"],
+        },
       },
       { headers: { "Content-Type": "application/json" }, timeout: 180_000 },
     );
@@ -441,11 +479,6 @@ export async function generateNewsContent(
   xPost: string;
   infographicData: any;
 }> {
-  const OPENROUTER_API_KEY = getOpenRouterKey();
-  if (!OPENROUTER_API_KEY) {
-    throw new Error("OPENROUTER_API_KEY eksik!");
-  }
-
   const systemPrompt = `
 Sen Botfusions'in otonom sistemisin. Verilen haber icin LinkedIn ve X platformlarina TURKCE icerik ureteceksin.
 
@@ -525,27 +558,18 @@ AEO → AI yanıtlarında otorite
 
   try {
     console.log("🧠 Haber icin icerik uretiliyor...");
-    const response = await axios.post(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        model: "google/gemini-2.0-flash-001",
-        messages: [
-          { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content: `Haber Basligi: ${title}\n\nHaber Icerigi:\n${content}\n\nSadece JSON olarak don.`,
-          },
-        ],
-        max_tokens: 6000,
-        temperature: 0.7,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
+    const response = await openRouterPost({
+      model: "google/gemini-2.0-flash-001",
+      messages: [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: `Haber Basligi: ${title}\n\nHaber Icerigi:\n${content}\n\nSadece JSON olarak don.`,
         },
-      },
-    );
+      ],
+      max_tokens: 6000,
+      temperature: 0.7,
+    });
 
     const responseText = response.data.choices[0].message.content;
     const jsonString = cleanJsonString(responseText);

@@ -1,4 +1,4 @@
-# Botfusions Autonomous Content Engine (v3.3)
+# Botfusions Autonomous Content Engine (v3.4)
 
 LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
@@ -269,6 +269,9 @@ Aciklama...
 | Bos metin                | Post gonderilmez (guvenlik bariyeri)                |
 | Gorsel uretilemezse      | Post gonderilmez, sonraki habere gecilir             |
 | Agentic denetim          | Her post oncesinde LLM denetimi (ban riski, kalite) |
+| OpenRouter rate limit    | 429 hatasinda 3 deneme, exponential backoff (30s/60s/90s) |
+| OpenRouter arasi delay   | Her API cagrisi arasi 12 saniye bekleme              |
+| Opus/Sonnet model yasagi | Bu modeller asla cagrilamaz, sadece flash/free       |
 
 ---
 
@@ -281,6 +284,8 @@ Aciklama...
 - "Detay icin ilk yorum" gibi cumleler **YOK**
 - Her yayin Supabase'e kayit + Telegram'a bildirim
 - Post URL'leri (LinkedIn/X) Supabase'e kaydedilir
+- OpenRouter API'de **ASLA** Opus/Sonnet modelleri kullanilmaz (kullanici yazmadikca)
+- Gemini gorsel uretimi **1024x1024 (1K)** cozunurlukte yapilir
 
 ---
 
@@ -488,6 +493,29 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 - **Teshis:** VPS Docker loglari incelendi: `🔁 X DUPLICATE (Supabase): "i̇stanbul hava durumu..." daha önce paylaşılmış.`
 - **Cozum:** `createXPost()` fonksiyonuna `skipDuplicate` opsiyonu eklendi. Hava durumu akisinda (`agentFlow.ts`) bu opsiyon aktif edildi. Excel ve RSS haber konulari hala duplicate korumasinda.
 - **Dosyalar:** `src/services/x.ts`, `src/services/agentFlow.ts`
+
+### 27. OpenRouter Rate Limit + Retry Mekanizmasi (23 Mayis 2026, v3.4)
+
+- **Sorun:** Hava durumu akisinda saat 08:01'de `Request failed with status code 429` hatasi.
+- **Neden:** OpenRouter API rate limit asimi. Hava durumu akisi kisa surede 2 arka arkaya API cagrisi yapiyordu (icerik + prompt optimizasyonu).
+- **Cozum:**
+  - `openRouterPost()` wrapper fonksiyonu eklendi (`src/services/llm.ts`). Tum OpenRouter cagrilari bu uzerinden gecer.
+  - **Retry:** 429 alindiginda 3 deneme, exponential backoff (30s/60s/90s).
+  - **Inter-call delay:** Her OpenRouter cagrisi arasi 12 saniye bekleme (`INTER_CALL_DELAY_MS`).
+  - **Model yasagi:** Opus/Sonnet modelleri `isModelBlocked()` ile engellenir. Yanlislikla pahali model secilirse hata firlatilir.
+- **Dosyalar:** `src/services/llm.ts`
+
+### 28. Gemini Gorsel 1K Cozunurluk (23 Mayis 2026, v3.4)
+
+- **Ozellik:** Gemini gorsel uretimi artik `generationConfig.responseModalities: ["TEXT", "IMAGE"]` ile explicit 1024x1024 (1K) cozunurlukte yapilir.
+- **Degisiklik:** `generateImageWithGemini()` fonksiyonuna `generationConfig` ve prompt icin cozunurluk talimati eklendi.
+- **Dosyalar:** `src/services/llm.ts`
+
+### 29. API Key Guncelleme (23 Mayis 2026, v3.4)
+
+- **OpenRouter API Key:** Yeni key ile guncellendi (`.env` + Supabase `env_config`).
+- **Google (Gemini) API Key:** Odemeli hesap keyi ile guncellendi (`.env` + Supabase `env_config`).
+- **Not:** Eski Google API key'in kredileri tukendigi icin 429 hatasi veriyordu. Yeni key odemeli hesaba bagli.
 
 ---
 © 2026 Botfusions. MIT Lisans.
