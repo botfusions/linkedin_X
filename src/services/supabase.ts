@@ -54,7 +54,7 @@ export async function initEnvFromSupabase(): Promise<void> {
     }
 
     for (const row of data) {
-      if (row.key_value && !process.env[row.key_name]) {
+      if (row.key_value) {
         process.env[row.key_name] = row.key_value;
       }
     }
