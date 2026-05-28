@@ -148,6 +148,19 @@ export async function createXPost(
       console.log("✅ Görsel X'e yüklendi. MediaID:", mediaId);
     }
 
+    // 280 karakter sınırı — X API tek tweet için izin vermez
+    const MAX_TWEET_LENGTH = 280;
+    if (text.length > MAX_TWEET_LENGTH) {
+      // Cümle veya boşluk sınırında kırpmayı dene
+      let truncated = text.substring(0, MAX_TWEET_LENGTH - 3);
+      const lastSpace = truncated.lastIndexOf(" ");
+      if (lastSpace > MAX_TWEET_LENGTH * 0.6) {
+        truncated = truncated.substring(0, lastSpace);
+      }
+      text = truncated.trim() + "...";
+      console.log(`✂️ X metni ${text.length + 3} karaktere kırıldı (orijinal: ${text.length}).`);
+    }
+
     console.log(`📡 X Paylaşımı Yapılıyor. Metin: ${text.substring(0, 50)}...`);
 
     const tweetPayload: any = { text };

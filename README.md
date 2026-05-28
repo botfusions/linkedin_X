@@ -514,8 +514,7 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 ### 29. API Key Guncelleme (23 Mayis 2026, v3.4)
 
 - **OpenRouter API Key:** Yeni key ile guncellendi (`.env` + Supabase `env_config`).
-- **Google (Gemini) API Key:** Odemeli hesap keyi ile guncellendi (`.env` + Supabase `env_config`).
-- **Not:** Eski Google API key'in kredileri tukendigi icin 429 hatasi veriyordu. Yeni key odemeli hesaba bagli.
+- **Google (Gemini) API Key:** Guncellendi (`.env` + Supabase `env_config`).
 
 ### 30. Icerik Uretim Modeli Gemini 3.5 Flash Guncellemesi (27 Mayis 2026, v3.5)
 

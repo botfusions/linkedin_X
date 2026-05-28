@@ -124,10 +124,12 @@ export async function createLinkedInPost(
     const postUrn = ugcResponse.headers["x-restli-id"] || ugcResponse.data?.id;
     let postUrl = "";
     if (postUrn) {
-      const postId = String(postUrn)
-        .replace("urn:li:ugcPost:", "")
-        .replace("urn:li:share:", "");
-      postUrl = `https://www.linkedin.com/feed/update/${postId}`;
+      const urnStr = String(postUrn);
+      if (urnStr.startsWith("urn:li:")) {
+        postUrl = `https://www.linkedin.com/feed/update/${urnStr}`;
+      } else {
+        postUrl = `https://www.linkedin.com/feed/update/urn:li:activity:${urnStr}`;
+      }
     }
 
     console.log(

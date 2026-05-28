@@ -73,11 +73,18 @@ export async function runWeatherPostFlow(
       }
     }
 
-    if (!weatherAudit.approved) {
-      console.error("🚫 LinkedIn hava durumu DENETİM RED: Atlanıyor.");
+    const skipLinkedIn = !weatherAudit.approved;
+    const skipX = !xWeatherAudit.approved;
+
+    if (skipLinkedIn) {
+      console.error("🚫 LinkedIn hava durumu DENETİM RED: Paylaşım iptal.");
     }
-    if (!xWeatherAudit.approved) {
-      console.error("🚫 X hava durumu DENETİM RED: Atlanıyor.");
+    if (skipX) {
+      console.error("🚫 X hava durumu DENETİM RED: Paylaşım iptal.");
+    }
+    if (skipLinkedIn && skipX) {
+      console.error("🚫 Her iki platform da DENETİM RED: Akış sonlandırılıyor.");
+      return;
     }
     // ─── DENETIM SONU ───
 
@@ -88,23 +95,29 @@ export async function runWeatherPostFlow(
     let linkedinSuccess = false;
     let linkedinError = "";
     let linkedinUrl = "";
-    try {
-      const liResult = await createLinkedInPost(linkedinPost, imagePath);
-      if (liResult) {
-        console.log("✅ LinkedIn hava durumu postu yayınlandı.");
-        linkedinSuccess = true;
-        linkedinUrl = liResult;
-      } else {
-        linkedinError =
-          "createLinkedInPost null dondu (token hatasi veya gorsel hatasi)";
-        console.error("❌ LinkedIn hava durumu postu basarisiz (null dondu).");
-      }
-    } catch (err: any) {
-      if (err.message === "SKIP_LINKEDIN") {
-        console.log("⏭️ LinkedIn atlanıyor (token yok, ban koruması).");
-      } else {
-        linkedinError = err.message;
-        console.error("❌ LinkedIn paylaşım hatası:", linkedinError);
+    if (skipLinkedIn) {
+      linkedinError = "Denetim reddi";
+      console.log("⏭️ LinkedIn atlanıyor (denetim reddi).");
+    } else {
+      try {
+        const liResult = await createLinkedInPost(linkedinPost, imagePath);
+        if (liResult) {
+          console.log("✅ LinkedIn hava durumu postu yayınlandı.");
+          linkedinSuccess = true;
+          linkedinUrl = liResult;
+        } else {
+          linkedinError =
+            "createLinkedInPost null dondu (token hatasi veya gorsel hatasi)";
+          console.error("❌ LinkedIn hava durumu postu basarisiz (null dondu).");
+        }
+      } catch (err: any) {
+        if (err.message === "SKIP_LINKEDIN") {
+          linkedinError = "Token yok";
+          console.log("⏭️ LinkedIn atlanıyor (token yok, ban koruması).");
+        } else {
+          linkedinError = err.message;
+          console.error("❌ LinkedIn paylaşım hatası:", linkedinError);
+        }
       }
     }
 
@@ -112,19 +125,24 @@ export async function runWeatherPostFlow(
     let xSuccess = false;
     let xError = "";
     let xUrl = "";
-    try {
-      const xResult = await createXPost(xPost, imagePath, "İstanbul Hava Durumu", { skipDuplicate: true });
-      if (xResult) {
-        console.log("✅ X (Twitter) hava durumu postu yayınlandı.");
-        xSuccess = true;
-        xUrl = xResult;
-      } else {
-        xError = "createXPost null dondu";
-        console.error("❌ X hava durumu postu basarisiz (null dondu).");
+    if (skipX) {
+      xError = "Denetim reddi";
+      console.log("⏭️ X atlanıyor (denetim reddi).");
+    } else {
+      try {
+        const xResult = await createXPost(xPost, imagePath, "İstanbul Hava Durumu", { skipDuplicate: true });
+        if (xResult) {
+          console.log("✅ X (Twitter) hava durumu postu yayınlandı.");
+          xSuccess = true;
+          xUrl = xResult;
+        } else {
+          xError = "createXPost null dondu";
+          console.error("❌ X hava durumu postu basarisiz (null dondu).");
+        }
+      } catch (err: any) {
+        xError = err.message;
+        console.error("❌ X paylaşım hatası:", xError);
       }
-    } catch (err: any) {
-      xError = err.message;
-      console.error("❌ X paylaşım hatası:", xError);
     }
 
     // Supabase kayıt
@@ -148,6 +166,15 @@ export async function runWeatherPostFlow(
       xError: xError || undefined,
       source: "weather",
     });
+
+    // Temizlik: geçici görseli sil
+    if (imagePath) {
+      try {
+        const { default: fsp } = await import("fs/promises");
+        await fsp.unlink(imagePath);
+        console.log("🗑️ Geçici görsel silindi.");
+      } catch { /* silinmezse sorun değil */ }
+    }
   } catch (error: any) {
     console.error("🔥 Hava Durumu Akış Hatası:", error.message);
     await sendErrorNotification("Hava Durumu Akışı", error.message);

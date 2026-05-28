@@ -201,12 +201,21 @@ export async function runAutonomousWorkflow() {
           }
         }
 
-        if (!liAudit.approved && !xAudit.approved) {
+        const skipLinkedIn = !liAudit.approved;
+        const skipX = !xAudit.approved;
+
+        if (skipLinkedIn && skipX) {
           console.error("🚫 Her iki platform da DENETİM RED: Post atlanıyor.");
           for (const s of [...liAudit.suggestions, ...xAudit.suggestions]) {
             console.log(`   💡 ${s}`);
           }
           continue;
+        }
+        if (skipLinkedIn) {
+          console.error("🚫 LinkedIn DENETİM RED: Sadece X paylaşılacak.");
+        }
+        if (skipX) {
+          console.error("🚫 X DENETİM RED: Sadece LinkedIn paylaşılacak.");
         }
         // ─── DENETIM SONU ───
 
@@ -215,45 +224,56 @@ export async function runAutonomousWorkflow() {
         let linkedinSuccess = false;
         let linkedinError = "";
         let linkedinUrl = "";
-        try {
-          const liResult = await createLinkedInPost(
-            optimizedLinkedIn.finalPost,
-            imagePath,
-          );
-          if (liResult) {
-            console.log("✅ LinkedIn paylasimi basarili.");
-            linkedinSuccess = true;
-            linkedinUrl = liResult;
-          } else {
-            linkedinError =
-              "createLinkedInPost null dondu (token hatasi veya gorsel hatasi)";
-            console.error("❌ LinkedIn paylasimi basarisiz (null dondu).");
-          }
-        } catch (err: any) {
-          if (err.message === "SKIP_LINKEDIN") {
-            console.log("⏭️ LinkedIn atlanıyor (token yok, ban koruması).");
-          } else {
-            linkedinError = err.message;
-            console.error("❌ LinkedIn paylasim hatasi:", linkedinError);
+        if (skipLinkedIn) {
+          linkedinError = "Denetim reddi";
+          console.log("⏭️ LinkedIn atlanıyor (denetim reddi).");
+        } else {
+          try {
+            const liResult = await createLinkedInPost(
+              optimizedLinkedIn.finalPost,
+              imagePath,
+            );
+            if (liResult) {
+              console.log("✅ LinkedIn paylasimi basarili.");
+              linkedinSuccess = true;
+              linkedinUrl = liResult;
+            } else {
+              linkedinError =
+                "createLinkedInPost null dondu (token hatasi veya gorsel hatasi)";
+              console.error("❌ LinkedIn paylasimi basarisiz (null dondu).");
+            }
+          } catch (err: any) {
+            if (err.message === "SKIP_LINKEDIN") {
+              linkedinError = "Token yok";
+              console.log("⏭️ LinkedIn atlanıyor (token yok, ban koruması).");
+            } else {
+              linkedinError = err.message;
+              console.error("❌ LinkedIn paylasim hatasi:", linkedinError);
+            }
           }
         }
 
         let xSuccess = false;
         let xError = "";
         let xUrl = "";
-        try {
-          const xResult = await createXPost(optimizedX.finalPost, imagePath, konu);
-          if (xResult) {
-            console.log("✅ X (Twitter) paylasimi basarili.");
-            xSuccess = true;
-            xUrl = xResult;
-          } else {
-            xError = "createXPost null dondu";
-            console.error("❌ X paylasimi basarisiz (null dondu).");
+        if (skipX) {
+          xError = "Denetim reddi";
+          console.log("⏭️ X atlanıyor (denetim reddi).");
+        } else {
+          try {
+            const xResult = await createXPost(optimizedX.finalPost, imagePath, konu);
+            if (xResult) {
+              console.log("✅ X (Twitter) paylasimi basarili.");
+              xSuccess = true;
+              xUrl = xResult;
+            } else {
+              xError = "createXPost null dondu";
+              console.error("❌ X paylasimi basarisiz (null dondu).");
+            }
+          } catch (err: any) {
+            xError = err.message;
+            console.error("❌ X paylasim hatasi:", xError);
           }
-        } catch (err: any) {
-          xError = err.message;
-          console.error("❌ X paylasim hatasi:", xError);
         }
 
         if (linkedinSuccess || xSuccess) {
@@ -284,6 +304,15 @@ export async function runAutonomousWorkflow() {
           xError: xError || undefined,
           source: "excel",
         });
+
+        // Temizlik: geçici görseli sil
+        if (imagePath) {
+          try {
+            const { default: fsp } = await import("fs/promises");
+            await fsp.unlink(imagePath);
+            console.log("🗑️ Geçici görsel silindi.");
+          } catch { /* silinmezse sorun değil */ }
+        }
 
         published = true;
         break;

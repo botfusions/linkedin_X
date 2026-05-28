@@ -83,10 +83,13 @@ export async function runReadyPostWorkflow() {
 
     // İlk bekleyen kaydı bul
     const pending = records.find((r) => {
-      const statusKey =
-        detectColumn(r.data, [
-          "durum", "status", "state", "yayın", "paylasim",
-        ]) || Object.keys(r.data)[0] || "";
+      const statusKey = detectColumn(r.data, [
+        "durum", "status", "state", "yayın", "paylasim",
+      ]);
+      if (!statusKey) {
+        console.warn(`⚠️ Satır ${r.rowNumber}: Durum sütunu bulunamadı, atlanıyor.`);
+        return false;
+      }
       const val = String(r.data[statusKey] || "")
         .trim()
         .toLowerCase();
