@@ -1,4 +1,4 @@
-# Botfusions Autonomous Content Engine (v3.4)
+# Botfusions Autonomous Content Engine (v3.5)
 
 LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
@@ -43,7 +43,7 @@ src/
 ├── index.ts                  # Tek seferlik calistirma
 └── services/
     ├── agentFlow.ts          # Hava durumu + Excel akis mantigi
-    ├── llm.ts                # Perplexity arastirma + OpenRouter (Gemini 2.0 Flash) icerik + gorsel prompt
+    ├── llm.ts                # Perplexity arastirma + OpenRouter (Gemini 3.5 Flash) icerik + gorsel prompt
     ├── google.ts             # Google Sheets (GEO) entegrasyonu
     ├── rss.ts                # Google News RSS okuma + parse
     ├── gemini_image.ts       # Gemini ile gorsel uretim + kayit
@@ -216,7 +216,7 @@ npm run scheduler
 | Bilesen       | Teknoloji                   |
 | ------------- | --------------------------- |
 | Core          | Node.js 20+, TypeScript     |
-| LLM           | OpenRouter (Gemini 2.0 Flash) |
+| LLM           | OpenRouter (Gemini 3.5 Flash) |
 | Arastirma     | Perplexity Sonar            |
 | Gorsel        | Gemini 3.1 Flash Image      |
 | Veri Kaynagi  | Google Sheets API           |
@@ -516,6 +516,22 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 - **OpenRouter API Key:** Yeni key ile guncellendi (`.env` + Supabase `env_config`).
 - **Google (Gemini) API Key:** Odemeli hesap keyi ile guncellendi (`.env` + Supabase `env_config`).
 - **Not:** Eski Google API key'in kredileri tukendigi icin 429 hatasi veriyordu. Yeni key odemeli hesaba bagli.
+
+### 30. Icerik Uretim Modeli Gemini 3.5 Flash Guncellemesi (27 Mayis 2026, v3.5)
+
+- **Degisiklik:** Icerik uretimi icin kullanilan LLM modeli `gemini-2.0-flash-001`'den `gemini-3.5-flash`'e guncellendi.
+- **Kapsam:** 4 fonksiyon guncellendi:
+  - `llm.ts:236` - Excel konu icerik uretimi
+  - `llm.ts:293` - Hava durumu prompt uretimi
+  - `llm.ts:374` - Gorsel prompt uretimi
+  - `llm.ts:562` - RSS haber icerik uretimi
+- **Degismeyenler:**
+  - `optimizer.ts` - LinkedIn skorlama: `gemini-2.5-flash`
+  - `x_optimizer.ts` - X skorlama: `gemini-2.5-flash`
+  - `post_auditor.ts` - Gonderi denetimi: `gemini-2.0-flash-001`
+  - `llm.ts:426` - Gorsel uretim (Google API): `gemini-3.1-flash-image-preview`
+- **Dogrulama:** OpenRouter uzerinden `google/gemini-3.5-flash` test edildi, basarili yanit alindi.
+- **Not:** Skorlama ve denetim modelleri birakilerek maliyet/kalite dengesi korundu. Bir kac gun test sonrasi karar verilecek.
 
 ---
 © 2026 Botfusions. MIT Lisans.

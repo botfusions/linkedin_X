@@ -233,7 +233,7 @@ export async function generateContentWithGemini(
     const finalSystemMessage = customSystemPrompt || defaultSystemPrompt;
 
     const response = await openRouterPost({
-      model: "google/gemini-2.0-flash-001",
+      model: "google/gemini-3.5-flash",
       messages: [
         {
           role: "system",
@@ -290,7 +290,7 @@ export async function generateShortContentWithGemini(
     `;
 
     const response = await openRouterPost({
-      model: "google/gemini-2.0-flash-001",
+      model: "google/gemini-3.5-flash",
       messages: [
         {
           role: "system",
@@ -304,7 +304,7 @@ export async function generateShortContentWithGemini(
         },
       ],
       max_tokens: 2000,
-      temperature: 0.1, // Daha kararlı çıktı için düşürüldü
+      temperature: 0.1,
     });
 
     const choice = response.data.choices[0];
@@ -371,7 +371,7 @@ A majestic, high-fidelity cinematic photograph of Istanbul. A panoramic view thr
 `;
 
     const response = await openRouterPost({
-      model: "google/gemini-2.0-flash-001",
+      model: "google/gemini-3.5-flash",
       messages: [
         {
           role: "system",
@@ -559,7 +559,7 @@ AEO → AI yanıtlarında otorite
   try {
     console.log("🧠 Haber icin icerik uretiliyor...");
     const response = await openRouterPost({
-      model: "google/gemini-2.0-flash-001",
+      model: "google/gemini-3.5-flash",
       messages: [
         { role: "system", content: systemPrompt },
         {
