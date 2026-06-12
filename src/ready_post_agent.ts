@@ -252,13 +252,7 @@ export async function runReadyPostWorkflow() {
       source: "ready_post",
     });
 
-    // Temizlik: geçici görseli sil
-    try {
-      await fs.unlink(imagePath);
-      console.log("🗑️ Geçici görsel silindi.");
-    } catch {
-      // Silinmezse sorun değil
-    }
+    // Not: temp görseller artık silinmiyor — debug ve arşiv için kalıcı tutuluyor
 
     if (linkedinSuccess || xSuccess) {
       console.log("\n✨ Hazır post akışı başarıyla tamamlandı.");

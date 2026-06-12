@@ -1,4 +1,4 @@
-# Botfusions Autonomous Content Engine (v3.5)
+# Botfusions Autonomous Content Engine (v3.5.1)
 
 LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
@@ -218,7 +218,7 @@ npm run scheduler
 | Core          | Node.js 20+, TypeScript     |
 | LLM           | OpenRouter (Gemini 3.5 Flash) |
 | Arastirma     | Perplexity Sonar            |
-| Gorsel        | Gemini 3.1 Flash Image      |
+| Gorsel        | Gemini 3.1 Flash Image (GA) |
 | Veri Kaynagi  | Google Sheets API           |
 | Haber Kaynagi | Google News AI RSS          |
 | Veritabani    | Supabase (PostgreSQL)       |
@@ -528,9 +528,18 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
   - `optimizer.ts` - LinkedIn skorlama: `gemini-2.5-flash`
   - `x_optimizer.ts` - X skorlama: `gemini-2.5-flash`
   - `post_auditor.ts` - Gonderi denetimi: `gemini-2.0-flash-001`
-  - `llm.ts:426` - Gorsel uretim (Google API): `gemini-3.1-flash-image-preview`
 - **Dogrulama:** OpenRouter uzerinden `google/gemini-3.5-flash` test edildi, basarili yanit alindi.
 - **Not:** Skorlama ve denetim modelleri birakilerek maliyet/kalite dengesi korundu. Bir kac gun test sonrasi karar verilecek.
+
+### 31. Gorsel Modeli + API Key + Temp Silme Fix (12 Haziran 2026, v3.5.1)
+
+- **Sorun:** Hava durumu gorselleri uretilmiyordu.
+- **Nedenler:**
+  1. Google API Key suresi dolmustu → yeni key alindi
+  2. Gorsel modeli `gemini-3.1-flash-image-preview` 25 Haziran'da kapatilacakti → GA model `gemini-3.1-flash-image`'e gecildi
+  3. Temp gorseller paylasim sonrasi siliniyordu → silme kodu kaldirildi, gorseller arsiv icin kalici tutuluyor
+- **Dosyalar:** `src/services/llm.ts`, `src/services/agentFlow.ts`, `src/autonomous_agent.ts`, `src/ready_post_agent.ts`, `src/rss_agent.ts`, `.env`
+- **Referans:** [Gemini API Deprecations](https://ai.google.dev/gemini-api/docs/deprecations) — `gemini-3.1-flash-image-preview` shutdown: 25 Haziran 2026
 
 ---
 © 2026 Botfusions. MIT Lisans.

@@ -167,14 +167,8 @@ export async function runWeatherPostFlow(
       source: "weather",
     });
 
-    // Temizlik: geçici görseli sil
-    if (imagePath) {
-      try {
-        const { default: fsp } = await import("fs/promises");
-        await fsp.unlink(imagePath);
-        console.log("🗑️ Geçici görsel silindi.");
-      } catch { /* silinmezse sorun değil */ }
-    }
+    // Not: temp görseller artık silinmiyor — debug ve arşiv için kalıcı tutuluyor
+    // Eski davranış: fsp.unlink(imagePath) ile siliniyordu
   } catch (error: any) {
     console.error("🔥 Hava Durumu Akış Hatası:", error.message);
     await sendErrorNotification("Hava Durumu Akışı", error.message);

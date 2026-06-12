@@ -305,14 +305,7 @@ export async function runAutonomousWorkflow() {
           source: "excel",
         });
 
-        // Temizlik: geçici görseli sil
-        if (imagePath) {
-          try {
-            const { default: fsp } = await import("fs/promises");
-            await fsp.unlink(imagePath);
-            console.log("🗑️ Geçici görsel silindi.");
-          } catch { /* silinmezse sorun değil */ }
-        }
+        // Not: temp görseller artık silinmiyor — debug ve arşiv için kalıcı tutuluyor
 
         published = true;
         break;
