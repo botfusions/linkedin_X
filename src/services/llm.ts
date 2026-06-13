@@ -412,13 +412,13 @@ export async function generateImageWithGemini(prompt: string): Promise<string> {
   if (!GOOGLE_API_KEY) throw new Error("GOOGLE_API_KEY eksik!");
 
   const TURKISH_RULE = `
-KRITIK KURALLAR:
-1. Tum basliklar, etiketler, label'lar ve metin TURKCE OLMALIDIR. Ingilizce terim kullanma.
-2. Metinler BUYUK ve BOLD olsun - mobilde okunabilir olmali (minimum 24pt).
-3. Flat design ikonlar kullan. Gercekci foto degil, vektor tarzi.
-4. Maksimum 4-5 kisa metin kutusu. Asiri kalabalik yapma.
-5. Her metin kutusunda en fazla 5-6 kelime. Kisa ve oz.
-6. Asla yazim hatasi yapma. Turkce karakterleri dogru kullan (ş,ğ,ı,ö,ü,ç).
+KRITIK KURALLAR (REFERANS STIL):
+1. STIL: FOTOREALISTIK cinematic photograph (8k). ASLA vektor, flat illustration, cizgi roman, 2D illustrasyon veya dijital cizim yapma — gercek bir fotograf gibi olsun.
+2. KOMPOZISYON: Agac pencere cercevesinden disari bakis. Pencere altinda/pervazinda ofis detaylari (ahsap masa, kitaplar, kahve veya cay bardagi, saksi bitkisi, deri koltuk). Arkada Istanbul landmark'i (Hagia Sophia, camiler, Kiz Kulesi, Bogaz ve feribotlar).
+3. HAVA ARAYUZU: Bilgiler DOGRUDAN CAMA ISLENMIS (overlay) olsun — KUTU/CONTAINER YOK, arka plan SEKLI YOK, siyah/koyu serit YOK. Yazilar ince beyaz, camsi, yari saydam; semi-bold, okunakli. 'ISTANBUL' ve sicaklik (ornegin 20°C) BUYUK ve kalin; Nem, Ruzgar Hizi, Hissedilen bilgileri kucuk ve ince.
+4. IKONLAR: sade, minimal, cizgisiz (flat vektor ikon DEGIL) — cam etching hissi veren ince beyaz ikonlar.
+5. Tum metinler TURKCE. Asla yazim hatasi yapma. Turkce karakterleri dogru kullan (ş, ğ, ı, İ, ö, ü, ç).
+6. Atmosfer isigi hava durumuna uysun (aciksa gunesli altin isik, yagmurluysa camda su damlalari).
 `;
 
   try {
