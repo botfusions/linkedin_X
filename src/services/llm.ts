@@ -289,40 +289,83 @@ export async function generateShortContentWithGemini(
       }
     `;
 
-    const response = await openRouterPost({
-      model: "google/gemini-3.5-flash",
-      messages: [
-        {
-          role: "system",
-          content:
-            finalSystemPrompt +
-            "\n\nÖnemli: JSON içinde tırnak işaretlerini ve yeni satırları doğru şekilde kaçır (escape). linkedinPost ve xPost alanları TAMAMEN AYNI metni içermelidir.",
-        },
-        {
-          role: "user",
-          content: `Güncel Bilgi: ${researchData}\n\nLütfen sadece istenen JSON objesini döndür.`,
-        },
-      ],
-      max_tokens: 2000,
-      temperature: 0.1,
-    });
+    // JSON parse hatası (Unterminated string vb.) için retry mekanizması.
+    // Gemini bazen kaçışsız tırnak veya yarım string üretiyor; tek hata tüm akışı çökertmesin.
+    const PARSE_MAX_RETRIES = 3;
+    let lastParseError: any = null;
+    let lastResponseText = "";
 
-    const choice = response.data.choices[0];
-    const responseText = choice.message.content;
-    const jsonString = cleanJsonString(responseText);
+    for (let attempt = 1; attempt <= PARSE_MAX_RETRIES; attempt++) {
+      const retryHint =
+        attempt === 1
+          ? ""
+          : `\n\nÖNEMLİ: ÖNCEKI DENEMEDE JSON BOZUKTU (unterminated string / escape hatası). Lütfen ÇOK DİKKATLİ ol: metin içindeki çift tırnakları (") mutlaka \\" olarak kaçır (escape), string değerlerini tek satırda tut ve kaçış dizilerini (\\n, \\", \\\\) doğru kullan. linkedinPost ve xPost alanları TAMAMEN AYNI metni içermelidir.`;
 
-    if (choice.finish_reason !== "stop") {
-      console.warn(`⚠️ Uyarı: LLM tamamlama sebebi: ${choice.finish_reason}`);
+      const response = await openRouterPost({
+        model: "google/gemini-3.5-flash",
+        messages: [
+          {
+            role: "system",
+            content:
+              finalSystemPrompt +
+              "\n\nÖnemli: JSON içinde tırnak işaretlerini ve yeni satırları doğru şekilde kaçır (escape). linkedinPost ve xPost alanları TAMAMEN AYNI metni içermelidir." +
+              retryHint,
+          },
+          {
+            role: "user",
+            content: `Güncel Bilgi: ${researchData}\n\nLütfen sadece istenen JSON objesini döndür.`,
+          },
+        ],
+        max_tokens: 2000,
+        temperature: attempt === 1 ? 0.1 : 0.0, // Retry'de deterministik
+      });
+
+      const choice = response.data.choices[0];
+      const responseText = choice.message.content;
+      const jsonString = cleanJsonString(responseText);
+      lastResponseText = responseText;
+
+      if (choice.finish_reason !== "stop") {
+        console.warn(
+          `⚠️ Uyarı: LLM tamamlama sebebi: ${choice.finish_reason} (deneme ${attempt}/${PARSE_MAX_RETRIES})`,
+        );
+        // Truncation (length) ise token artırarak tekrar dene
+        if (choice.finish_reason === "length") {
+          lastParseError = new Error(
+            `Yanıt kısaltıldı (finish_reason=length) — token limiti yetmedi.`,
+          );
+          if (attempt < PARSE_MAX_RETRIES) {
+            await sleep(INTER_CALL_DELAY_MS);
+            continue;
+          }
+        }
+      }
+
+      try {
+        const parsed = JSON.parse(jsonString);
+        if (attempt > 1) {
+          console.log(`✅ JSON parse deneme ${attempt}/${PARSE_MAX_RETRIES}'de başarılı.`);
+        }
+        return parsed;
+      } catch (e: any) {
+        lastParseError = e;
+        console.warn(
+          `⚠️ JSON Parse Hatası (deneme ${attempt}/${PARSE_MAX_RETRIES}): ${e.message}`,
+        );
+        console.error("📄 Ham Yanıt:", responseText);
+        console.error("🧼 Temizlenmiş String:", jsonString);
+        if (attempt < PARSE_MAX_RETRIES) {
+          console.log(`🔁 JSON yeniden üretiliyor (deneme ${attempt + 1})...`);
+          await sleep(INTER_CALL_DELAY_MS);
+          continue;
+        }
+      }
     }
 
-    try {
-      return JSON.parse(jsonString);
-    } catch (e: any) {
-      console.error("❌ JSON Parse Hatası Detayı:", e.message);
-      console.error("📄 Ham Yanıt:", responseText);
-      console.error("🧼 Temizlenmiş String:", jsonString);
-      throw e;
-    }
+    // Tüm denemeler başarısız — son hatayı fırlat
+    console.error("❌ JSON Parse tüm denemelerden sonra başarısız.");
+    console.error("📄 Son Ham Yanıt:", lastResponseText);
+    throw lastParseError ?? new Error("JSON parse başarısız");
   } catch (error: any) {
     console.error("❌ Kısa İçerik Hatası:", error.message);
     throw error;
