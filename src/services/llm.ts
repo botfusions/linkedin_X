@@ -316,7 +316,10 @@ export async function generateShortContentWithGemini(
             content: `Güncel Bilgi: ${researchData}\n\nLütfen sadece istenen JSON objesini döndür.`,
           },
         ],
-        max_tokens: 2000,
+        // gemini-3.5-flash reasoning modelidir; düşünme token'ları max_tokens'tan düşer.
+        // 2000'de reasoning bütçeyi aşıp JSON'u yarıda kesiyordu (retry boşuna 3 kez deniyordu).
+        // Kök neden: retry'nin yorumundaki "token artır" niyetini burada uyguluyoruz.
+        max_tokens: 6000,
         temperature: attempt === 1 ? 0.1 : 0.0, // Retry'de deterministik
       });
 
@@ -427,7 +430,8 @@ A majestic, high-fidelity cinematic photograph of Istanbul. A panoramic view thr
           content: `**Zaman:** ${formattedDate}\n**Hava Verisi:** ${researchData}\n\nLütfen promptu oluştur.`,
         },
       ],
-      max_tokens: 1000,
+      // gemini-3.5-flash reasoning modelidir; 1000 max_tokens promptu yarıda kesebilir.
+      max_tokens: 4000,
       temperature: 0.3,
     });
 
