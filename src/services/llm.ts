@@ -454,7 +454,71 @@ A majestic, high-fidelity cinematic photograph of Istanbul. A panoramic view thr
   }
 }
 
-export async function generateImageWithGemini(prompt: string): Promise<string> {
+/**
+ * Hava durumu görseli için YALNIZCA atmosferik arka plan promptu üretir.
+ * KRİTİK: promptta hava verisi (sıcaklık rakamı, durum etiketi, ikon, overlay/UI)
+ * ASLA bulunmaz — bu veriler deterministik olarak (weather_overlay.ts) görselin
+ * üzerine yazılır. Böylece görsel modeli rakam/metin yanlış render edemez.
+ */
+export async function generateWeatherBackgroundPrompt(
+  researchData: string,
+  basePrompt: string,
+): Promise<string> {
+  try {
+    await sleep(INTER_CALL_DELAY_MS); // Önceki OpenRouter çağrısıyla araya delay
+    const systemPrompt = `
+Sen profesyonel bir görsel prompt mühendisisin.
+
+**GÖREV:**
+A majestic, high-fidelity cinematic wide-angle photograph of [LANDMARK] in Istanbul. The sky and natural lighting MUST strictly match: [ATMOSPHERE_DESCRIPTION]. Pure professional travel photography, ultra realistic, 8k. --ar 1:1
+
+**KURALLAR:**
+1. SADECE İNGİLİZCE PROMPT döndür.
+2. [LANDMARK]: İstanbul'un ikonik mekanlarından rastgele (Bosphorus Bridge with ferries, Maiden's Tower, Hagia Sophia, Blue Mosque, Rumeli Fortress, Bosphorus shoreline). GALATA TOWER KULLANMA. Her seferinde farklı mekan seç.
+3. [ATMOSPHERE_DESCRIPTION]:
+   - AÇIK/GÜNEŞLİ: clear bright blue sky, warm golden sunlight, no clouds.
+   - BULUTLU/PARÇALI BULUTLU: bright blue sky with aesthetic fluffy white clouds, sunlight peeking through. NOT grey/gloomy.
+   - YAĞMURLU: moody overcast sky, wet streets and surfaces, cinematic cool tone.
+4. TEK PARAGRAF. Giriş/açıklama yok. --ar 1:1 koru.
+
+**YASAK (ÇOK KRİTİK - görsel modeli yazı çizmeye meyillidir, DİKKATLE OKU):**
+- Fotoğrafta HİÇBİR yazı, metin, rakam, sayı, harf, logo, watermark, tabela, tabel, reklam panosu, işaret ETİKETİ olmasın.
+- HİÇBİR pencere çerçevesi, cam arayüzü, HUD, overlay, bilgi kutusu, dijital ekran, grafik, ikon, düğme, UI elementi, harita, sıcaklık göstergesi olmasın.
+- İnsanlar tabel veya tabela taşısın bile. Doğal, metinsiz bir manzara fotoğrafı olsun.
+- Promptta "text/window/overlay/interface/HUD/display/UI/screen/label/number/degree/temperature/sign/widget" kelimeleri ASLA geçmesin.
+- Hava verileri (sıcaklık vb.) sonradan AYRI ve deterministik bir katman olarak eklenecek; prompt bunu ASLA içermesin.
+`;
+
+    const response = await openRouterPost({
+      model: "google/gemini-3.5-flash",
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
+        {
+          role: "user",
+          content: `**Hava Verisi:** ${researchData}\n\nLütfen yalnızca atmosferik arka plan promptunu oluştur (TAMAMEN METİNSİZ, hiçbir hava verisi yazısı yok).`,
+        },
+      ],
+      // gemini-3.5-flash reasoning modelidir; yeterli bütçe.
+      max_tokens: 4000,
+      temperature: 0.3,
+    });
+
+    let result = response.data.choices[0].message.content.trim();
+    result = result.replace(/^["']|["']$/g, "");
+    return result;
+  } catch (error: any) {
+    console.error("❌ Background Prompt Hatası:", error.message);
+    return basePrompt;
+  }
+}
+
+export async function generateImageWithGemini(
+  prompt: string,
+  opts: { raw?: boolean } = {},
+): Promise<string> {
   const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
   if (!GOOGLE_API_KEY) throw new Error("GOOGLE_API_KEY eksik!");
 
@@ -476,7 +540,9 @@ KRITIK KURALLAR (REFERANS STIL):
           {
             parts: [
               {
-                text: `${prompt}\n\nOutput resolution: 1024x1024 pixels (1K).\n\n${TURKISH_RULE}`,
+                text: opts.raw
+                  ? `${prompt}\n\nOutput resolution: 1024x1024 pixels (1K).`
+                  : `${prompt}\n\nOutput resolution: 1024x1024 pixels (1K).\n\n${TURKISH_RULE}`,
               },
             ],
           },

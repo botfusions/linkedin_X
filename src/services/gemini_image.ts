@@ -7,10 +7,13 @@ import { generateImageWithGemini } from "./llm.js";
  * @param prompt Görsel üretim promptu
  * @returns Oluşturulan görselin dosya yolu
  */
-export async function generateGeminiImage(prompt: string): Promise<string> {
+export async function generateGeminiImage(
+  prompt: string,
+  opts: { raw?: boolean } = {},
+): Promise<string> {
   try {
     console.log("🎨 Gemini ile görsel üretiliyor...");
-    const base64Data = await generateImageWithGemini(prompt);
+    const base64Data = await generateImageWithGemini(prompt, opts);
 
     const tempDir = path.join(process.cwd(), "temp_images");
 

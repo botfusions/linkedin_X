@@ -1,11 +1,12 @@
 import {
   generateShortContentWithGemini,
-  generateOptimizedImagePrompt,
+  generateWeatherBackgroundPrompt,
 } from "./llm.js";
 import { createLinkedInPost } from "./linkedin.js";
 import { createXPost } from "./x.js";
 import { generateGeminiImage } from "./gemini_image.js";
-import { getIstanbulWeather } from "./weather.js";
+import { getIstanbulWeatherData } from "./weather.js";
+import { overlayWeatherData } from "./weather_overlay.js";
 import { initEnvFromSupabase, insertPublishedPost } from "./supabase.js";
 import { sendPublishNotification, sendErrorNotification } from "./telegram.js";
 import { auditPost } from "./post_auditor.js";
@@ -19,8 +20,9 @@ export async function runWeatherPostFlow(
   await initEnvFromSupabase();
 
   try {
-    // 1. Hava durumu araştırması (OpenWeatherMap ile)
-    const researchData = await getIstanbulWeather();
+    // 1. Hava durumu verisi (yapısal + LLM metni) — OpenWeatherMap
+    const weather = await getIstanbulWeatherData();
+    const researchData = weather.text;
 
     // 2. İçerik üretimi (Özel kısa weather promptu ile LinkedIn + X)
     const generated = await generateShortContentWithGemini(
@@ -30,17 +32,20 @@ export async function runWeatherPostFlow(
 
     const { linkedinPost, xPost } = generated;
 
-    // 3. Görsel Üretimi
-    console.log(
-      "\n🎨 Görsel promptu optimize ediliyor (Gemini 2.5 Pro - OpenRouter)...",
-    );
-    const optimizedPrompt = await generateOptimizedImagePrompt(
+    // 3. Görsel Üretimi — YALNIZCA atmosferik arka plan (metinsiz), ardından
+    //    hava verisi DETERMİNİSTİK olarak görselin üzerine yazılır. Böylece
+    //    sıcaklık/koşul görsel modeli tarafından yanlış render edilemez.
+    console.log("\n🎨 Atmosferik arka plan promptu üretiliyor (metinsiz)...");
+    const bgPrompt = await generateWeatherBackgroundPrompt(
       researchData,
       imageVisualPrompt,
     );
 
-    console.log("\n🎨 Hava durumu görseli üretiliyor...");
-    const imagePath = await generateGeminiImage(optimizedPrompt);
+    console.log("\n🎨 Hava durumu arka plan görseli üretiliyor (metinsiz, raw)...");
+    const bgPath = await generateGeminiImage(bgPrompt, { raw: true });
+
+    console.log("\n🖌️ Hava verisi görselin üzerine yazılıyor (deterministik)...");
+    const imagePath = await overlayWeatherData(bgPath, weather);
 
     // --- GÜVENLİK BARİYERİ ---
     if (!linkedinPost || linkedinPost.length < 10) {
