@@ -218,7 +218,7 @@ npm run scheduler
 | Core          | Node.js 20+, TypeScript     |
 | LLM           | OpenRouter (Gemini 3.5 Flash) |
 | Arastirma     | Perplexity Sonar            |
-| Gorsel        | Gemini 3.1 Flash Image (GA) |
+| Gorsel        | Gemini 3.1 Flash Lite Image |
 | Veri Kaynagi  | Google Sheets API           |
 | Haber Kaynagi | Google News AI RSS          |
 | Veritabani    | Supabase (PostgreSQL)       |
@@ -540,6 +540,16 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
   3. Temp gorseller paylasim sonrasi siliniyordu → silme kodu kaldirildi, gorseller arsiv icin kalici tutuluyor
 - **Dosyalar:** `src/services/llm.ts`, `src/services/agentFlow.ts`, `src/autonomous_agent.ts`, `src/ready_post_agent.ts`, `src/rss_agent.ts`, `.env`
 - **Referans:** [Gemini API Deprecations](https://ai.google.dev/gemini-api/docs/deprecations) — `gemini-3.1-flash-image-preview` shutdown: 25 Haziran 2026
+
+### 32. Gorsel Modeli Lite'a Gecis + API Key Yenileme (11 Temmuz 2026, v3.5.2)
+
+- **Degisiklik:** Gorsel uretim modeli `gemini-3.1-flash-image`'den `gemini-3.1-flash-lite-image`'a gecildi.
+- **Neden:**
+  1. Eski Google API Key (`AIzaSyA447FaxxmPvjouCEj19KRhbV-43nFCwrI`) suresi dolmustu → `INVALID_ARGUMENT / API_KEY_INVALID` hatasi
+  2. Lite model daha dusuk maliyetli; testlerde fotorealistik pencere stili ve Turkce overlay (kutu/arka plan olmadan, cama kazınmıs) ayni kalitede uretildi
+- **Dosyalar:** `src/services/llm.ts` (model URL'si, `generateImageWithGemini`), `.env` (`GOOGLE_API_KEY`)
+- **Dogrulama:** `src/test_weather_dry_run_v3.ts` ile hava durumu gorseli uretildi (1024x1024, paylasimsiz test). Kompozisyon, cama islenmis Turkce metinler (`İSTANBUL`, `22°C`, `Hissedilen: 23°C`, `Nem: %100`, `Rüzgar: 2.38 m/s`) ve deterministik sıcaklik dogru geldi.
+- **Not:** Sadece yerel test; paylasim yapilmadi.
 
 ---
 © 2026 Botfusions. MIT Lisans.
