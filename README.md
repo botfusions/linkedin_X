@@ -549,7 +549,8 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
   2. Lite model daha dusuk maliyetli; testlerde fotorealistik pencere stili ve Turkce overlay (kutu/arka plan olmadan, cama kazınmıs) ayni kalitede uretildi
 - **Dosyalar:** `src/services/llm.ts` (model URL'si, `generateImageWithGemini`), `.env` (`GOOGLE_API_KEY`)
 - **Dogrulama:** `src/test_weather_dry_run_v3.ts` ile hava durumu gorseli uretildi (1024x1024, paylasimsiz test). Kompozisyon, cama islenmis Turkce metinler (`İSTANBUL`, `22°C`, `Hissedilen: 23°C`, `Nem: %100`, `Rüzgar: 2.38 m/s`) ve deterministik sıcaklik dogru geldi.
-- **Not:** Sadece yerel test; paylasim yapilmadi.
+- **Deploy:** `main`'e push edildi (commit `d9c415e`), Coolify uzerinden production'a alindi.
+- **Not (onemli):** Production `GOOGLE_API_KEY`'yi `.env`'ten degil **Supabase `env_config`** tablosundan okur (late-load). Bu kez Supabase zaten yeni key (`AIzaSyDygjbFRS...`) ile gunceldi → ek Supabase mudahalesi gerekmedi. Key yenilendiginde her zaman `.env` + Supabase `env_config` iki yerini de dogrula.
 
 ---
 © 2026 Botfusions. MIT Lisans.
