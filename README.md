@@ -363,7 +363,7 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 | Ban koruması             | RSS agent calisirken postlar arasi 3-5dk bekleme var mi kontrol et       |
 | LinkedIn false positive  | Token yokken "yayinlandi" raporlanmiyor mu dogrula                       |
 | Hayalet Paylasim (Ghost) | Import sırasında RSS workflow tetiklenmiyor mu dogrula (v2.6.1 fix)      |
-| Stil Rotasyonu           | Her postta farkli stil (3D, Cyber, vb.) uretiliyor mu dogrula            |
+| Stil Rotasyonu           | Her postta farkli stil (Blueprint, Cyberpunk, vb.; 3d kaldirildi - bkz. §35) uretiliyor mu dogrula            |
 | Supabase late-load       | Container redeploy sonrasi API key'ler Supabase'ten geliyor mu dogrula   |
 | Tek haber                | RSS agent her calismada sadece 1 haber isliyor mu dogrula                |
 | X hashtag                | X postlarinda 2-3 hashtag var mi dogrula                                  |
@@ -574,8 +574,17 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
   4. Yeni `src/test_hermes_dry_run.ts`: paylasimsiz + sheet yazmayan demo.
 - **Sonuc:** HERMES X gunde 2 (her seferinde 1 satir) + RSS 1 = **3 infografik/gun**. LinkedIn URL C sütununa, status "done" yazilir; 2. calisma otomatik sonraki satira gecer.
 - **Dosyalar:** `src/services/google.ts`, `src/autonomous_agent.ts`, `src/scheduler.ts`, `src/test_hermes_dry_run.ts`
-- **Dogrulama:** `npx tsc --noEmit` gecti. Demo: ilk TODO satir ("Google Aramaları %38 Düştü") → Perplexity arastirma → Gemini LI+X icerik → 3D infografik (Turkce, botfusions logo). **Paylasim yapilmadi**, sheet read-back ile satir 2 "TODO" + C bos olarak teyit edildi.
+- **Dogrulama:** `npx tsc --noEmit` gecti. Demo: ilk TODO satir ("Google Aramaları %38 Düştü") → Perplexity arastirma → Gemini LI+X icerik → infografik (Turkce, botfusions logo; 3d stili sonradan kaldirildi, bkz. §35). **Paylasim yapilmadi**, sheet read-back ile satir 2 "TODO" + C bos olarak teyit edildi.
 - **Not:** `fetchContentFromSheet` (GEO), `ready_post_agent.ts`, `fetchReadyPosts` artik **olu kod** (dosyalar silinmedi). "HERMES  X" sekme adinda **cift bosluk** var; kod tam adıyla referanslanir.
+
+### 35. 3D Infografik Stili Kaldirma (14 Temmuz 2026)
+
+- **Sorun:** "3d" (3D Infrastructure Matrix) infografik stili kaliteli cikmadi. Kullanici tarafindan "bu imaj asla uretilmeyecek, bu kesin" seklinde kalici kaldirma talep edildi.
+- **Kok neden:** Model bu stilin yüksek yogunluklu 3D matris goruntusunu tutarli/cilt edilebilir uretemiyordu; diger 4 stil (blueprint/cyberpunk/minimalist/editorial) ise kaliteli cikiyordu.
+- **Degisiklik:** `optimizer.ts`'te `STYLE_ORDER`, `getNextStyle` donus tipi, `stylePool` ve `InfographicData` union'indan "3d" kaldirildi. Kalan stiller: **blueprint, cyberpunk, minimalist, editorial**. Kod icine not dusturuldu: `// NOT: "3d" (3D Infrastructure Matrix) kaliteli çıkmadığı için kaldırıldı.`
+- **Dosyalar:** `src/services/optimizer.ts`
+- **Dogrulama:** `npx tsc --noEmit` gecti. Dinamik promptla 1 ornek infografik uretildi (3d disinda stil) → kullanici tarafindan "cok iyi" onayi. Ayni commit (`7f25515`) ile push edildi; §33 ve §34 ile ayni deploy batch'inde.
+- **Not:** Test tablosundaki "Stil Rotasyonu" maddesi ve §34 dogrulama satiri bu kaldirmaya uygun guncellendi.
 
 ---
 © 2026 Botfusions. MIT Lisans.
