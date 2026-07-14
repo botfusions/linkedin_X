@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import axios from "axios";
 import dotenv from "dotenv";
+import { getIstanbulDayPart, type DayPart } from "./weather.js";
 
 dotenv.config();
 
@@ -455,10 +456,27 @@ A majestic, high-fidelity cinematic photograph of Istanbul. A panoramic view thr
 }
 
 /**
+ * Gün vaktine göre ışık betimi (TIME_LIGHTING). Europe/Istanbul saatinden
+ * deterministik hesaplanır → gece her zaman gece ışığı, sabah her zaman şafak.
+ * Model tahminine bırakılmaz; resolve edilip prompta birebir enjekte edilir.
+ */
+const TIME_LIGHTING_BY_PART: Record<DayPart, string> = {
+  sabah:
+    "soft early-morning light, gentle pink and golden dawn glow, a low warm sun casting long soft shadows, dewy fresh atmosphere",
+  gündüz:
+    "bright clear midday daylight, high sun, vivid blue sky, crisp sharp shadows",
+  akşam:
+    "warm golden-hour sunset light, deep orange and amber glow, sun low on the horizon, dramatic long shadows",
+  gece:
+    "nighttime, deep dark-blue sky, a glowing moon and faint stars, glittering warm city lights and bridge reflections on the Bosphorus water, cozy warm glow from an interior lamp",
+};
+
+/**
  * Hava durumu görseli için YALNIZCA atmosferik arka plan promptu üretir.
  * KRİTİK: promptta hava verisi (sıcaklık rakamı, durum etiketi, ikon, overlay/UI)
  * ASLA bulunmaz — bu veriler deterministik olarak (weather_overlay.ts) görselin
  * üzerine yazılır. Böylece görsel modeli rakam/metin yanlış render edemez.
+ * Saat-bilinçlidir: gün vaktine (sabah/gündüz/akşam/gece) göre ışık enjekte eder.
  */
 export async function generateWeatherBackgroundPrompt(
   researchData: string,
@@ -466,27 +484,38 @@ export async function generateWeatherBackgroundPrompt(
 ): Promise<string> {
   try {
     await sleep(INTER_CALL_DELAY_MS); // Önceki OpenRouter çağrısıyla araya delay
+
+    // Gün vaktini çöz (Europe/Istanbul) ve ışık betimini enjekte et.
+    // Model seçmez, BİZ veririz → gece her zaman gece ışığı. Saat tahmine bırakılmaz.
+    const { part, timeStr } = getIstanbulDayPart();
+    const timeLighting = TIME_LIGHTING_BY_PART[part];
+    console.log(
+      `🕐 Görsel gün-vakti: ${timeStr} → ${part} | ışık: "${timeLighting.slice(0, 40)}..."`,
+    );
+
     const systemPrompt = `
 Sen profesyonel bir görsel prompt mühendisisin.
 
 **GÖREV:**
-A majestic, high-fidelity cinematic wide-angle photograph of [LANDMARK] in Istanbul. The sky and natural lighting MUST strictly match: [ATMOSPHERE_DESCRIPTION]. Pure professional travel photography, ultra realistic, 8k. --ar 1:1
+A panoramic, high-fidelity cinematic photograph looking THROUGH a large dark-wooden window from a premium, cozy indoor office in Istanbul, out at [LANDMARK] across the Bosphorus. Warm lived-in interior in the foreground: a brown leather armchair, a wooden desk with a steaming glass of Turkish tea, stacked books, and a small potted plant on the windowsill. The natural lighting and sky MUST strictly match: [TIME_LIGHTING]. [WEATHER_ELEMENT]. Pure professional photography, ultra realistic, 8k. --ar 1:1
 
 **KURALLAR:**
 1. SADECE İNGİLİZCE PROMPT döndür.
 2. [LANDMARK]: İstanbul'un ikonik mekanlarından rastgele (Bosphorus Bridge with ferries, Maiden's Tower, Hagia Sophia, Blue Mosque, Rumeli Fortress, Bosphorus shoreline). GALATA TOWER KULLANMA. Her seferinde farklı mekan seç.
-3. [ATMOSPHERE_DESCRIPTION]:
-   - AÇIK/GÜNEŞLİ: clear bright blue sky, warm golden sunlight, no clouds.
-   - BULUTLU/PARÇALI BULUTLU: bright blue sky with aesthetic fluffy white clouds, sunlight peeking through. NOT grey/gloomy.
-   - YAĞMURLU: moody overcast sky, wet streets and surfaces, cinematic cool tone.
-4. TEK PARAGRAF. Giriş/açıklama yok. --ar 1:1 koru.
+3. [TIME_LIGHTING] YERİNE birebir şunu yaz (DEĞİŞTİRME): "${timeLighting}". Bu, günün vaktini (şu an İstanbul saatiyle ${timeStr} → ${part}) belirler; gökyüzü rengi ve ışık TAMAMEN bundan gelir.
+4. [WEATHER_ELEMENT] kısmını hava verisine göre doldur:
+   - AÇIK/GÜNEŞLİ: completely clear sky, no clouds at all.
+   - BULUTLU/PARÇALI BULUTLU: aesthetic fluffy white clouds drifting across the sky, light peeking through. NOT grey/gloomy.
+   - YAĞMURLU: realistic rain, wet streets and water droplets on the window glass, cinematic moody tone.
+   - KAR: light snow falling, white snow blanketing rooftops and the windowsill.
+5. ÇELİŞKİ KURALI (ÇOK KRİTİK): gökyüzü RENGİ ve ana ışık her zaman [TIME_LIGHTING] tarafından belirlenir. Eğer vakit AKŞAM veya GECE ise gökyüzü ASLA "bright blue sky" olamaz — sırasıyla turuncu/amber gün batımı veya koyu lacivert gece gökyüzü olsun. Hava durumu yalnızca bulut/yağmur/kar ekler; gökyüzü rengini VEYA gece/gündüz olmasını ASLA değiştirmez.
+6. TEK PARAGRAF. Giriş/açıklama yok. --ar 1:1 koru.
 
 **YASAK (ÇOK KRİTİK - görsel modeli yazı çizmeye meyillidir, DİKKATLE OKU):**
-- Fotoğrafta HİÇBİR yazı, metin, rakam, sayı, harf, logo, watermark, tabela, tabel, reklam panosu, işaret ETİKETİ olmasın.
-- HİÇBİR pencere çerçevesi, cam arayüzü, HUD, overlay, bilgi kutusu, dijital ekran, grafik, ikon, düğme, UI elementi, harita, sıcaklık göstergesi olmasın.
-- İnsanlar tabel veya tabela taşısın bile. Doğal, metinsiz bir manzara fotoğrafı olsun.
-- Promptta "text/window/overlay/interface/HUD/display/UI/screen/label/number/degree/temperature/sign/widget" kelimeleri ASLA geçmesin.
+- FOTOĞRAFTA HİÇBİR YAZI OLMASIN: metin, rakam, sayı, harf, logo, watermark, tabela, reklam panosu, işaret etiketi YOK.
+- FİZİKSEL ahşap pencere çerçevesi VE cam VARDIR (kompozisyonun parçası) — ANCAK camda HİÇBİR dijital arayüz, HUD, overlay, bilgi kutusu, dijital ekran, grafik, ikon, düğme, UI elementi, harita, sıcaklık göstergesi OLMASIN. Cam TAMAMEN BOŞ ve şeffaf olsun.
 - Hava verileri (sıcaklık vb.) sonradan AYRI ve deterministik bir katman olarak eklenecek; prompt bunu ASLA içermesin.
+- Promptta "text/overlay/interface/HUD/display/UI/screen/label/number/degree/temperature/sign/widget" kelimeleri ASLA geçmesin. ("window/glass/frame/pencere/cam" SERBESTTİR — fiziksel kompozisyon için.)
 `;
 
     const response = await openRouterPost({
@@ -498,7 +527,7 @@ A majestic, high-fidelity cinematic wide-angle photograph of [LANDMARK] in Istan
         },
         {
           role: "user",
-          content: `**Hava Verisi:** ${researchData}\n\nLütfen yalnızca atmosferik arka plan promptunu oluştur (TAMAMEN METİNSİZ, hiçbir hava verisi yazısı yok).`,
+          content: `**Hava Verisi:** ${researchData}\n\n**Gün Vakti (İstanbul ${timeStr}):** ${part}\n\nLütfen yalnızca atmosferik pencere-manzara arka plan promptunu oluştur (fiziksel pencere var, ama TAMAMEN METİNSİZ — hiçbir dijital hava verisi yazısı yok). [TIME_LIGHTING] yerine verdiğim betimi birebir kullan.`,
         },
       ],
       // gemini-3.5-flash reasoning modelidir; yeterli bütçe.

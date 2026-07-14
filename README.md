@@ -552,5 +552,30 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 - **Deploy:** `main`'e push edildi (commit `d9c415e`), Coolify uzerinden production'a alindi.
 - **Not (onemli):** Production `GOOGLE_API_KEY`'yi `.env`'ten degil **Supabase `env_config`** tablosundan okur (late-load). Bu kez Supabase zaten yeni key (`AIzaSyDygjbFRS...`) ile gunceldi → ek Supabase mudahalesi gerekmedi. Key yenilendiginde her zaman `.env` + Supabase `env_config` iki yerini de dogrula.
 
+### 33. Hava Durumu Gorseli Saat-Bazli Gun-Vakti + Favori Pencere Stili (14 Temmuz 2026)
+
+- **Sorun:** Yayinlanan hava durumu gorseli hep ayni (parlak mavi gunduz) cikiyordu; gunun vaktini (sabah/ogle/aksam/gece) yansitmiyordu ve "favori" goresele (ahsap pencere + sicak ic mekan + gece isigi) benzemiyordu. Metin "iyi aksamlar" dese bile gorsel gunduz kaluyordu.
+- **Kok neden (deploy sorunu DEGIL):** Uretim gorsel fonksiyonu `generateWeatherBackgroundPrompt` atmosferi yalnizca hava durumuna gore dallandiriyordu; saat bilgisi `weather.text`'te ve promptta hic yoktu. Ayrica kompozisyon saf manzaraydi (pencere/ic mekan yok).
+- **Degisiklik:**
+  1. `weather.ts`: `getIstanbulDayPart()` yardimcisi eklendi (`Intl.DateTimeFormat`, `timeZone: Europe/Istanbul`; bantlar 05-10 sabah, 11-16 gunduz, 17-20 aksam, 21-04 gece). `weather.text`'e "Mevcut Saat" + "Gun Vakti" eklendi → metin LLM'i "gunaydin/iyi aksamlar" secimini deterministik yapar.
+  2. `llm.ts`: `generateWeatherBackgroundPrompt` saat-bilincli yapildi. Kompozisyon favori pencere+sicak-ic-mekan stiline getirildi (metinsiz). `[TIME_LIGHTING]` (4 bant) deterministik enjekte edilir; `[WEATHER_ELEMENT]` hava durumundan. Zaman×hava celiski kurali eklendi (gece/aksamda "bright blue sky" yok).
+  3. `weather_overlay.ts`: overlay alt-sol'dan ust-sol bolgeye tasindi (favoriyle uyum + ic mekan detaylarina binmemsi icin).
+  4. Yeni `src/test_weather_production_dry_run.ts`: paylasim yapmadan urem yolunu test eder (`FORCE_HOUR` ile bant zorlanabilir).
+- **Dosyalar:** `src/services/weather.ts`, `src/services/llm.ts`, `src/services/weather_overlay.ts`, `src/test_weather_production_dry_run.ts`
+- **Dogrulama:** `npx tsc --noEmit` gecti. Dry-run gunduz (gercek 11:37) → canli mavi gunduz gokyuzu; `FORCE_HOUR=21` (gece) → karanlik gokyuzu + ay + sehir isiklari. Her ikisinde de pencere+sicak ic mekan, ust-sol overlay ve model-metni yok. Saat-bazli varyasyon gorsel olarak kanitlandi.
+
+### 34. HERMES  X Akisina Gecis + 2x/Gun + URL->C + linkedin excel Kaldirma (14 Temmuz 2026)
+
+- **Sorun:** `GEO` sayfasi tukendi (62/62 satir "Done", 0 bekleyen) → Excel infografik postu 7 Temmuz'dan sonra durdu. Infografikler 2/gun → 1/gun'e dustu (yalnizca RSS kaldi).
+- **Degisiklik:** Excel otonom akisi yeni **"HERMES  X"** sayfasina gecirildi.
+  1. `google.ts`: `fetchHermesXContent()` (HERMES  X, rowNumber>=2) + `updateHermesRowPublished(row, url)` (status->"done" + "YAYIN URLSI"->LinkedIn linki) eklendi.
+  2. `autonomous_agent.ts`: GEO→HERMES  X, satir>=2, status filtresi (done degil), KONU kolonu direkt, **temel konu dogrulamasi** (bos/<8 karakter atla), LI+X yayin, yayin sonrasi status->done + C->LI url. `source`="excel" korundu (DB constraint riski yok).
+  3. `scheduler.ts`: 14:30 "linkedin excel" (hazir post) **kaldirildi**; yerine **2. HERMES  X** cron'u (runAutonomousWorkflow) eklendi. Gunluk program: 08:00 Hava / 10:00 HERMES X #1 / 14:30 HERMES X #2 / 16:30 RSS.
+  4. Yeni `src/test_hermes_dry_run.ts`: paylasimsiz + sheet yazmayan demo.
+- **Sonuc:** HERMES X gunde 2 (her seferinde 1 satir) + RSS 1 = **3 infografik/gun**. LinkedIn URL C sütununa, status "done" yazilir; 2. calisma otomatik sonraki satira gecer.
+- **Dosyalar:** `src/services/google.ts`, `src/autonomous_agent.ts`, `src/scheduler.ts`, `src/test_hermes_dry_run.ts`
+- **Dogrulama:** `npx tsc --noEmit` gecti. Demo: ilk TODO satir ("Google Aramaları %38 Düştü") → Perplexity arastirma → Gemini LI+X icerik → 3D infografik (Turkce, botfusions logo). **Paylasim yapilmadi**, sheet read-back ile satir 2 "TODO" + C bos olarak teyit edildi.
+- **Not:** `fetchContentFromSheet` (GEO), `ready_post_agent.ts`, `fetchReadyPosts` artik **olu kod** (dosyalar silinmedi). "HERMES  X" sekme adinda **cift bosluk** var; kod tam adıyla referanslanir.
+
 ---
 © 2026 Botfusions. MIT Lisans.

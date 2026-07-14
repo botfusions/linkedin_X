@@ -160,3 +160,91 @@ export async function updateRowStatus(row: any, status: string = "Yayınlandı")
     );
   }
 }
+
+// ─── HERMES  X akışı (Excel/GEO yerine) ───
+
+const HERMES_X_SHEET = "HERMES  X"; // sekme adında bilerek iki boşluk var
+
+/**
+ * "HERMES  X" sayfasındaki tüm içerik satırlarını (rowNumber >= 2) çeker.
+ * Kolonlar: A=KONU, B=status, C=YAYIN URLSİ.
+ */
+export async function fetchHermesXContent() {
+  const { serviceAccountEmail, privateKey } = getGoogleCredentials();
+  if (!serviceAccountEmail || !privateKey) {
+    throw new Error(
+      "❌ Hata: GOOGLE_SERVICE_ACCOUNT_EMAIL veya GOOGLE_PRIVATE_KEY .env dosyasında bulunamadı!",
+    );
+  }
+
+  const serviceAccountAuth = new JWT({
+    email: serviceAccountEmail,
+    key: privateKey,
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+  });
+
+  try {
+    console.log("📊 Google Sheets'e bağlanılıyor (HERMES  X)...");
+    const doc = new GoogleSpreadsheet(SPREADSHEET_ID, serviceAccountAuth);
+    await doc.loadInfo();
+    console.log(`✅ Doküman bağlantısı başarılı: "${doc.title}"`);
+
+    const sheet = doc.sheetsByTitle[HERMES_X_SHEET];
+    if (!sheet) {
+      throw new Error(
+        `❌ "${doc.title}" içerisinde '${HERMES_X_SHEET}' adında bir çalışma sayfası bulunamadı. Sayfalar: ${Object.keys(doc.sheetsByTitle).join(", ")}`,
+      );
+    }
+
+    const rows = await sheet.getRows();
+    const records = rows
+      .filter((row) => row.rowNumber >= 2)
+      .map((row) => ({
+        rowNumber: row.rowNumber,
+        data: row.toObject(),
+        _rawRow: row,
+      }));
+
+    console.log(
+      `📋 '${HERMES_X_SHEET}' sayfasından ${records.length} adet satır aktarıldı.`,
+    );
+    return records;
+  } catch (error: any) {
+    console.error("❌ Google Sheets Okuma Hatası (HERMES  X):", error.message);
+    throw error;
+  }
+}
+
+/**
+ * HERMES  X satırını yayınlandı olarak işaretler: status -> "done" VE
+ * "YAYIN URLSİ" kolonuna LinkedIn paylaşım linkini yazar.
+ */
+export async function updateHermesRowPublished(
+  row: any,
+  publishUrl: string,
+): Promise<void> {
+  try {
+    const data = row.toObject();
+    const keys = Object.keys(data);
+
+    const statusKey =
+      keys.find((k) => k.toLowerCase() === "status") || "status";
+    // URL kolonu: başlık normalize edilerek (büyük/küçük + boşluk) bulunur.
+    const urlKey =
+      keys.find((k) => {
+        const l = k.toLowerCase().replace(/\s+/g, "");
+        return /url|yayin|yayın/.test(l);
+      }) || "YAYIN URLSİ";
+
+    row.assign({ [statusKey]: "done", [urlKey]: publishUrl });
+    await row.save();
+    console.log(
+      `✅ HERMES  X satır ${row.rowNumber}: status -> "done", ${urlKey} -> ${publishUrl}`,
+    );
+  } catch (error: any) {
+    console.error(
+      `❌ HERMES  X Satır ${row.rowNumber} güncelleme hatası:`,
+      error.message,
+    );
+  }
+}

@@ -1,4 +1,4 @@
-import { fetchContentFromSheet, updateRowStatus } from "./services/google.js";
+import { fetchHermesXContent, updateHermesRowPublished } from "./services/google.js";
 import {
   researchTopicWithPerplexity,
   generateContentWithGemini,
@@ -27,25 +27,22 @@ export async function runAutonomousWorkflow() {
   await initEnvFromSupabase();
 
   try {
-    const records = await fetchContentFromSheet();
+    const records = await fetchHermesXContent();
     const pending = records.filter((r) => {
-      if (r.rowNumber < 39) return false;
-      const statusKey =
-        Object.keys(r.data).find(
-          (k) => k.toLowerCase() === "durum" || k.toLowerCase() === "status",
-        ) || "Durum";
-      const statusValue = String(r.data[statusKey] || "")
+      if (r.rowNumber < 2) return false;
+      const statusValue = String(r.data["status"] || "")
         .trim()
         .toLowerCase();
       return !(
         statusValue === "done" ||
         statusValue === "bitti" ||
-        statusValue.startsWith("yayinlandi")
+        statusValue.startsWith("yayinlandi") ||
+        statusValue.startsWith("yayınlandı")
       );
     });
 
     if (pending.length === 0) {
-      console.log("📭 Paylasilacak icerik bulunamadi.");
+      console.log("📭 HERMES  X'te paylaşılacak içerik bulunamadı.");
       return;
     }
 
@@ -54,92 +51,21 @@ export async function runAutonomousWorkflow() {
     for (const targetRecord of pending) {
       const { rowNumber, data } = targetRecord;
 
-      const columnNames = Object.keys(data);
+      // HERMES  X: konu doğrudan KONU kolonunda.
+      const konuRaw = String(data["KONU"] ?? "").trim();
+      const statusValue = String(data["status"] ?? "").trim();
       console.log(
-        `\n📋 Satir ${rowNumber} sutunlari: ${columnNames.join(", ")}`,
-      );
-      for (const col of columnNames) {
-        console.log(`   → ${col}: "${String(data[col]).substring(0, 80)}"`);
-      }
-
-      const statusColKey = columnNames.find(
-        (k) => k.toLowerCase() === "durum" || k.toLowerCase() === "status",
+        `\n📋 HERMES  X satır ${rowNumber}: KONU="${konuRaw.slice(0, 80)}" (status="${statusValue}")`,
       );
 
-      // Meta sütunlar (bunlar konu değil)
-      const metaCols = new Set([
-        (statusColKey || "").toLowerCase(),
-        "content", "url", "link", "image", "görsel", "resim",
-      ]);
-
-      // Önce bilinen isimlerle ara, bulamazsa ilk non-meta sütunu kullan
-      const konuKey = columnNames.find((k) => {
-        const lower = k.toLowerCase().replace(/\s+/g, "").replace(/[-_]/g, "");
-        return (
-          lower === "konu" ||
-          lower === "topic" ||
-          lower === "başlık" ||
-          lower === "baslik" ||
-          lower === "title" ||
-          lower === "subject" ||
-          lower === "postkonu"
-        );
-      });
-
-      let konuRaw: string | undefined;
-      if (konuKey) {
-        konuRaw = String(data[konuKey]);
-      } else {
-        // İlk non-meta sütunu konu olarak kullan
-        const firstTopicCol = columnNames.find(
-          (k) => !metaCols.has(k.toLowerCase()) && String(data[k] || "").trim().length > 0,
-        );
-        konuRaw = firstTopicCol
-          ? String(data[firstTopicCol])
-          : undefined;
-      }
-
-      if (!konuRaw || !konuRaw.trim()) {
-        console.error(`⚠️ Satir ${rowNumber}'da konu bulunamadi, atlanıyor.`);
+      // Temel konu doğrulaması: boş veya çok kısa → sonraki satıra atla.
+      if (!konuRaw || konuRaw.length < 8) {
+        console.error(`⚠️ Satır ${rowNumber}: konu boş/aşırı kısa, atlanıyor.`);
         continue;
       }
 
-      const konu = konuRaw.trim();
-
-      const altBaslikKey = Object.keys(data).find((k) => {
-        const lower = k.toLowerCase().replace(/\s+/g, "").replace(/[-_]/g, "");
-        return (
-          lower === "altbaslik" ||
-          lower === "subtopic" ||
-          lower === "description" ||
-          lower === "altbaşlık" ||
-          lower === "açıklama" ||
-          lower === "aciklama" ||
-          lower === "detay" ||
-          lower === "subtitle"
-        );
-      });
-      const altBaslik: string | undefined = altBaslikKey
-        ? String(data[altBaslikKey])
-        : undefined;
-
-      const hedefKitleKey = Object.keys(data).find((k) => {
-        const lower = k.toLowerCase().replace(/\s+/g, "").replace(/[-_]/g, "");
-        return (
-          lower === "hedefkitle" ||
-          lower === "audience" ||
-          lower === "target" ||
-          lower === "hedef" ||
-          lower === "kitle"
-        );
-      });
-      const hedefKitle: string | undefined = hedefKitleKey
-        ? String(data[hedefKitleKey])
-        : undefined;
-
-      console.log(`📍 Konu Secildi [Satir ${rowNumber}]: ${konu}`);
-      if (altBaslik) console.log(`📎 Alt Baslik: ${altBaslik}`);
-      if (hedefKitle) console.log(`🎯 Hedef Kitle: ${hedefKitle}`);
+      const konu = konuRaw;
+      console.log(`📍 Konu Seçildi [Satır ${rowNumber}]: ${konu}`);
 
       try {
         console.log("🔍 Arastirma yapiliyor (Perplexity)...");
@@ -277,8 +203,15 @@ export async function runAutonomousWorkflow() {
         }
 
         if (linkedinSuccess || xSuccess) {
-          await updateRowStatus(targetRecord._rawRow, "Done");
-          console.log(`📊 Excel guncellendi: Satir ${rowNumber} -> Done`);
+          // HERMES  X: status -> "done" + "YAYIN URLSİ" -> LinkedIn linki (X yedek)
+          const publishUrlForSheet = linkedinUrl || xUrl || "";
+          await updateHermesRowPublished(
+            targetRecord._rawRow,
+            publishUrlForSheet,
+          );
+          console.log(
+            `📊 HERMES  X güncellendi: Satır ${rowNumber} -> done (URL: ${publishUrlForSheet || "yok"})`,
+          );
         }
 
         await insertPublishedPost({

@@ -409,20 +409,20 @@ export function formatResult(result: OptimizationResult): string {
 export interface InfographicData {
   title: string;
   keyStats: { label: string; value: string }[];
-  style?: "blueprint" | "cyberpunk" | "minimalist" | "3d" | "random";
+  style?: "blueprint" | "cyberpunk" | "minimalist" | "editorial" | "random";
 }
 
 // Stil rotasyon takibi - her çağrıda sıradaki stil kullanılır
-const STYLE_ORDER: Array<"blueprint" | "cyberpunk" | "minimalist" | "3d" | "editorial"> = [
+// NOT: "3d" (3D Infrastructure Matrix) kaliteli çıkmadığı için kaldırıldı.
+const STYLE_ORDER: Array<"blueprint" | "cyberpunk" | "minimalist" | "editorial"> = [
   "blueprint",
   "cyberpunk",
   "minimalist",
-  "3d",
   "editorial",
 ];
 let styleIndex = Math.floor(Math.random() * STYLE_ORDER.length);
 
-function getNextStyle(): "blueprint" | "cyberpunk" | "minimalist" | "3d" | "editorial" {
+function getNextStyle(): "blueprint" | "cyberpunk" | "minimalist" | "editorial" {
   const style = STYLE_ORDER[styleIndex % STYLE_ORDER.length]!;
   styleIndex++;
   console.log(`🎨 İnfografik stili: ${style} (sıra: ${(styleIndex - 1) % STYLE_ORDER.length + 1}/${STYLE_ORDER.length})`);
@@ -443,7 +443,6 @@ export function generateDynamicInfographicPrompt(
       "Visual Style: 'Futuristic Command Center'. Dark mode with glowing data modules, vibrant cyan/magenta neon accents, interconnected glass UI nodes.",
     minimalist:
       "Visual Style: 'Modern Enterprise Board'. Clean white/grey background, structured grid layout, premium typography, gold accent connectors.",
-    "3d": "Visual Style: '3D Infrastructure Matrix'. Realistic 3D floating modules connected by glass fiber-optic tubes, professional studio lighting.",
     editorial:
       "Visual Style: 'Premium Dark Editorial Board'. Deep charcoal background #121212, modular horizontal/vertical zones with thin dividers. Pastel salmon-orange accents, cream-white text, soft muted purple, sage green tones. Premium bold title with minimalist UI icons. 8 rounded-square feature cards with line-art icons. Side-by-side comparison module. 5 vertical workflow columns with colorful circular badges. Comparative data table and 3-step getting started block. Sophisticated sans-serif typography, fashion-editorial aesthetic. --ar 4:3 --v 6.0",
   };

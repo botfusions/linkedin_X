@@ -3,7 +3,6 @@ import cron from "node-cron";
 import { runWeatherPostFlow } from "./services/agentFlow.js";
 import { runAutonomousWorkflow } from "./autonomous_agent.js";
 import { runRSSNewsWorkflow } from "./rss_agent.js";
-import { runReadyPostWorkflow } from "./ready_post_agent.js";
 
 dotenv.config();
 
@@ -41,8 +40,8 @@ function safeCron(fn: () => Promise<void>): () => void {
 console.log("⏰ Botfusions Zamanlayici Baslatildi...");
 console.log("📅 Gunluk Program (7/24 Aktif):");
 console.log("   - 08:00: Istanbul Hava Durumu (LinkedIn + X)");
-console.log("   - 10:00: Excel Otonom Icerik (LinkedIn + X)");
-console.log("   - 14:30: Hazir Post (LinkedIn)");
+console.log("   - 10:00: HERMES X İçerik #1 (LinkedIn + X) — infografik");
+console.log("   - 14:30: HERMES X İçerik #2 (LinkedIn + X) — infografik");
 console.log("   - 16:30: RSS Haber (LinkedIn + X)");
 
 const WEATHER_TEXT_PROMPT = `
@@ -94,24 +93,24 @@ cron.schedule(
   { timezone: "Europe/Istanbul" },
 );
 
-// 10:00 - Excel Postu
+// 10:00 - HERMES X İçerik #1
 cron.schedule(
   "0 10 * * *",
   safeCron(async () => {
-    console.log("🚀 [10:00] Excel konu postu hazirlaniyor...");
+    console.log("🚀 [10:00] HERMES X içerik postu #1 hazırlanıyor...");
     await randomDelay();
     await runAutonomousWorkflow();
   }),
   { timezone: "Europe/Istanbul" },
 );
 
-// 14:30 - Hazır Post (linkedin excel sayfası)
+// 14:30 - HERMES X İçerik #2 (günde 2. infografik postu)
 cron.schedule(
   "30 14 * * *",
   safeCron(async () => {
-    console.log("🚀 [14:30] Hazır post paylaşılıyor (linkedin excel)...");
+    console.log("🚀 [14:30] HERMES X içerik postu #2 hazırlanıyor...");
     await randomDelay();
-    await runReadyPostWorkflow();
+    await runAutonomousWorkflow();
   }),
   { timezone: "Europe/Istanbul" },
 );

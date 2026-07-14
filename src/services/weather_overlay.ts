@@ -50,12 +50,14 @@ export async function overlayWeatherData(
   const fCond = Math.round(W * 0.03); // ~31 @1024 (koşul)
   const fMeta = Math.round(W * 0.024); // ~25 @1024 (alt satırlar)
 
-  // Blok konumu: sol-alt bölge, dikey hizalama
+  // Blok konumu: sol-üst bölge (gökyüzü / üst pencere alanı). Pencere+sıcak iç
+  // mekan kompozisyonunda alt bölge masaya/çaya biner; üst-sol favori görselle
+  // birebir uyuşur ve gökyüzü temiz arka plan sağlar. Dikey aralıklar korunur.
   const x = Math.round(W * 0.055); // sol kenar boşluğu
-  const yCity = Math.round(H * 0.74);
-  const yTemp = Math.round(H * 0.84);
-  const yCond = Math.round(H * 0.905);
-  const yDetail = Math.round(H * 0.955);
+  const yCity = Math.round(H * 0.085);
+  const yTemp = Math.round(H * 0.185);
+  const yCond = Math.round(H * 0.25);
+  const yDetail = Math.round(H * 0.3);
 
   const detailLine = `Hissedilen ${data.feelsLike}°C   ·   Nem %${data.humidity}   ·   Rüzgar ${data.wind} m/s`;
 
