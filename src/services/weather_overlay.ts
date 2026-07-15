@@ -45,10 +45,10 @@ export async function overlayWeatherData(
   const H = meta.height || 1024;
 
   // Font boyutları görsel genişliğine orantılı (responsive)
-  const fCity = Math.round(W * 0.028); // ~29 @1024 (İSTANBUL)
-  const fTemp = Math.round(W * 0.13); // ~133 @1024 ( büyük rakam )
-  const fCond = Math.round(W * 0.03); // ~31 @1024 (koşul)
-  const fMeta = Math.round(W * 0.024); // ~25 @1024 (alt satırlar)
+  const fCity = Math.round(W * 0.04); // ~41 @1024 (İSTANBUL) - okunabilirlik için büyütüldü
+  const fTemp = Math.round(W * 0.135); // ~138 @1024 (büyük rakam)
+  const fCond = Math.round(W * 0.042); // ~43 @1024 (koşul) - büyütüldü
+  const fMeta = Math.round(W * 0.032); // ~33 @1024 (alt satırlar) - büyütüldü
 
   // Blok konumu: sol-üst bölge (gökyüzü / üst pencere alanı). Pencere+sıcak iç
   // mekan kompozisyonunda alt bölge masaya/çaya biner; üst-sol favori görselle
@@ -75,10 +75,10 @@ export async function overlayWeatherData(
     </filter>
   </defs>
   <g font-family="'${FONT_FAMILY}', 'Roboto', sans-serif" filter="url(#etch)" text-rendering="geometricPrecision">
-    <text x="${x}" y="${yCity}" font-size="${fCity}" font-weight="700" letter-spacing="6" fill="rgba(255,255,255,0.80)">${escapeXml(data.city.toUpperCase())}</text>
-    <text x="${x}" y="${yTemp}" font-size="${fTemp}" font-weight="700" fill="rgba(255,255,255,0.96)">${data.temp}°C</text>
-    <text x="${x}" y="${yCond}" font-size="${fCond}" font-weight="700" fill="rgba(255,255,255,0.92)">${escapeXml(data.condition)}</text>
-    <text x="${x}" y="${yDetail}" font-size="${fMeta}" font-weight="700" fill="rgba(255,255,255,0.82)">${escapeXml(detailLine)}</text>
+    <text x="${x}" y="${yCity}" font-size="${fCity}" font-weight="700" letter-spacing="6" fill="rgba(255,255,255,0.92)" stroke="rgba(0,0,0,0.5)" stroke-width="2.5" paint-order="stroke">${escapeXml(data.city.toUpperCase())}</text>
+    <text x="${x}" y="${yTemp}" font-size="${fTemp}" font-weight="700" fill="rgba(255,255,255,0.98)" stroke="rgba(0,0,0,0.5)" stroke-width="4" paint-order="stroke">${data.temp}°C</text>
+    <text x="${x}" y="${yCond}" font-size="${fCond}" font-weight="700" fill="rgba(255,255,255,0.95)" stroke="rgba(0,0,0,0.5)" stroke-width="2.5" paint-order="stroke">${escapeXml(data.condition)}</text>
+    <text x="${x}" y="${yDetail}" font-size="${fMeta}" font-weight="700" fill="rgba(255,255,255,0.9)" stroke="rgba(0,0,0,0.5)" stroke-width="2" paint-order="stroke">${escapeXml(detailLine)}</text>
   </g>
 </svg>`;
 

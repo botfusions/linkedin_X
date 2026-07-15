@@ -409,20 +409,22 @@ export function formatResult(result: OptimizationResult): string {
 export interface InfographicData {
   title: string;
   keyStats: { label: string; value: string }[];
-  style?: "blueprint" | "cyberpunk" | "minimalist" | "editorial" | "random";
+  style?: "blueprint" | "minimalist" | "editorial" | "random";
 }
 
-// Stil rotasyon takibi - her çağrıda sıradaki stil kullanılır
-// NOT: "3d" (3D Infrastructure Matrix) kaliteli çıkmadığı için kaldırıldı.
-const STYLE_ORDER: Array<"blueprint" | "cyberpunk" | "minimalist" | "editorial"> = [
+// Stil rotasyon takibi - her çağrıda sıradaki stil kullanılır.
+// NOT: "3d" (3D Infrastructure Matrix) VE "cyberpunk" (3D floating neon modules)
+// kaliteli çıkmadığı için kaldırıldı. Kullanıcı "3D floating module" görünümünü yasakladı;
+// her ikisi de bu görünümü üretiyordu (floating/havada-asılı modüller, glowing bağlantılar).
+// Kalan stillerin hepsi FLAT 2D: blueprint, minimalist, editorial.
+const STYLE_ORDER: Array<"blueprint" | "minimalist" | "editorial"> = [
   "blueprint",
-  "cyberpunk",
   "minimalist",
   "editorial",
 ];
 let styleIndex = Math.floor(Math.random() * STYLE_ORDER.length);
 
-function getNextStyle(): "blueprint" | "cyberpunk" | "minimalist" | "editorial" {
+function getNextStyle(): "blueprint" | "minimalist" | "editorial" {
   const style = STYLE_ORDER[styleIndex % STYLE_ORDER.length]!;
   styleIndex++;
   console.log(`🎨 İnfografik stili: ${style} (sıra: ${(styleIndex - 1) % STYLE_ORDER.length + 1}/${STYLE_ORDER.length})`);
@@ -439,8 +441,6 @@ export function generateDynamicInfographicPrompt(
   const stylePool = {
     blueprint:
       "Visual Style: 'Corporate Engineering Blueprint'. Deep navy background, clinical white architectural lines, precise technical measurements.",
-    cyberpunk:
-      "Visual Style: 'Futuristic Command Center'. Dark mode with glowing data modules, vibrant cyan/magenta neon accents, interconnected glass UI nodes.",
     minimalist:
       "Visual Style: 'Modern Enterprise Board'. Clean white/grey background, structured grid layout, premium typography, gold accent connectors.",
     editorial:
@@ -463,6 +463,7 @@ export function generateDynamicInfographicPrompt(
     `TASK: Create a professional, high-density 'Enterprise Technology Map' for '${data.title}'.`,
     `LAYOUT: Multi-modular grid layout. 6-8 distinct information boxes interconnected by logical flow arrows.`,
     `STRICT RULE: All text, headers, and detailed bullet points MUST be in TURKISH language.`,
+    `FLAT 2D ZORUNLU (ÇOK KRİTİK - bu kural tüm stilleri geçersiz kılar): ABSOLUTELY NO 3D — no perspective, no depth, no floating/elevated modules, no 3D tubes/pipes/bevels/extrude, no glow-implying-3D-volume. Everything MUST be FLAT 2D, like a clean modern infographic board (think Figma/Notion style, NOT a 3D scene). Modules sit flat on the plane, side-by-side and top-to-bottom; NEVER floating in mid-air or rendered in perspective. No central 3D hub with radiating 3D connectors.`,
     stylePool[selectedStyleKey],
     `CONTENT STRUCTURE:`,
     dataDetails,

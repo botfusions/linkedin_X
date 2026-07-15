@@ -596,5 +596,15 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 - **Doğrulama:** `npx tsc --noEmit` geçti. Landmark rotasyonu tarih-bazlı (aynı gün = aynı mekan idempotent, farklı gün = farklı mekan). Overlay render testi lokalde RENDER OK (1704 px). Container içi kesin teyit deploy sonrası `node /app/diag_tmp.cjs` ile (§35 bağlamı).
 - **Bağlam:** Bu fixler 7f25515 ile aynı batch'te değildi; ayrı commit. 3D infografik sorunu için **7f25515'in (3d stili kaldırma) canlıya alınması hâlâ bekleniyor** (bkz. §35) — redeploy 7f25515'i almadıysa 3D devam eder.
 
+### 37. Cyberpunk Stili Kaldirma + FLAT 2D Kurali + Overlay Okunabilirlik (15 Temmuz 2026)
+
+- **Teşhis (önemli düzeltme):** §35'te "3d" stilini kaldırdık ama üretim hâlâ "yasaklanan 3D floating" görüntüsü üretiyordu. Görseller analiz edildi: iki kötü post DAHİ **cyberpunk** stilinde (dark neon, merkezi shield + 5 floating module, glowing 3D bağlantılar). Yani "3d" VE "cyberpunk" aynı floating-3D görüntüyü üretiyordu; yalnızca "3d" kaldırmak yetmedi.
+- **Deploy durumu (düzeltme):** "eski kod çalışıyor" tahmini YANLIŞTI. Hava overlay'i **üst-sol** bölgedeydi (7f25515'in yeni pozisyonu; eski kod alt-sol'daydı) → **7f25515 canlıda**. Redeploy oturmuş.
+- **Çözüm 1 (infografik):** `optimizer.ts`'ten **cyberpunk** stili kaldırıldı (STYLE_ORDER, getNextStyle, stylePool, InfographicData union). Kalan 3 stil: **blueprint, minimalist, editorial** (hepsi FLAT 2D). Ayrıca tüm stillere **FLAT 2D zorunlu kuralı** eklendi: "ABSOLUTELY NO 3D — no perspective/depth/floating modules/tubes/bevel. Figma/Notion style flat board." (Kural tüm stilleri geçersiz kılar.)
+- **Çözüm 2 (overlay okunabilirlik):** Overlay render OLUYORDU ama **çok küçüktü** (iç mekan karmaşası + LinkedIn sıkıştırmasıyla okunaksız) — font/render sorunu değildi. `weather_overlay.ts`: font boyutları büyütüldü (city 0.028→0.04, cond 0.03→0.042, meta 0.024→0.032) VE tüm metne `paint-order="stroke"` ile koyu kenar (outline) eklendi → her arka planda okunabilir.
+- **Dosyalar:** `src/services/optimizer.ts`, `src/services/weather_overlay.ts`
+- **Doğrulama:** `npx tsc --noEmit` geçti. Yeni flat promptla üretilen test infografik (blueprint) görsel olarak FLAT 2D teyit edildi (floating/3D yok). Overlay lokalde render OK.
+- **Bağlam:** Kız Kulesi rotasyonu (§36) bu batch'te değil, c9292e2'de. Bu commit ayrı. Tüm fixlerin (§35/36/37) canlıya alınması için en son main deploy edilmeli.
+
 ---
 © 2026 Botfusions. MIT Lisans.
