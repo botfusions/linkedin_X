@@ -586,5 +586,15 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 - **Dogrulama:** `npx tsc --noEmit` gecti. Dinamik promptla 1 ornek infografik uretildi (3d disinda stil) → kullanici tarafindan "cok iyi" onayi. Ayni commit (`7f25515`) ile push edildi; §33 ve §34 ile ayni deploy batch'inde.
 - **Not:** Test tablosundaki "Stil Rotasyonu" maddesi ve §34 dogrulama satiri bu kaldirmaya uygun guncellendi.
 
+### 36. Hava Gorseli Landmark Rotasyonu + Overlay Font Render Fix (15 Temmuz 2026)
+
+- **Sorun (Kız Kulesi tekrarı):** Hava görselleri sürekli aynı mekan (Kız Kulesi) çıkıyordu. `generateWeatherBackgroundPrompt` mekan seçimini modele bırakıyordu ("her seferinde farklı mekan seç"), model bu talimatı dinlemeyip Kız Kulesi'nde kalıyordu.
+- **Çözüm:** `llm.ts`'e tarih-bazlı **DETERMİNİSTİK** landmark rotasyonu eklendi (`LANDMARKS` dizisi + `landmarkForDate(now)` = `dayOfYear % LANDMARKS.length`). Günün tarihine göre mekan BİZ seçilir ve prompta birebir enjekte edilir; modele seçim bırakılmaz. 6 mekan (Boğaziçi Köprüsü, Ayasofya, Sultanahmet, Rumeli Hisarı, Boğaz kıyısı yalıları, Kız Kulesi) gün gün döner → tekrar yok. Infografik `styleIndex` rotasyonunun mekan karşılığı.
+- **Sorun (overlay eksik):** Yayınlanan hava görselinde sıcaklık/şehir/durum overlay'i yoktu. Kök neden: `node:20-slim` container'da fontconfig/font eksik → sharp SVG `<text>` + gömülü `@font-face` fontunu render edemiyor → text sessizce boş, görsel bilgisiz yayınlanıyor. (Lokalde Mac'te çalışıyordu, container'da hayır.)
+- **Çözüm:** `Dockerfile`'a `fontconfig` kurulumu + `Roboto-Bold.ttf`'in `/usr/share/fonts`'a kopyalanıp `fc-cache` ile sistem genelinde kaydı eklendi. `weather_overlay.ts` `font-family`'ye sistem fontu `'Roboto'` fallback eklendi (@font-face çözülemezse sistem fontu devreye girer). Böylece overlay her ortamda render edilir.
+- **Dosyalar:** `src/services/llm.ts`, `Dockerfile`, `src/services/weather_overlay.ts`
+- **Doğrulama:** `npx tsc --noEmit` geçti. Landmark rotasyonu tarih-bazlı (aynı gün = aynı mekan idempotent, farklı gün = farklı mekan). Overlay render testi lokalde RENDER OK (1704 px). Container içi kesin teyit deploy sonrası `node /app/diag_tmp.cjs` ile (§35 bağlamı).
+- **Bağlam:** Bu fixler 7f25515 ile aynı batch'te değildi; ayrı commit. 3D infografik sorunu için **7f25515'in (3d stili kaldırma) canlıya alınması hâlâ bekleniyor** (bkz. §35) — redeploy 7f25515'i almadıysa 3D devam eder.
+
 ---
 © 2026 Botfusions. MIT Lisans.

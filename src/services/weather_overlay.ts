@@ -74,7 +74,7 @@ export async function overlayWeatherData(
       <feDropShadow dx="0" dy="2" stdDeviation="2.2" flood-color="#000000" flood-opacity="0.55"/>
     </filter>
   </defs>
-  <g font-family="'${FONT_FAMILY}', sans-serif" filter="url(#etch)" text-rendering="geometricPrecision">
+  <g font-family="'${FONT_FAMILY}', 'Roboto', sans-serif" filter="url(#etch)" text-rendering="geometricPrecision">
     <text x="${x}" y="${yCity}" font-size="${fCity}" font-weight="700" letter-spacing="6" fill="rgba(255,255,255,0.80)">${escapeXml(data.city.toUpperCase())}</text>
     <text x="${x}" y="${yTemp}" font-size="${fTemp}" font-weight="700" fill="rgba(255,255,255,0.96)">${data.temp}°C</text>
     <text x="${x}" y="${yCond}" font-size="${fCond}" font-weight="700" fill="rgba(255,255,255,0.92)">${escapeXml(data.condition)}</text>

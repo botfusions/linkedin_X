@@ -471,6 +471,23 @@ const TIME_LIGHTING_BY_PART: Record<DayPart, string> = {
     "nighttime, deep dark-blue sky, a glowing moon and faint stars, glittering warm city lights and bridge reflections on the Bosphorus water, cozy warm glow from an interior lamp",
 };
 
+// Landmark rotasyonu: günün tarihine göre DETERMİNİSTİK (her gün farklı, tekrar yok).
+// Model "her seferinde farklı mekan" talimatını dinlemeyip sürekli Kız Kulesi üretiyordu;
+// bu yüzden mekanı BİZ seçip prompta enjekte ediyoruz, modele bırakmıyoruz.
+const LANDMARKS = [
+  "the Bosphorus Bridge (Boğaziçi Köprüsü) with ferries crossing below",
+  "Hagia Sophia and the Sultanahmet mosque skyline",
+  "the Blue Mosque with its cascading domes and six slender minarets",
+  "Rumeli Fortress (Rumeli Hisarı) rising on the Bosphorus shore",
+  "a lively Bosphorus shoreline with ferries and wooden waterfront yalı houses",
+  "the Maiden's Tower (Kız Kulesi) on its small islet",
+];
+function landmarkForDate(now: Date): string {
+  const start = new Date(now.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((now.getTime() - start.getTime()) / 86_400_000);
+  return LANDMARKS[dayOfYear % LANDMARKS.length]!;
+}
+
 /**
  * Hava durumu görseli için YALNIZCA atmosferik arka plan promptu üretir.
  * KRİTİK: promptta hava verisi (sıcaklık rakamı, durum etiketi, ikon, overlay/UI)
@@ -488,6 +505,8 @@ export async function generateWeatherBackgroundPrompt(
     // Gün vaktini çöz (Europe/Istanbul) ve ışık betimini enjekte et.
     // Model seçmez, BİZ veririz → gece her zaman gece ışığı. Saat tahmine bırakılmaz.
     const { part, timeStr } = getIstanbulDayPart();
+    const chosenLandmark = landmarkForDate(new Date());
+    console.log(`📍 Görsel landmark (tarih-bazlı, deterministik): ${chosenLandmark}`);
     const timeLighting = TIME_LIGHTING_BY_PART[part];
     console.log(
       `🕐 Görsel gün-vakti: ${timeStr} → ${part} | ışık: "${timeLighting.slice(0, 40)}..."`,
@@ -501,8 +520,8 @@ A panoramic, high-fidelity cinematic photograph looking THROUGH a large dark-woo
 
 **KURALLAR:**
 1. SADECE İNGİLİZCE PROMPT döndür.
-2. [LANDMARK]: İstanbul'un ikonik mekanlarından rastgele (Bosphorus Bridge with ferries, Maiden's Tower, Hagia Sophia, Blue Mosque, Rumeli Fortress, Bosphorus shoreline). GALATA TOWER KULLANMA. Her seferinde farklı mekan seç.
-3. [TIME_LIGHTING] YERİNE birebir şunu yaz (DEĞİŞTİRME): "${timeLighting}". Bu, günün vaktini (şu an İstanbul saatiyle ${timeStr} → ${part}) belirler; gökyüzü rengi ve ışık TAMAMEN bundan gelir.
+2. [LANDMARK] değerini KURAL 3'te verdiğim mekan olarak kullan (günün tarihine göre seçildi, tekrar yok). Kendi mekanını RASTGELE SEÇME. GALATA TOWER ASLA KULLANMA.
+3. [TIME_LIGHTING] YERİNE birebir şunu yaz (DEĞİŞTİRME): "${timeLighting}". Bu, günün vaktini (şu an İstanbul saatiyle ${timeStr} → ${part}) belirler; gökyüzü rengi ve ışık TAMAMEN bundan gelir. [LANDMARK] YERİNE de birebir şunu yaz (DEĞİŞTİRME, BAŞKA MEKAN SEÇME, GALATA TOWER ASLA): "${chosenLandmark}". Bu mekan günün tarihine göre seçildi; modelin kendi seçimi YOK.
 4. [WEATHER_ELEMENT] kısmını hava verisine göre doldur:
    - AÇIK/GÜNEŞLİ: completely clear sky, no clouds at all.
    - BULUTLU/PARÇALI BULUTLU: aesthetic fluffy white clouds drifting across the sky, light peeking through. NOT grey/gloomy.
