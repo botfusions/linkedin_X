@@ -218,7 +218,7 @@ npm run scheduler
 | Core          | Node.js 20+, TypeScript     |
 | LLM           | OpenRouter (Gemini 3.5 Flash) |
 | Arastirma     | Perplexity Sonar            |
-| Gorsel        | Gemini 3.1 Flash Lite Image |
+| Gorsel        | Gemini 3.1 Flash Image |
 | Veri Kaynagi  | Google Sheets API           |
 | Haber Kaynagi | Google News AI RSS          |
 | Veritabani    | Supabase (PostgreSQL)       |
@@ -605,6 +605,17 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 - **Dosyalar:** `src/services/optimizer.ts`, `src/services/weather_overlay.ts`
 - **Doğrulama:** `npx tsc --noEmit` geçti. Yeni flat promptla üretilen test infografik (blueprint) görsel olarak FLAT 2D teyit edildi (floating/3D yok). Overlay lokalde render OK.
 - **Bağlam:** Kız Kulesi rotasyonu (§36) bu batch'te değil, c9292e2'de. Bu commit ayrı. Tüm fixlerin (§35/36/37) canlıya alınması için en son main deploy edilmeli.
+
+### 38. İnfografik Görsel Hatası — Hava Durumu Kuralı Kirliliği + Tam Model (16 Temmuz 2026)
+
+- **Sorun:** HERMES X ve RSS infografik görselleri flat 2D teknoloji şeması YERİNE **fotoğraf** (ahşap pencere + Boğaz + iç mekan + çay bardağı) üzerine metin gömülmüş halde yayınlanıyordu. Hava durumu görseli ise düzgündü. Kullanıcı: "LinkedIn'de asla görselsiz paylaşım olmayacak" → infografiği kapatmak değil düzeltmek gerekiyordu.
+- **Kök neden (deploy sorunu DEĞİL — prompt kirliliği):** `generateImageWithGemini` (`src/services/llm.ts`), `opts.raw` false olan **tüm** görsel çağrılarına `TURKISH_RULE` adlı hava durumu fotoğraf kompozisyonunu ("FOTOREALİSTİK cinematic photograph, ahşap pencere, ofis detayları, İstanbul landmark, **ASLA flat illustration**") yapıştırıyordu. HERMES/RSS infografik çağrıları `raw` belirtmediği için flat-2D-grid prompt'ları bu fotoğraf kuralıyla EZİLİYORDU → Gemini çelişkiyi fotoğraf lehine çözüyordu. Hava akışı `{ raw: true }` kullandığı için bu kuralı almıyor, o yüzden düzgün üretiyordu.
+- **Çözüm:**
+  1. `TURKISH_RULE` sabiti ve `opts.raw` ternary'i `generateImageWithGemini`'den kaldırıldı; prompt inşası sadece çözünürlük talimatı ekleyecek şekilde sadeleştirildi. (Hava `raw:true` ile bu kuralı zaten almıyordu → etkilenmedi. İnfografik prompt'u kendi içinde Türkçe/8k/logo/FLAT-2D kurallarını taşıyor → eksiksiz.)
+  2. Görsel modeli `gemini-3.1-flash-lite-image` → **`gemini-3.1-flash-image`** (tam model) yapıldı. Lite model (§32, 11 Temmuz maliyet kesiği) yüksek yoğunluklu flat infografikte zayıf kalıyordu; tam model daha tutarlı.
+- **Dosyalar:** `src/services/llm.ts`
+- **Doğrulama:** `npx tsc --noEmit` geçti. `src/test_infographic_flat.ts` ile aynı konu ("Yapay Zeka Güvenliği") üretilince **flat 2D infografik** çıktı (pencere/fotoğraf unsuru YOK — bozuk çıktıyla teyit edilen zıtlık). `src/test_weather_production_dry_run.ts` ile hava görseli **sinematik pencere fotoğrafı + okunabilir overlay (26°C/açık) + Kız Kulesi** üretti (regresyon yok). Paylaşım yapılmadı.
+- **Not:** Bu commit canlıya alınınca bekleyen §35/§36/§37 (3d kaldırma, Kız Kulesi rotasyonu, cyberpunk kaldırma + FLAT 2D + overlay okunabilirlik) fix'lerini de production'a taşır. Deploy teyidi (SSH yok → container terminal): `cd /app && grep -c TURKISH_RULE src/services/llm.ts` → **0** olmalı; model URL'sinde `gemini-3.1-flash-image` görünmeli.
 
 ---
 © 2026 Botfusions. MIT Lisans.
