@@ -248,7 +248,7 @@ export const RULES: Rule[] = [
     id: "hashtag_count",
     name: "Hashtag Sayısı",
     category: "algorithm",
-    description: "3-8 hashtag ideal, 10+ spam sinyali",
+    description: "SSI stratejisi: 3-5 hashtag ideal, fazlası spam sinyali",
     weight: 7,
     check: (post: string): RuleResult => {
       const count = extractHashtags(post).length;
@@ -257,22 +257,22 @@ export const RULES: Rule[] = [
           passed: false,
           score: 30,
           message: "Hashtag yok",
-          suggestion: "En az 3 hashtag ekleyin.",
+          suggestion: "3-5 hashtag ekleyin.",
         };
-      if (count > 10)
+      if (count > 8)
         return {
           passed: false,
           score: 20,
           message: `${count} hashtag — spam sinyali!`,
-          suggestion: "Max 8 hashtag kullanın.",
+          suggestion: "3-5 hashtag'e düşürün.",
         };
-      if (count >= 3 && count <= 8)
+      if (count >= 3 && count <= 5)
         return { passed: true, score: 100, message: `İdeal: ${count} hashtag` };
       return {
         passed: false,
-        score: 50,
+        score: 55,
         message: `${count} hashtag`,
-        suggestion: "3-8 arası hedefleyin.",
+        suggestion: "3-5 arası hedefleyin.",
       };
     },
   },
@@ -302,34 +302,27 @@ export const RULES: Rule[] = [
     id: "emoji_usage",
     name: "Emoji Kullanımı",
     category: "engagement",
-    description: "Her bölümde en az 1 emoji",
+    description: "1-4 emoji doğal; her paragrafa emoji AI izi bırakır",
     weight: 4,
     check: (post: string): RuleResult => {
       const analysis = analyzePostText(post);
-      const pWithEmoji = analysis.paragraphs.filter(
-        (p) => countEmojis(p) > 0,
-      ).length;
-      const ratio =
-        analysis.paragraphs.length > 0
-          ? pWithEmoji / analysis.paragraphs.length
-          : 0;
       if (analysis.emojiCount === 0)
         return {
-          passed: false,
-          score: 20,
-          message: "Emoji yok",
-          suggestion: "Her bölümde en az 1 emoji.",
+          passed: true,
+          score: 70,
+          message: "Emoji yok — format gereği kabul edilebilir",
         };
-      if (ratio >= 0.6)
+      if (analysis.emojiCount <= 4)
         return {
           passed: true,
           score: 100,
-          message: `${analysis.emojiCount} emoji, ${pWithEmoji}/${analysis.paragraphs.length} bölümde`,
+          message: `${analysis.emojiCount} emoji — doğal kullanım`,
         };
       return {
-        passed: true,
-        score: 60,
-        message: `${analysis.emojiCount} emoji — bazı bölümlerde eksik`,
+        passed: false,
+        score: 40,
+        message: `${analysis.emojiCount} emoji — fazla, AI izi bırakıyor`,
+        suggestion: "Emojileri 3-4 adede düşürün.",
       };
     },
   },
@@ -354,31 +347,35 @@ export const RULES: Rule[] = [
     id: "word_count",
     name: "Kelime Sayısı",
     category: "structure",
-    description: "280-320 kelime ideal",
+    description: "Post formatına göre 60-350 kelime; makale uzunluğu cezalı",
     weight: 5,
     check: (post: string): RuleResult => {
       const wc = post.split(/\s+/).filter((w) => w.length > 0).length;
-      if (wc < 100)
+      if (wc < 50)
         return { passed: false, score: 20, message: `Çok kısa: ${wc} kelime` };
-      if (wc >= 250 && wc <= 350)
+      if (wc <= 350)
         return { passed: true, score: 100, message: `İdeal: ${wc} kelime` };
-      return { passed: true, score: 65, message: `${wc} kelime` };
+      return {
+        passed: false,
+        score: 55,
+        message: `${wc} kelime — makale gibi uzun`,
+        suggestion: "Post formatına dönün: en güçlü fikri bırakıp kısaltın.",
+      };
     },
   },
   {
     id: "bullets",
     name: "Bullet Point",
     category: "structure",
-    description: "Liste formatı okunabilirliği artırır",
+    description: "Liste isteğe bağlı — format çeşitliliği bullet'sız posta izin verir",
     weight: 3,
     check: (post: string): RuleResult => {
       const count = countBulletPoints(post);
       if (count === 0)
         return {
-          passed: false,
-          score: 40,
-          message: "Bullet point yok",
-          suggestion: "En az 2 bullet ekleyin (•).",
+          passed: true,
+          score: 80,
+          message: "Bullet yok — format gereği kabul edilebilir",
         };
       if (count >= 2 && count <= 5)
         return { passed: true, score: 100, message: `${count} bullet — ideal` };

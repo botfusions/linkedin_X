@@ -7,6 +7,7 @@ RUN npm install --production
 
 COPY tsconfig.json ./
 COPY agent.md ./
+COPY skills/ ./skills/
 COPY src/ ./src/
 
 # sharp SVG text (hava overlay'i) font render icin fontconfig + Roboto fontunu

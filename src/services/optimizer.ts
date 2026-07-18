@@ -158,12 +158,13 @@ ${post}
 
 GÖREV:
 1. Yukarıdaki başarısız kuralları düzelt
-2. Orijinal mesajı ve tonu koru
+2. Orijinal mesajı, formatı ve İNSANİ tonu koru — postu şablona ("📊 Rakamlar", "⚙️ Stratejiler" gibi başlıklı bölümlere) ÇEVİRME
 3. Hook'u güçlendir (ilk satır rakam/soru/şaşırtıcı iddia ile başlamalı)
 4. Link varsa çıkar
-5. Hashtag'leri 3-8 arasına ayarla
-6. Her bölümde emoji olsun
-7. Sonunda CTA olsun
+5. Hashtag'leri 3-5 arasına ayarla
+6. Emojileri en fazla 3-4 adette tut, her paragrafa emoji serpiştirme
+7. Sonunda yorum getirecek net BİR tartışma sorusu olsun
+8. Yasaklı AI kalıplarını kullanma: "Günümüzde", "önemli bir konudur", "Özetle", "Sonuç olarak", "Öte yandan", "şüphesiz", "dikkat edilmesi gereken"
 
 SADECE düzeltilmiş post metnini döndür. Açıklama ekleme.`;
 

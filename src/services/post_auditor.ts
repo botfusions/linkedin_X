@@ -60,13 +60,18 @@ function ruleBasedAudit(ctx: AuditContext): AuditResult {
     }
   }
 
-  // 4. LinkedIn için hashtag kontrol
+  // 4. LinkedIn için hashtag kontrol (SSI stratejisi: 3-5 ideal)
   if (ctx.platform === "linkedin") {
     const hashtags = ctx.text.match(/#\w+/g) || [];
     if (hashtags.length < 3) {
       reasons.push(`LinkedIn postunda sadece ${hashtags.length} hashtag`);
       risk += 10;
-      suggestions.push("5-10 hashtag arası ideal");
+      suggestions.push("3-5 hashtag arası ideal");
+    }
+    if (hashtags.length > 5) {
+      reasons.push(`LinkedIn postunda ${hashtags.length} hashtag (SSI stratejisi 3-5 önerir)`);
+      risk += 15;
+      suggestions.push("Hashtag sayısını 3-5'e düşür");
     }
   }
 
@@ -81,7 +86,18 @@ function ruleBasedAudit(ctx: AuditContext): AuditResult {
   }
 
   // 6. AI tespit edilebilir kalıplar
-  const aiPatterns = ["günümüzde", "önemli bir konudur", "özetle", "sonuç olarak", "bu makalede"];
+  const aiPatterns = [
+    "günümüzde",
+    "önemli bir konudur",
+    "özetle",
+    "sonuç olarak",
+    "bu makalede",
+    "öte yandan",
+    "şüphesiz",
+    "kuşkusuz",
+    "dikkat edilmesi gereken",
+    "yürütülmektedir",
+  ];
   for (const pattern of aiPatterns) {
     if (lowerText.includes(pattern)) {
       reasons.push(`AI kalıbı tespit: "${pattern}"`);

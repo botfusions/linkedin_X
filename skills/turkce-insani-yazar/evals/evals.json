@@ -1,0 +1,54 @@
+{
+  "skill_name": "turkce-insani-yazar",
+  "evals": [
+    {
+      "id": 1,
+      "name": "linkedin-post",
+      "prompt": "Yapay zeka ve otomasyon konusunda profesyonel bir LinkedIn postu yaz. Türkçe, doğal ve insani bir ton kullan. 200-300 kelime.",
+      "expected_output": "TDK kurallarına uygun, AI kalıplarından arındırılmış, kişisel ve doğal bir LinkedIn postu",
+      "assertions": [
+        "de/da bağlacı doğru kullanılmış",
+        "ki bağlacı doğru kullanılmış",
+        "AI kalıpları içermiyor (günümüzde, önemli bir, özetle vb.)",
+        "Kişisel ton var (bence, sanırım gibi ifadeler)",
+        "Pasif cümle yok"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "blog-giris",
+      "prompt": "Uzaktan çalışma üzerine bir blog yazısının giriş bölümünü yaz. Samimi ve okuyucuyla doğrudan konuşur tarzda olsun.",
+      "expected_output": "Dikkat çekici, doğal, AI tonu olmayan blog girişi",
+      "assertions": [
+        "Ansiklopedik ton yok",
+        "Gereksiz tarihsel bağlam yok",
+        "Doğrudan konuya giriyor",
+        "Kişisel dokunuş var"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "imla-duzeltme",
+      "prompt": "Aşağıdaki metni TDK imla kurallarına göre düzelt: 'Ankarada yaşayan Ahmet bey, her gün işe giderken kitabı okur. Oda tıpkı benim gibi kitap sever. Hemde çok güzel okur.'",
+      "expected_output": "İmla hataları düzeltilmiş metin",
+      "assertions": [
+        "Ankara'da (kesme işareti)",
+        "O da (ayrı yazım)",
+        "Hem de (ayrı yazım)"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "ai-ton-temizleme",
+      "prompt": "Aşağıdaki AI kokan metni insani bir tona çevir: 'Günümüzde teknoloji hızla gelişmektedir. Bu durum iş dünyasında önemli değişikliklere yol açmaktadır. Öte yandan, bu gelişmeler dikkatle takip edilmelidir. Sonuç olarak, teknolojiyi doğru kullanmak önemlidir.'",
+      "expected_output": "Doğal, insani Türkçe metin",
+      "assertions": [
+        "'Günümüzde' kalıbı yok",
+        "'Önemli' kelimesi aşırı kullanılmamış",
+        "'Öte yandan' kalıbı yok",
+        "'Sonuç olarak' kalıbı yok",
+        "Pasif cümleler etken yapılmış"
+      ]
+    }
+  ]
+}

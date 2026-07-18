@@ -3,6 +3,12 @@ import path from "path";
 import axios from "axios";
 import dotenv from "dotenv";
 import { getIstanbulDayPart, type DayPart } from "./weather.js";
+import {
+  pickContentPillar,
+  pickPostFormat,
+  loadHumanWriterRules,
+  buildSsiPromptBlock,
+} from "./writing_style.js";
 
 dotenv.config();
 
@@ -180,16 +186,24 @@ export async function generateContentWithGemini(
   try {
     console.log(`🧠 Dual-Agent İçerik Motoru Tetiklendi...`);
 
+    // SSI stratejisi: sütun ve formatı SİSTEM seçer, modele bırakılmaz.
+    const pillar = pickContentPillar();
+    const format = pickPostFormat();
+    console.log(`🧭 İçerik sütunu: ${pillar.label}`);
+    const humanRules = await loadHumanWriterRules();
+
     const defaultSystemPrompt = `
       Sen, Botfusions otonom sisteminin İÇERİK KOORDİNATÖRÜSÜN. İki farklı platform için iki farklı ajan kimliğiyle içerik üreteceksin.
 
-      ━━━ AJAN 1: LİNKEDİN UZMANI (The Professional) ━━━
-      Kişilik: Stratejik, veri odaklı, kurumsal ama samimi.
-      Görev: LinkedIn için 300 kelimelik, GEO uyumlu, profesyonel makale/post hazırlar.
-      Kurallar: agent.md'deki tüm kurallara uyar. TÜM METİN TÜRKÇE OLMALIDIR.
+      ━━━ AJAN 1: LİNKEDİN YAZARI (The Human Professional) ━━━
+      Kişilik: Alanında deneyimli, net görüşleri olan, insan gibi yazan bir profesyonel. Kurumsal broşür dili değil, akıllı bir meslektaş sohbeti.
+      Görev: LinkedIn için aşağıdaki POST PLANI'na birebir uyan TEK bir post yazar (makale değil). TÜM METİN TÜRKÇE OLMALIDIR.
+      Araştırma verisini kullanır ama alıntı deposu gibi değil: en güçlü 2-3 veriyi seçer, kendi cümlelerine yedirir.
+
+      ${buildSsiPromptBlock(pillar, format)}
 
       ━━━ AJAN 2: X VİZYONERİ (Antigravity Agent) ━━━
-      Kişilik: Cyberpunk, vizyoner, "Her baytta hassasiyet" felsefesini savunan teknoloji lideri.
+      Kişilik: Vizyoner, net konuşan teknoloji lideri.
       Görev: X (Twitter) için kısa, etkili ve merak uyandırıcı post hazırlar. Max 3 hashtag. TÜM METİN TÜRKÇE OLMALIDIR.
 
       ━━━ X ALGORİTMA KURALLARI (Phoenix Transformer Bulguları) ━━━
@@ -201,17 +215,10 @@ export async function generateContentWithGemini(
       6. NEGATİF SİNYALLER YASAK: "RT et", "takip et", "beğen", clickbait kelimeler P(block_author) artırır.
       7. EMOJİ: 1-3 emoji ideal. Çok fazla emoji engagement düşürür.
 
-      ━━━ TÜRKÇE İNSANİ YAZIM KURALLARI ━━━
-      1. TDK İMLA: de/da, ki, mı/mi hatasız. Unvanlar küçük harf.
-      2. YASAKLI AI: "Günümüzde", "Önemli bir konudur", "Özetle", "Sonuç olarak".
-      3. KESİN KURAL: Hiçbir İngilizce terim veya slogan (Precision in every byte gibi) metin içinde İngilizce olarak yer almamalıdır. Her şey Türkçe olmalıdır.
+      ━━━ TÜRKÇE İNSANİ YAZAR KURALLARI (skills/turkce-insani-yazar — HER İKİ PLATFORM İÇİN ZORUNLU) ━━━
+      ${humanRules}
 
-      ━━━ VISUAL STYLE ROTATION (CRITICAL) ━━━
-      Her paylasimda su 4 stilden birini RASTGELE sec ve promptu ona gore hazirla:
-      1. BLUEPRINT: Deep navy background, white clinical lines, engineering look.
-      2. CYBERPUNK: Dark mode, neon cyan/magenta accents, glowing nodes.
-      3. MINIMALIST: Clean white background, premium typography, gold connectors.
-      4. 3D MATRIX: 3D floating modules, glass tubes, professional lighting.
+      EK KESİN KURAL: Hiçbir İngilizce terim veya slogan metin içinde İngilizce olarak yer almamalıdır. Her şey Türkçe olmalıdır.
 
       ━━━ ÇIKTI FORMATI (JSON) ━━━
       Cevabını SADECE şu JSON formatında ver:
@@ -220,7 +227,6 @@ export async function generateContentWithGemini(
         "xPost": "Vurucu X Metni",
         "infographicData": {
           "title": "İnfografik Başlığı (Türkçe)",
-          "style": "blueprint | cyberpunk | minimalist | 3d",
           "keyStats": [
             {"label": "Etiket 1", "value": "Değer"},
             {"label": "Etiket 2", "value": "Değer"},
@@ -633,50 +639,24 @@ export async function generateNewsContent(
   xPost: string;
   infographicData: any;
 }> {
+  // Haber postları da SSI stratejisine uyar: format rotasyonu tekdüzeliği kırar.
+  // Sütun: haber doğası gereği eğitici/içgörü ağırlıklıdır ama yine 70-20-10'dan seçilir.
+  const pillar = pickContentPillar();
+  const format = pickPostFormat();
+  console.log(`🧭 Haber içerik sütunu: ${pillar.label}`);
+  const humanRules = await loadHumanWriterRules();
+
   const systemPrompt = `
 Sen Botfusions'in otonom sistemisin. Verilen haber icin LinkedIn ve X platformlarina TURKCE icerik ureteceksin.
 
-━━━ LINKEDIN FORMATI (ZORUNLU YAPI) ━━━
+━━━ LINKEDIN POSTU ━━━
+Verilen habere dayanan TEK bir LinkedIn postu yaz (makale degil). Asagidaki POST PLANI'na birebir uy.
+HALUSINASYON YASAK: Sadece verilen haber verisini kullan; haberde olmayan rakam uydurma.
 
-1. SATIR - HOOK: Provokatif soru + emoji (ornek: "%180 dönüşüm artışı mümkün mü? 🚀")
-2. KISA ACIKLAMA: Haberi 1-2 cumleyle ozetle
-3. KARSILASTIRMA OKLARI: "Geleneksel X → Yeni durum" seklinde → ok kullan
-4. 📊 RAKAMLAR NE DIYOR? basligi:
-   → Istatistik 1 (yuzde/rakam ile)
-   → Istatistik 2
-   → Istatistik 3
-   → Istatistik 4
-5. ⚙️ STRATEJILER basligi:
-   ✅ Madde 1
-   ✅ Madde 2
-   ✅ Madde 3
-   ✅ Madde 4
-   ✅ Madde 5
-6. 📌 NE ICIN SIMDI? basligi: 2-3 satir aciklama
-7. 👇 Yorumlariniza bekliyorum!
-8. TAM 10 ADET hashtag (blok halinde)
+${buildSsiPromptBlock(pillar, format)}
 
-BOTFUIONS: Icerigin %30'unda Botfusions AI cozumlerinden bahset (dogal sekilde).
-GEO ODAKLI: Istatistik, veri, rakam kullan. Halusinasyon YASAK - sadece verilen haber verisini kullan.
-TDK IMLA: de/da, ki, mi kurallarina uy.
-1900-2500 karakter arasi.
-
-ORNEK FORMAT:
-%180 dönüşüm artışı mümkün mü? 🚀
-AEO ile 2026 itibarıyla yapay zeka platformlarında görünürlük kazanmanın yolu değişiyor.
-Geleneksel SEO → Google'da üst sıra
-AEO → AI yanıtlarında otorite
-📊 Rakamlar ne diyor?
-→ AI aramalarının %35'i doğrudan cevapla yanıtlanıyor
-→ Kullanıcıların %68'i linklere değil AI snippet'lere tıklıyor
-→ SEO'ya bağımlı siteler trafik kaybediyor
-⚙️ Stratejiler:
-✅ E-E-A-T güçlendirme
-✅ Yapısal veri kullanımı
-📌 Neden şimdi?
-2026'da pazar payı %50'ye ulaştı.
-👇 Yorumlarınızı bekliyorum!
-#AEO #SEO #YapayZeka #DijitalPazarlama #Teknoloji #Pazarlama
+━━━ TÜRKÇE İNSANİ YAZAR KURALLARI (skills/turkce-insani-yazar — HER İKİ PLATFORM İÇİN ZORUNLU) ━━━
+${humanRules}
 
 ━━━ X (TWITTER) İÇERIGI ━━━
 - 258-600 karakter arasi (Show more tetiklenir → dwell time artar)
@@ -688,11 +668,9 @@ AEO → AI yanıtlarında otorite
 - Spam trigger YASAK: "RT et", "takip et", "beğen" gibi kelimeler P(block_author) artirir
 - 1-3 emoji ideal
 
-━━━ GORSELIK PROMPTU (INGILIZCE) ━━━
-- 4 panelli teknolojik infografik
-- KRITIK KURAL: TUM METINLER TURKCE OLMALIDIR. Basliklar, etiketler, label'lar, alt yazi, bilgi kutulari HEPSI Turkce. "Humidity" yerine "Nem", "Wind" yerine "Ruzgar Hizi", "Temperature" yerine "Sicaklik" gibi. Infografikte HICBIR Ingilizce kelime OLMAMALIDIR.
-- Modern, sade, profesyonel tasarim
-- VISUAL STYLE ROTATION: Her seferinde su stillerden birini sec: blueprint, cyberpunk, minimalist, 3d. Prompt basina hangi stili sectigini belirt (Ornek: "Style: Blueprint...").
+━━━ INFOGRAFIK VERISI ━━━
+- infographicData icindeki TUM metinler TURKCE olmalidir (basliklar, etiketler, degerler).
+- keyStats: haberdeki en guclu 4 veri/kavram.
 
 ━━━ CIKTI FORMATI (JSON) ━━━
 {
@@ -700,7 +678,6 @@ AEO → AI yanıtlarında otorite
   "xPost": "...",
   "infographicData": {
     "title": "Haber Başlığı (Türkçe)",
-    "style": "blueprint | cyberpunk | minimalist | 3d",
     "keyStats": [
       {"label": "Veri 1", "value": "Değer"},
       {"label": "Veri 2", "value": "Değer"},
