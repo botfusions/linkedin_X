@@ -55,10 +55,45 @@ export function getIstanbulDayPart(now: Date = new Date()): {
   return { hour, timeStr, part: dayPartFromHour(hour) };
 }
 
+// ponytail: 10 dk cache. OpenWeatherMap free tier ~10dk'da günceller ve
+// 60 istek/dk, 1000/gün limiti var. Daha kısa TTL = back-to-back istek = 429.
+// Bu cache "arka arkaya istek atılmaz" kuralını uygular: üretim + dry-run +
+// test + manuel tetik aynı 10dk penceresinde tek API çağrısı paylaşır.
+const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
+let weatherCache: { data: any; ts: number } | null = null;
+
 async function fetchWeatherRaw(): Promise<any> {
+  // 1) Cache — TTL içinde tekrar gelen çağrı API'ye GİTMEZ (arka arkaya istek yok).
+  if (weatherCache && Date.now() - weatherCache.ts < WEATHER_CACHE_TTL_MS) {
+    console.log("🌦️ Hava verisi cache'ten döndü (arka arkaya istek engellendi).");
+    return weatherCache.data;
+  }
+
   const url = `https://api.openweathermap.org/data/2.5/weather?q=Istanbul&appid=${API_KEY}&units=metric&lang=tr`;
-  const response = await axios.get(url);
-  return response.data;
+  try {
+    const response = await axios.get(url);
+    weatherCache = { data: response.data, ts: Date.now() };
+    return response.data;
+  } catch (err: any) {
+    if (err?.response?.status === 429) {
+      // Rate limit. Eski cache varsa (hava yavaş değişir) ondan servis et.
+      if (weatherCache) {
+        console.warn(
+          "⚠️ OpenWeatherMap 429 (rate limit) — eski cache'ten servis ediliyor.",
+        );
+        return weatherCache.data;
+      }
+      // İlk çağrıda cache yok → bir kez bekle, tekrar dene.
+      console.warn(
+        "⚠️ OpenWeatherMap 429 — 12 sn bekleyip tekrar deneniyor...",
+      );
+      await new Promise((r) => setTimeout(r, 12000));
+      const retry = await axios.get(url);
+      weatherCache = { data: retry.data, ts: Date.now() };
+      return retry.data;
+    }
+    throw err;
+  }
 }
 
 /**
