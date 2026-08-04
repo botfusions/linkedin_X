@@ -1,6 +1,8 @@
-# Botfusions Autonomous Content Engine (v3.5.1)
+# Botfusions Autonomous Content Engine (v4.0)
 
 LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
+
+**Son guncelleme:** 5 Agustos 2026, 02:20 (TRT) — §43'e kadar islendi.
 
 ---
 
@@ -21,12 +23,25 @@ LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
 ## Gunluk Program
 
-| Saat (TR) | Gorev                         | Kaynak              |
-| :-------- | :---------------------------- | :------------------ |
-| **08:00** | Istanbul Hava Durumu + Gorsel | Weather API         |
-| **10:00** | Excel Konu Akisi              | Google Sheets (GEO) |
-| **14:30** | Hazir Post (LinkedIn + X)     | Google Sheets (linkedin excel) |
-| **16:30** | RSS Haber Akisi               | Google News AI      |
+**VPS (Coolify) — `src/scheduler.ts`:**
+
+| Saat (TR) | Gorev                         | Kanal                  | Kaynak              |
+| :-------- | :---------------------------- | :--------------------- | :------------------ |
+| **08:00** | Istanbul Hava Durumu + Gorsel | **Sadece X**           | Weather API         |
+| **10:00** | HERMES icerik                 | Sali/Persembe: LinkedIn + X · diger gunler **sadece X** | Google Sheets (GEO) |
+| **16:30** | RSS Haber Akisi               | **Sadece X**           | Google News AI      |
+
+LinkedIn haftada **2 gonderi** ile sinirli (§41). 83 takipcili hesapta gunde 4 gonderi,
+her sifir etkilesimli gonderiyle bir sonrakinin erisimini dusuruyordu.
+
+**Mac (Hermes cron) — yorum ajani:**
+
+| Saat (TR) | Gorev | Cikti |
+| :-- | :-- | :-- |
+| **09:00 / 13:00 / 18:00** | Yorum firsati taramasi + taslak uretimi | Telegram + Obsidian |
+
+Sunucuda **calismaz** (§42): girdisi `data/yakalanan-gonderiler.json` ve bu dosyayi
+Cenk'in tarayici oturumu besliyor.
 
 ---
 
@@ -616,6 +631,54 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 - **Dosyalar:** `src/services/llm.ts`
 - **Doğrulama:** `npx tsc --noEmit` geçti. `src/test_infographic_flat.ts` ile aynı konu ("Yapay Zeka Güvenliği") üretilince **flat 2D infografik** çıktı (pencere/fotoğraf unsuru YOK — bozuk çıktıyla teyit edilen zıtlık). `src/test_weather_production_dry_run.ts` ile hava görseli **sinematik pencere fotoğrafı + okunabilir overlay (26°C/açık) + Kız Kulesi** üretti (regresyon yok). Paylaşım yapılmadı.
 - **Not:** Bu commit canlıya alınınca bekleyen §35/§36/§37 (3d kaldırma, Kız Kulesi rotasyonu, cyberpunk kaldırma + FLAT 2D + overlay okunabilirlik) fix'lerini de production'a taşır. Deploy teyidi (SSH yok → container terminal): `cd /app && grep -c TURKISH_RULE src/services/llm.ts` → **0** olmalı; model URL'sinde `gemini-3.1-flash-image` görünmeli.
+
+### 39. SSI Stratejisi + turkce-insani-yazar Skill Entegrasyonu (18 Temmuz 2026)
+
+- **Sorun:** Postlar teknik olarak dogruydu ama LinkedIn'de tutmuyordu; ses yapay ve tekduzeydi.
+- **Cozum:** `linkedin-ssi-strateji.md` (SSI 4 sutun) referans alindi, `skills/turkce-insani-yazar` skill'i akisa baglandi. Format ve sutun secimi **modele birakilmiyor**, `writing_style.ts` belirliyor.
+- **Commit:** `96a397b`
+
+### 40. Hava Durumu 429 Rate Limit + 10dk Cache (3 Agustos 2026)
+
+- **Sorun:** Hava durumu API'si 429 doduruyordu; arka arkaya istek atiliyordu.
+- **Cozum:** 10 dakikalik cache + arka arkaya istek engeli.
+- **Commit:** `60eac8d`
+
+### 41. Yorum Firsat Ajani + v4.0 Erisim Odakli Ritim (4 Agustos 2026)
+
+- **Sorun:** Hesabin 83 takipcisi var; LinkedIn once aga gosterdigi icin kendi gonderilerimiz kimseye ulasmiyordu — **iki gunde 5 gonderi, toplam 2 etkilesim**. Buna karsilik 3 Agustos'ta bir rakip gonderisine yazilan **tek yorum**, 70 tepkili gonderinin en ust yorumu oldu ve tum gonderilerin toplamindan fazla kisiye ulasti.
+- **Cikarim:** Ag 500 baglantiyi gecene kadar en verimli kanal gonderi degil **yorum**.
+- **Cozum:**
+  1. **Yorum Firsat Ajani** eklendi: `engagement_scout.ts` (puanlama) → `comment_writer.ts` (2 taslak + guvenlik bariyeri) → `engagement_agent.ts` (Telegram). **Ajan hicbir kosulda LinkedIn'e yorum yazmaz**; yayin karari Cenk'te.
+  2. **v4.0 ritmi:** LinkedIn haftada 2 gonderiye (Sali/Persembe) dusuruldu, diger gunler ayni icerik yalnizca X'e gidiyor.
+  3. Taslak modeli **Anthropic `claude-sonnet-5`, effort `medium`, yedeksiz**. Ucuz model testinde yanlis isimle hitap, iltifatla acis ve 110+ kelime cikti — sessizce ucuz modele dusen bir taslak, taslak uretmemekten kotu. Anahtar yoksa hata Telegram'a duser.
+  4. Gonderi hatti ayri kaldi: `llm.ts` OpenRouter/Gemini kullanmaya devam ediyor (orada hacim yuksek, maliyet gercek kisit).
+- **Sonnet 5 tuzaklari:** `temperature` gonderilmez (varsayilan disi deger 400 doner), `max_tokens` 8000'dir (adaptive thinking bu butceyi metinle **paylasir**; 2000 ile cevap yarida kesiliyordu).
+- **Dosyalar:** `src/engagement_agent.ts`, `src/services/engagement_scout.ts`, `src/services/comment_writer.ts`, `src/scheduler.ts`
+- **Commit:** `7fa4c53`, guvenlik bariyeri eki `22f8420` (sen/siz hitap karisikligi)
+- **Ayrinti:** `YORUM-AJANI.md`
+
+### 42. Yorum Ajani VPS'ten Mac'e Tasindi + Obsidian Arsivi + Hermes Profili (5 Agustos 2026)
+
+- **Sorun:** Ajan VPS'te mimari olarak **no-op** idi. Girdisi `data/yakalanan-gonderiler.json` ve bu dosyayi Cenk'in tarayici oturumu besliyor; konteynerdeki kopya imaja gomulu ve donuk kaldigi icin tarama her seferinde "0 aday" veriyordu.
+- **Yan bulgu:** `Dockerfile` `data/` klasorunu hic kopyalamiyordu (secmeli COPY). `loadWatchlist()` try/catch'siz okudugu icin her tarama ENOENT ile patlayacakti — redeploy oncesi yakalandi (`0fcbee2`).
+- **Cozum:**
+  1. Cron `scheduler.ts`'ten kaldirildi, **Mac'teki Hermes cron'una** tasindi: is `566da5a12511`, 09:00/13:00/18:00, `--no-agent`, sarmalayici `~/.hermes/scripts/linkedin-yorum-ajani.sh` (basarida sessiz, yalnizca hatada konusur).
+  2. Taslaklar artik **Telegram + Obsidian** ikisine birden yaziliyor: `Claude-Media/linkedin/yorumlar/YYYY-MM-DD-<slug>-<id>.md`, frontmatter'da `durum: taslak`. Yayinlanani elle `yayinlandi` yap — hangi yorumun tuttugunu bu alanla olceriz. Kasa erisilemezse **sessizce gecilir** (Telegram zaten gitti).
+  3. Ajan bir **Hermes profili** olarak kaydedildi: `linkedin` (`~/.hermes/profiles/linkedin/`), Hakan'dan klonlandi. Hakan X'te, bu LinkedIn'de; ikisi de read-only tarar, taslak uretir, yayinlamaz. Kimlik/yasaklar `SOUL.md`'de, kayit `~/.hermes/ROUTING.md` profil tablosunda.
+- **Iki ayri model, karistirilmaz:** profilin *sohbet* modeli Hermes zincirinden gelir; *taslak* modeli ondan bagimsiz Anthropic Sonnet 5'tir. Profil modelini degistirmek taslak kalitesini etkilemez.
+- **`scheduler.ts`'e geri eklenmez** — once besleme sorunu cozulur.
+- **Commit:** `179689b`, `5ddc410`, `517f3bc`
+
+### 43. Anthropic Anahtari Coolify Imaj Gecmisine Sizdi (5 Agustos 2026)
+
+- **Sorun:** Coolify'a eklenen yeni degiskenler varsayilan olarak **"Build Variable"** isaretli geliyor. Bu, onlari Dockerfile'a `ARG` satiri olarak enjekte ediyor — yani `ANTHROPIC_API_KEY` `7fa4c53` imajinin gecmisine **duz metin** yazilmisti ve `docker history <imaj>` ile okunabiliyordu.
+- **Cozum:**
+  1. Coolify DB'den 6 satir silindi (3 degisken × prod + preview kopyasi): `docker exec coolify-db psql -U coolify -d coolify` → `environment_variables`, `resourceable_id=27`.
+  2. Sizintili imaj silindi; kalan uc imajda anahtar yok.
+  3. Anahtar yenilendi.
+- **Kural:** Coolify'a secret eklerken **"Build Variable" kutusu isaretlenmez**. Bu sekilde eklenmis bir secret yanmis sayilir → yenile, sonra eski imaji sil.
+- **Not:** Ajan artik VPS'te calismadigi icin `ANTHROPIC_*` degiskenleri orada zaten gereksizdi. Anahtar yalnizca Mac'teki `.env`'de durur.
 
 ---
 © 2026 Botfusions. MIT Lisans.
