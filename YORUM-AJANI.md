@@ -103,6 +103,18 @@ Kod: `src/services/comment_writer.ts` → `callModel()`. `temperature` gönderil
 
 ---
 
+## Çıktılar: Telegram + Obsidian
+
+**Telegram** — anlık bildirim (aşağıdaki bölüm).
+
+**Obsidian** — `~/Documents/Claude-Media/linkedin/yorumlar/YYYY-MM-DD-<slug>-<id>.md`. Kalıcı arşiv ve arama. Frontmatter'da `hesap`, `skor`, `tepki`, `durum` var; yayınladığın taslağın `durum:` alanını elle `yayinlandi` yap — hangi yorumun tuttuğunu sonradan bu alanla ölçeriz. Yol `OBSIDIAN_LINKEDIN_DIR` ile değiştirilebilir.
+
+Kasa yoksa ya da yazma başarısızsa ajan **sessizce geçer**: Telegram zaten gitmiştir, arşiv yüzünden taslağı kaybetmenin anlamı yok.
+
+Ajanın kasa içindeki tanım sayfası: `Claude-Media/linkedin/AGENT.md`. Hermes kaydı: `~/.hermes/ROUTING.md` → "Zamanlanmış sistemler".
+
+---
+
 ## Telegram
 
 Yorum ajanı **ayrı bir bot** kullanır. `TELEGRAM_BOT_TOKEN` n8n'e bağlıdır ve hata bildirimleri oraya düşer; taslakların o kanala karışması ikisini de kullanılmaz kılar.

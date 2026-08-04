@@ -1,4 +1,7 @@
 import dotenv from "dotenv";
+import fs from "fs/promises";
+import path from "path";
+import os from "os";
 import {
   findOpportunities,
   markPostSeen,
@@ -59,6 +62,92 @@ async function bildir(firsat: Opportunity, taslaklar: string[], analiz: string, 
   satirlar.push("", "_Beğendiğini kopyala ve sen gönder. Ajan yorum yazmaz._");
 
   await sendEngagementMessage(satirlar.join("\n"));
+  await obsidianaYaz(firsat, taslaklar, analiz, acik);
+}
+
+/**
+ * Taslakları Obsidian kasasına da yazar (Claude-Media / Botfusions Social
+ * Autopilot). Telegram anlık bildirim; Obsidian kalıcı arşiv ve arama.
+ *
+ * Kasa yoksa ya da yazma başarısızsa SESSİZCE geçilir: Telegram zaten
+ * gitti, arşiv yüzünden taslağı kaybetmenin anlamı yok.
+ */
+const OBSIDIAN_DIR =
+  process.env.OBSIDIAN_LINKEDIN_DIR ||
+  path.join(os.homedir(), "Documents", "Claude-Media", "linkedin", "yorumlar");
+
+function bugun(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Istanbul" });
+}
+
+async function obsidianaYaz(
+  firsat: Opportunity,
+  taslaklar: string[],
+  analiz: string,
+  acik: string,
+): Promise<void> {
+  try {
+    await fs.mkdir(OBSIDIAN_DIR, { recursive: true });
+    const dosya = path.join(
+      OBSIDIAN_DIR,
+      `${bugun()}-${firsat.hesap.slug}-${firsat.post.id}.md`,
+    );
+
+    const govde = [
+      "---",
+      `hesap: "${firsat.hesap.ad}"`,
+      `kurum: "${firsat.hesap.kurum ?? ""}"`,
+      `slug: ${firsat.hesap.slug}`,
+      `gonderi_id: "${firsat.post.id}"`,
+      `skor: ${firsat.skor}`,
+      `tepki: ${firsat.post.tepki ?? 0}`,
+      `paylasim: ${firsat.post.paylasim ?? 0}`,
+      `tarih: ${bugun()}`,
+      "durum: taslak", // Cenk yayınlayınca elle "yayinlandi" yapılır
+      "tags: [linkedin, yorum-firsati, geo]",
+      "---",
+      "",
+      `# Yorum fırsatı — ${firsat.hesap.ad}`,
+      "",
+      `🔗 [Gönderiye git](${firsat.url})`,
+      "",
+      `**Puanlama:** ${firsat.gerekce.join(" · ")}`,
+      "",
+      "## Gönderi",
+      "",
+      "> " + firsat.post.metin.replace(/\n+/g, "\n> "),
+      "",
+      "## Analiz",
+      "",
+      analiz,
+      "",
+      "## Açık",
+      "",
+      acik,
+      "",
+      "## Taslaklar",
+      "",
+    ];
+
+    taslaklar.forEach((t, i) => {
+      govde.push(`### Taslak ${i + 1} (${t.trim().split(/\s+/).length} kelime)`, "", t, "");
+    });
+
+    // Yol bazli wikilink: kasada bircok AGENT.md var, cip
+    // "[[AGENT]]" belirsiz kalirdi.
+    govde.push(
+      "---",
+      "",
+      "Ajan yorum yazmaz; yayın kararı Cenk'e aittir.",
+      "",
+      "[[linkedin/AGENT|LinkedIn Ajanı]]",
+    );
+
+    await fs.writeFile(dosya, govde.join("\n"), "utf-8");
+    console.log(`🗂️  Obsidian: ${dosya}`);
+  } catch (err: any) {
+    console.warn(`⚠️ Obsidian'a yazilamadi (Telegram gonderildi): ${err?.message || err}`);
+  }
 }
 
 export async function runEngagementWorkflow(): Promise<void> {
