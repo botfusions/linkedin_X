@@ -8,6 +8,10 @@ RUN npm install --production
 COPY tsconfig.json ./
 COPY agent.md ./
 COPY skills/ ./skills/
+# Yorum ajani data/takip-listesi.json'u KORUMASIZ okuyor (engagement_scout.ts
+# loadWatchlist). Kopyalanmazsa her taramada ENOENT -> Telegram'a hata duser.
+# Not: konteynerdeki yazmalar (markPostSeen) her redeploy'da sifirlanir.
+COPY data/ ./data/
 COPY src/ ./src/
 
 # sharp SVG text (hava overlay'i) font render icin fontconfig + Roboto fontunu
