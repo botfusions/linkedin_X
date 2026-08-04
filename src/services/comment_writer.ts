@@ -262,6 +262,15 @@ Her biri 55-90 kelime olsun. Hiçbir marka adı geçmesin. İsimle hitap etme, i
       console.warn("⛔ Taslak reddedildi — çekingen kalıp içeriyor.");
       return false;
     }
+    // Sen/siz karisikligi: ayni yorumda iki hitap kullanilmamali.
+    // 4 Agu 2026 testinde "izliyor musun" + "takip ediyorsunuz" ayni taslakta cikti.
+    const senVar =
+      /\b(sen|sana|seni|senin)\b|(m[ıi]s[ıi]n|musun|m[üu]s[üu]n|yorsun|[ıi]yorsun)\b(?!uz)/i.test(t);
+    const sizVar = /\b(siz|size|sizi|sizin)\b|(m[ıi]s[ıi]n[ıi]z|musunuz|yorsunuz)\b/i.test(t);
+    if (senVar && sizVar) {
+      console.warn("⛔ Taslak reddedildi — sen/siz hitabı karışmış.");
+      return false;
+    }
     const kelime = wordCount(t);
     if (kelime < 30 || kelime > 110) {
       console.warn(`⛔ Taslak reddedildi — uzunluk dışı (${kelime} kelime).`);
