@@ -3,7 +3,6 @@ import cron from "node-cron";
 import { runWeatherPostFlow } from "./services/agentFlow.js";
 import { runAutonomousWorkflow } from "./autonomous_agent.js";
 import { runRSSNewsWorkflow } from "./rss_agent.js";
-import { runEngagementWorkflow } from "./engagement_agent.js";
 
 dotenv.config();
 
@@ -44,7 +43,11 @@ console.log("   - 08:00 hergun : Istanbul Hava Durumu  → SADECE X");
 console.log("   - 10:00 Sal/Per: HERMES icerik          → LinkedIn + X");
 console.log("   - 10:00 diger  : HERMES icerik          → SADECE X");
 console.log("   - 16:30 hergun : RSS Haber              → SADECE X");
-console.log("   - 09:00/13:00/18:00: Yorum firsati taramasi → Telegram taslak");
+console.log("");
+console.log("ℹ️  Yorum firsati taramasi burada CALISMAZ; Hermes cron'una tasindi");
+console.log("   (Mac, 09:00/13:00/18:00). Gerekce: ajanin girdisi olan");
+console.log("   data/yakalanan-gonderiler.json Cenk'in tarayici oturumundan");
+console.log("   besleniyor, sunucudaki kopya donuk kaliyor.");
 console.log("");
 console.log("ℹ️  LinkedIn haftada 2 gonderi ile sinirli (Sal/Per).");
 console.log("   Gerekce: 83 takipcili hesapta gunde 4 gonderi, her sifir");
@@ -152,17 +155,15 @@ cron.schedule(
 );
 
 // ─────────────────────────────────────────────────────────────
-// YORUM FIRSAT AJANI — gunde 3 tarama
+// YORUM FIRSAT AJANI — BURADA DEGIL, HERMES CRON'UNDA (5 Agu 2026)
 //
-// Ag 500 baglantiyi gecene kadar en verimli kanal gonderi degil yorum.
-// Ajan LinkedIn'e yorum YAZMAZ; taslak uretip Telegram'a gonderir,
-// Cenk okur ve kendisi yayinlar.
+// Ajan Mac'te calisiyor: `hermes cron` isi 566da5a12511,
+// ~/.hermes/scripts/linkedin-yorum-ajani.sh -> `npm run engagement`.
+//
+// Neden sunucuda degil: ajanin girdisi data/yakalanan-gonderiler.json ve
+// bu dosyayi Cenk'in kendi tarayici oturumu besliyor. Konteynerdeki kopya
+// imaja gomulu ve donuk kaldigi icin tarama her seferinde "0 aday"
+// veriyordu. Cron, verinin uretildigi makinede olmali.
+//
+// Buraya geri eklemeyin; once besleme sorununu cozun.
 // ─────────────────────────────────────────────────────────────
-cron.schedule(
-  "0 9,13,18 * * *",
-  safeCron(async () => {
-    console.log("💬 Yorum firsati taramasi basliyor...");
-    await runEngagementWorkflow();
-  }),
-  { timezone: "Europe/Istanbul" },
-);

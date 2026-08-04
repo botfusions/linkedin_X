@@ -126,7 +126,17 @@ npm run engagement                                   # tarama + taslak üretimi
 npm run engagement:tek -- <id> <slug> "metin"        # tek gönderi için taslak
 ```
 
-Zamanlanmış: her gün **09:00, 13:00, 18:00** (scheduler.ts).
+Zamanlanmış: her gün **09:00, 13:00, 18:00** — **VPS'te değil, Mac'teki Hermes cron'unda** (5 Ağustos 2026'da taşındı).
+
+```bash
+hermes cron list                      # is 566da5a12511
+hermes cron run 566da5a12511          # elle tetikle
+hermes cron runs 566da5a12511         # gecmis calismalar
+```
+
+Sarmalayıcı: `~/.hermes/scripts/linkedin-yorum-ajani.sh` → `npm run engagement`. `--no-agent` modunda çalışır (Hermes'in LLM katmanı devreye girmez, script'in kendisi iştir). Script normal akışta **sessizdir**; yalnızca hata olursa konuşur, çünkü taslakları ajanın kendisi zaten Telegram'a gönderiyor.
+
+**Neden sunucuda değil:** ajanın girdisi `data/yakalanan-gonderiler.json` ve bu dosyayı Cenk'in tarayıcı oturumu besliyor. Konteynerdeki kopya imaja gömülü ve donuk kaldığı için tarama her seferinde "0 aday" veriyordu. Cron, verinin üretildiği makinede olmalı. `scheduler.ts`'e geri eklemeyin; önce besleme sorununu çözün.
 
 ---
 
