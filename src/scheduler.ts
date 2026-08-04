@@ -3,6 +3,7 @@ import cron from "node-cron";
 import { runWeatherPostFlow } from "./services/agentFlow.js";
 import { runAutonomousWorkflow } from "./autonomous_agent.js";
 import { runRSSNewsWorkflow } from "./rss_agent.js";
+import { runEngagementWorkflow } from "./engagement_agent.js";
 
 dotenv.config();
 
@@ -37,12 +38,18 @@ function safeCron(fn: () => Promise<void>): () => void {
   };
 }
 
-console.log("⏰ Botfusions Zamanlayici Baslatildi...");
-console.log("📅 Gunluk Program (7/24 Aktif):");
-console.log("   - 08:00: Istanbul Hava Durumu (LinkedIn + X)");
-console.log("   - 10:00: HERMES X İçerik #1 (LinkedIn + X) — infografik");
-console.log("   - 14:30: HERMES X İçerik #2 (LinkedIn + X) — infografik");
-console.log("   - 16:30: RSS Haber (LinkedIn + X)");
+console.log("⏰ Botfusions Zamanlayici Baslatildi... (v4 - erisim odakli ritim)");
+console.log("📅 Program:");
+console.log("   - 08:00 hergun : Istanbul Hava Durumu  → SADECE X");
+console.log("   - 10:00 Sal/Per: HERMES icerik          → LinkedIn + X");
+console.log("   - 10:00 diger  : HERMES icerik          → SADECE X");
+console.log("   - 16:30 hergun : RSS Haber              → SADECE X");
+console.log("   - 09:00/13:00/18:00: Yorum firsati taramasi → Telegram taslak");
+console.log("");
+console.log("ℹ️  LinkedIn haftada 2 gonderi ile sinirli (Sal/Per).");
+console.log("   Gerekce: 83 takipcili hesapta gunde 4 gonderi, her sifir");
+console.log("   etkilesimli gonderiyle bir sonrakinin erisimini dusuruyordu.");
+console.log("   Kanal kontrolu: .env > LINKEDIN_DISABLED_FLOWS");
 
 const WEATHER_TEXT_PROMPT = `
 Sen Botfusions'in sosyal medya editorusun.
@@ -93,22 +100,40 @@ cron.schedule(
   { timezone: "Europe/Istanbul" },
 );
 
-// 10:00 - HERMES X İçerik #1
+// 10:00 - HERMES icerik (LinkedIn yalnizca Sali ve Persembe)
+//
+// LinkedIn kanali gun bazli acilip kapaniyor: hafta ici diger gunlerde ayni
+// icerik yalnizca X'e gidiyor. Boylece LinkedIn'de haftada 2 gonderi kaliyor.
+const LINKEDIN_POST_DAYS = [2, 4]; // 0=Pazar ... 2=Sali, 4=Persembe
+
+function setLinkedInChannelForToday(): boolean {
+  const today = new Date().toLocaleDateString("en-US", {
+    timeZone: "Europe/Istanbul",
+    weekday: "short",
+  });
+  const map: Record<string, number> = {
+    Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+  };
+  const isPostDay = LINKEDIN_POST_DAYS.includes(map[today] ?? -1);
+
+  const base = (process.env.LINKEDIN_DISABLED_FLOWS || "")
+    .split(",")
+    .map((x) => x.trim().toLowerCase())
+    .filter(Boolean)
+    .filter((x) => x !== "hermes");
+
+  if (!isPostDay) base.push("hermes");
+  process.env.LINKEDIN_DISABLED_FLOWS = base.join(",");
+  return isPostDay;
+}
+
 cron.schedule(
   "0 10 * * *",
   safeCron(async () => {
-    console.log("🚀 [10:00] HERMES X içerik postu #1 hazırlanıyor...");
-    await randomDelay();
-    await runAutonomousWorkflow();
-  }),
-  { timezone: "Europe/Istanbul" },
-);
-
-// 14:30 - HERMES X İçerik #2 (günde 2. infografik postu)
-cron.schedule(
-  "30 14 * * *",
-  safeCron(async () => {
-    console.log("🚀 [14:30] HERMES X içerik postu #2 hazırlanıyor...");
+    const isPostDay = setLinkedInChannelForToday();
+    console.log(
+      `🚀 [10:00] HERMES icerik hazirlaniyor... (LinkedIn: ${isPostDay ? "ACIK" : "kapali, sadece X"})`,
+    );
     await randomDelay();
     await runAutonomousWorkflow();
   }),
@@ -122,6 +147,22 @@ cron.schedule(
     console.log("🚀 [16:30] RSS haber postu hazirlaniyor...");
     await randomDelay();
     await runRSSNewsWorkflow();
+  }),
+  { timezone: "Europe/Istanbul" },
+);
+
+// ─────────────────────────────────────────────────────────────
+// YORUM FIRSAT AJANI — gunde 3 tarama
+//
+// Ag 500 baglantiyi gecene kadar en verimli kanal gonderi degil yorum.
+// Ajan LinkedIn'e yorum YAZMAZ; taslak uretip Telegram'a gonderir,
+// Cenk okur ve kendisi yayinlar.
+// ─────────────────────────────────────────────────────────────
+cron.schedule(
+  "0 9,13,18 * * *",
+  safeCron(async () => {
+    console.log("💬 Yorum firsati taramasi basliyor...");
+    await runEngagementWorkflow();
   }),
   { timezone: "Europe/Istanbul" },
 );

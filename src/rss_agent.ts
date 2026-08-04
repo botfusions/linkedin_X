@@ -5,7 +5,7 @@ import {
 } from "./services/rss.js";
 import { generateNewsContent } from "./services/llm.js";
 import { generateGeminiImage } from "./services/gemini_image.js";
-import { createLinkedInPost } from "./services/linkedin.js";
+import { createLinkedInPost, isLinkedInFlowEnabled } from "./services/linkedin.js";
 import { createXPost } from "./services/x.js";
 import {
   optimizeWithSelfImprove,
@@ -79,7 +79,7 @@ export async function runRSSNewsWorkflow() {
         }
       }
 
-      const skipLinkedIn = !liAudit.approved;
+      const skipLinkedIn = !liAudit.approved || !isLinkedInFlowEnabled("rss");
       const skipX = !xAudit.approved;
 
       if (skipLinkedIn && skipX) {

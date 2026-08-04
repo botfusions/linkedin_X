@@ -11,7 +11,9 @@
     "scheduler": "tsx src/scheduler.ts",
     "rss": "tsx src/rss_agent.ts",
     "ready-post": "tsx src/ready_post_agent.ts",
-    "linkedin-auth": "tsx src/linkedin_auth.ts"
+    "linkedin-auth": "tsx src/linkedin_auth.ts",
+    "engagement": "tsx src/engagement_agent.ts",
+    "engagement:tek": "tsx src/engagement_agent.ts --tek"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.1",

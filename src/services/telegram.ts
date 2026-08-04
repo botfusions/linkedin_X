@@ -35,6 +35,53 @@ export async function sendTelegramMessage(text: string): Promise<void> {
   }
 }
 
+/**
+ * YORUM AJANI ICIN AYRI BOT
+ *
+ * Neden ayri: TELEGRAM_BOT_TOKEN n8n'e bagli ve hata bildirimleri oraya
+ * dusuyor. Yorum taslaklari gunde birkac kez gelen, okunup uzerinde islem
+ * yapilan mesajlar — hata kanaliyla karismasi ikisini de kullanilmaz kilar.
+ *
+ * .env:
+ *   TELEGRAM_ENGAGEMENT_BOT_TOKEN=...
+ *   TELEGRAM_ENGAGEMENT_CHAT_ID=...
+ *
+ * Tanimli degilse mesaj GONDERILMEZ ve hata kanalina DUSMEZ; yalnizca
+ * konsola uyari yazilir. Boylece yanlislikla n8n kanalina tasma olmaz.
+ */
+export async function sendEngagementMessage(text: string): Promise<boolean> {
+  const token = process.env.TELEGRAM_ENGAGEMENT_BOT_TOKEN || "";
+  const chatId = process.env.TELEGRAM_ENGAGEMENT_CHAT_ID || "";
+
+  if (!token || !chatId) {
+    console.warn(
+      "⚠️ Yorum ajani Telegram botu tanimli degil " +
+        "(TELEGRAM_ENGAGEMENT_BOT_TOKEN / TELEGRAM_ENGAGEMENT_CHAT_ID). " +
+        "Mesaj gonderilmedi — hata kanalina DUSURULMEDI.",
+    );
+    console.log("\n──── TASLAK (konsol ciktisi) ────\n" + text + "\n─────────────────────────────\n");
+    return false;
+  }
+
+  try {
+    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+      chat_id: chatId,
+      text,
+      parse_mode: "Markdown",
+      disable_web_page_preview: false,
+    });
+    console.log("✅ Yorum taslagi Telegram'a gonderildi.");
+    return true;
+  } catch (error: any) {
+    console.error(
+      "❌ Yorum ajani Telegram hatasi:",
+      error.response?.data?.description || error.message,
+    );
+    console.log("\n──── TASLAK (gonderilemedi, konsol) ────\n" + text + "\n─────────────────────────────\n");
+    return false;
+  }
+}
+
 export interface PublishReport {
   topic: string;
   linkedinScore?: number | undefined;

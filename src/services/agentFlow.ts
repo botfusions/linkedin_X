@@ -2,7 +2,7 @@ import {
   generateShortContentWithGemini,
   generateWeatherBackgroundPrompt,
 } from "./llm.js";
-import { createLinkedInPost } from "./linkedin.js";
+import { createLinkedInPost, isLinkedInFlowEnabled } from "./linkedin.js";
 import { createXPost } from "./x.js";
 import { generateGeminiImage } from "./gemini_image.js";
 import { getIstanbulWeatherData } from "./weather.js";
@@ -78,7 +78,8 @@ export async function runWeatherPostFlow(
       }
     }
 
-    const skipLinkedIn = !weatherAudit.approved;
+    const skipLinkedIn =
+      !weatherAudit.approved || !isLinkedInFlowEnabled("weather");
     const skipX = !xWeatherAudit.approved;
 
     if (skipLinkedIn) {

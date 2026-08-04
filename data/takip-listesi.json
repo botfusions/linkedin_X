@@ -1,0 +1,205 @@
+{
+  "_aciklama": "GEO/AEO alaninda izlenen hesaplar. Yorum firsati taramasi bu listeyi kullanir. Kaynak: 'Linkedin post/AGENTS.md' rakip haritasi.",
+  "_guncelleme": "2026-08-04",
+  "_oncelik_aciklama": {
+    "1": "Her taramada kontrol edilir. Yorum firsati en yuksek deger.",
+    "2": "Her taramada kontrol edilir.",
+    "3": "Gunde bir kez kontrol edilir.",
+    "4": "Haftada bir kontrol edilir. Olu/durgun kayitlar."
+  },
+  "hesaplar": [
+    {
+      "ad": "Atiye Berika Ertas",
+      "slug": "atiyeberikaertas",
+      "tip": "kisi",
+      "kurum": "Webtures / Brantial",
+      "unvan": "Generative Search Manager",
+      "oncelik": 1,
+      "takipci": 12603,
+      "not": "Webtures'un GEO dagitimi bu profil uzerinden yuruyor. Kurumsal sayfadan (115K) daha yuksek etkilesim aliyor: 17-76 tepki, 5-16 paylasim. Sik sik soru sorarak bitiriyor -> en iyi yorum firsati.",
+      "son_gonderi_id": "7490360134762946560"
+    },
+    {
+      "ad": "Webtures",
+      "slug": "webtures",
+      "tip": "sirket",
+      "oncelik": 1,
+      "takipci": 115709,
+      "not": "Ana rakip. 31 Tem'de GEO/AEO danismanligini vitrine koydu, 3 Agu'da SEvO kampanyasi basladi. Iddialarinin cogu kaynaksiz -> veri ekleyerek ayrismak icin uygun zemin.",
+      "son_gonderi_id": "7490055673653944322"
+    },
+    {
+      "ad": "Brantial",
+      "slug": "brantialai",
+      "tip": "sirket",
+      "oncelik": 1,
+      "takipci": 51965,
+      "not": "Webtures'un GEO kolu (kanit: 17/17 calisan Turkiye'de, kadro Webtures'un Visibility Intelligence ekibi). Ingilizce yayin yapiyor. UYARI: /company/brantial/ YANLIS sayfa, /company/brantialai/ dogru.",
+      "son_gonderi_id": "7490045724005609472"
+    },
+    {
+      "ad": "Gonul Atar",
+      "slug": "gonulatar",
+      "tip": "kisi",
+      "kurum": "Webtures / Brantial",
+      "unvan": "Sales Development Specialist",
+      "oncelik": 2,
+      "takipci": 2442,
+      "not": "Satis tarafinda. Icerikleri Brantial'in satis argumanlarinin erken gostergesi - hangi mesajin test edildigi buradan okunur.",
+      "son_gonderi_id": "7488530751148306433"
+    },
+    {
+      "ad": "Opttab",
+      "slug": "opttab",
+      "tip": "sirket",
+      "oncelik": 2,
+      "takipci": 732,
+      "not": "Amsterdam merkezli. 25.352 promptluk sektorel endeks yayimladi - kategorinin en iyi lead magnet ornegi.",
+      "son_gonderi_id": "7489258666827718656"
+    },
+    {
+      "ad": "Huseyin Kilic",
+      "slug": "hüseyin-kılıç-b3a90b39a",
+      "tip": "kisi",
+      "kurum": "Opttab",
+      "oncelik": 3,
+      "takipci": 839,
+      "not": "Sektorel sablon serisi uretiyor (sektor -> 4 risk -> Opttab kapanisi). Etkilesim 1-3 bandinda.",
+      "son_gonderi_id": "7488969220446367744"
+    },
+    {
+      "ad": "Can Dogan",
+      "slug": "candogannn",
+      "tip": "kisi",
+      "kurum": "Lein Digital",
+      "oncelik": 2,
+      "takipci": 1188,
+      "not": "'Turkiye'nin ilk GEO ajansi' kurucusu. Icerik kalitesi yuksek, ucuncu taraf arastirma referansli. Dagitimi zayif.",
+      "son_gonderi_id": "7488502672065466368"
+    },
+    {
+      "ad": "Lein Digital",
+      "slug": "leindigital",
+      "tip": "sirket",
+      "oncelik": 3,
+      "takipci": 336,
+      "not": "Dogrudan rakip ajans. Bulten yok, reklam yok.",
+      "son_gonderi_id": "7488622441452412928"
+    },
+    {
+      "ad": "AwoScan",
+      "slug": "awoscan",
+      "tip": "sirket",
+      "oncelik": 2,
+      "not": "4 Agustos 2026'da kesfedildi. Sektorel AI Visibility Index yayimliyor (belediye, dijital pazarlama ajanslari). Kurucu: Atilla Senol (Sesim). 12 LLM analizi iddiasi. Slug DOGRULANMADI.",
+      "son_gonderi_id": null
+    },
+    {
+      "ad": "Cengiz Doruk Oksas",
+      "slug": "cengiz-doruk-okşaş-8a21b223b",
+      "tip": "kisi",
+      "kurum": "Menra AI",
+      "oncelik": 3,
+      "not": "40K+ EUR MRR iddiasi DOGRULANAMAZ. Menra Hub icerik uretici agi. Sifir reklam, 1-3 begeni.",
+      "son_gonderi_id": "7488997115172675584"
+    },
+    {
+      "ad": "Muhammed Furkan Yaman",
+      "slug": "muhammed-furkan-yaman-524057207",
+      "tip": "kisi",
+      "kurum": "Cognizo",
+      "oncelik": 3,
+      "not": "Cognizo GTM Engineer. Cognizo'nun ajans white-label hatti Botfusions icin kanal tehdidi. 52 aktif reklam.",
+      "son_gonderi_id": "7480948741529841664"
+    },
+    {
+      "ad": "Hasan Onal",
+      "slug": "hasan-onal",
+      "tip": "kisi",
+      "oncelik": 2,
+      "takipci": 20000,
+      "not": "RAKIP DEGIL, KANAL. E-Ihracat Sekretaryasi, Ticaret Bakanligi/EIB baglantilari, IGEXX zirvesi. 'Agentic commerce' terimini kendi kullaniyor. Erisimi listedeki herkesten yuksek (60-120 begeni).",
+      "son_gonderi_id": "7489754702964928512"
+    },
+    {
+      "ad": "Sinan Seyfi Yetginer",
+      "slug": "sinanseyfiyetginer",
+      "tip": "kisi",
+      "oncelik": 3,
+      "not": "Yuksek tempoda GEO icerigi uretiyor ama son 4 gonderisi UST USTE 0 begeni. Rakip degil, pazar teshisi olarak izle: icerik kalitesi tek basina dagitim getirmiyor.",
+      "son_gonderi_id": "7489739266210701312"
+    },
+    {
+      "ad": "Ibrahim Aydogdu",
+      "slug": "ibrahimaydogdu",
+      "tip": "kisi",
+      "kurum": "Workexe / Forsid",
+      "oncelik": 3,
+      "not": "Gundemi GEO'dan uzaklasip e-ticaret altyapisina kayiyor. Rakip degil, potansiyel tamamlayici.",
+      "son_gonderi_id": "7489973439823351808"
+    },
+    {
+      "ad": "Gulsah Kizilkaya",
+      "slug": "gulsahkzlky",
+      "tip": "kisi",
+      "oncelik": 4,
+      "not": "GEO icerigi ~1 aydir guncellenmiyor.",
+      "son_gonderi_id": "7486865435964006400"
+    },
+    {
+      "ad": "Gulsah Arslan",
+      "slug": "gülşah-arslan-12bb97b3",
+      "tip": "kisi",
+      "kurum": "Ajans Vadi",
+      "oncelik": 4,
+      "not": "1 aydir yeni paylasim yok.",
+      "son_gonderi_id": "7472955691809280000"
+    },
+    {
+      "ad": "Umit Karaduman",
+      "slug": "umit-karaduman-aa424222",
+      "tip": "kisi",
+      "kurum": "Strategis Research",
+      "oncelik": 4,
+      "not": "Dusuk aktiflik.",
+      "son_gonderi_id": "7469305429827944448"
+    },
+    {
+      "ad": "YouAreAd",
+      "slug": "youaread",
+      "tip": "sirket",
+      "oncelik": 4,
+      "takipci": 1605,
+      "not": "Yeni icerik yok.",
+      "son_gonderi_id": "7484887009820520448"
+    },
+    {
+      "ad": "LookPro",
+      "slug": "lookpro-bilisim",
+      "tip": "sirket",
+      "oncelik": 4,
+      "takipci": 81,
+      "not": "Bir aydir durgun.",
+      "son_gonderi_id": "7481339531946995712"
+    },
+    {
+      "ad": "GEO Checker",
+      "slug": "geo-checker",
+      "tip": "sirket",
+      "oncelik": 4,
+      "takipci": 102,
+      "not": "LinkedIn'de fiilen olu. Asil faaliyeti web + Product Hunt uzerinde, ayri gorevde izleniyor.",
+      "son_gonderi_id": "7466068649766711296"
+    }
+  ],
+  "_cikarilanlar": [
+    {
+      "ad": "Ilkkod",
+      "sebep": "4 calistirmadir LinkedIn 404 donuyor"
+    },
+    {
+      "ad": "Ozkan Gocer",
+      "sebep": "Son gonderi 10 ay once ve GEO ile ilgisiz"
+    }
+  ]
+}

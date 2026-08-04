@@ -3,6 +3,7 @@
 .env.local
 .env.production
 .linkedin_token.json
+*.rtf
 
 # Loglar
 *.log
@@ -12,6 +13,7 @@ npm-debug.log*
 node_modules/
 
 # Gecici dosyalar
+*.bak
 temp_images/
 out/
 scratch/

@@ -4,7 +4,7 @@ import {
   generateContentWithGemini,
 } from "./services/llm.js";
 import { generateGeminiImage } from "./services/gemini_image.js";
-import { createLinkedInPost } from "./services/linkedin.js";
+import { createLinkedInPost, isLinkedInFlowEnabled } from "./services/linkedin.js";
 import { createXPost } from "./services/x.js";
 import {
   optimizeWithSelfImprove,
@@ -127,7 +127,8 @@ export async function runAutonomousWorkflow() {
           }
         }
 
-        const skipLinkedIn = !liAudit.approved;
+        const skipLinkedIn =
+          !liAudit.approved || !isLinkedInFlowEnabled("hermes");
         const skipX = !xAudit.approved;
 
         if (skipLinkedIn && skipX) {

@@ -17,6 +17,36 @@ function getImageContentType(imagePath: string): string {
 }
 
 /**
+ * Bir akış için LinkedIn kanalının açık olup olmadığını söyler.
+ *
+ * Neden: 83 takipçili bir hesapta günde 4 gönderi, algoritmaya "bu hesabın
+ * içeriği etkileşim almıyor" diye öğretiyor; her sıfır etkileşimli gönderi bir
+ * sonrakinin erişimini düşürüyor. Hava durumu ve RSS akışları LinkedIn'de değer
+ * üretmiyor, X'te kalmaya devam ediyorlar.
+ *
+ * .env ile kontrol edilir:
+ *   LINKEDIN_PAUSED=true                → tüm LinkedIn gönderileri durur
+ *   LINKEDIN_DISABLED_FLOWS=weather,rss → yalnızca listelenen akışlar durur
+ *
+ * Akış adları: "weather" | "rss" | "hermes"
+ */
+export function isLinkedInFlowEnabled(flow: string): boolean {
+  if (process.env.LINKEDIN_PAUSED === "true") {
+    console.log("⏸️ LINKEDIN GÖNDERİLERİ DURDURULDU (LINKEDIN_PAUSED=true)");
+    return false;
+  }
+  const disabled = (process.env.LINKEDIN_DISABLED_FLOWS || "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  if (disabled.includes(flow.trim().toLowerCase())) {
+    console.log(`⏸️ LinkedIn kanalı bu akış için kapalı: ${flow}`);
+    return false;
+  }
+  return true;
+}
+
+/**
  * LinkedIn'de metin + Gerçek Görsel (Upload edilmiş) olan bir paylaşım oluşturur.
  * Güvenlik bariyerleri ve dosya yolu desteği içerir.
  */
