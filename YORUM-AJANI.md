@@ -111,7 +111,19 @@ Kod: `src/services/comment_writer.ts` → `callModel()`. `temperature` gönderil
 
 Kasa yoksa ya da yazma başarısızsa ajan **sessizce geçer**: Telegram zaten gitmiştir, arşiv yüzünden taslağı kaybetmenin anlamı yok.
 
-Ajanın kasa içindeki tanım sayfası: `Claude-Media/linkedin/AGENT.md`. Hermes kaydı: `~/.hermes/ROUTING.md` → "Zamanlanmış sistemler".
+Ajanın kasa içindeki tanım sayfası: `Claude-Media/linkedin/AGENT.md`.
+
+---
+
+## Hermes profili
+
+Ajan bir **Hermes profilidir**: `linkedin` (`~/.hermes/profiles/linkedin/`). Hakan'dan klonlandı çünkü ikisi aynı doktrinin ajanı — Hakan X'te, bu LinkedIn'de; ikisi de read-only tarar, taslak üretir, yayınlamaz.
+
+- Kimlik ve yasaklar: `~/.hermes/profiles/linkedin/SOUL.md` (`uchg` kilitli; değiştirmek için önce `chflags nouchg`)
+- Routing kaydı: `~/.hermes/ROUTING.md` → profil tablosu + kural #9
+- Sohbet: `linkedin chat`
+
+**İki ayrı model var, karıştırma.** Profilin sohbet modeli Hermes'in sağlayıcı zincirinden gelir (`deepseek-v4-flash` → …). Cron'un ürettiği **taslakların** modeli bundan bağımsızdır: Anthropic Sonnet 5, yedeksiz. Profil modelini değiştirmek taslak kalitesini etkilemez, taslak modelini değiştiren tek yer `.env`.
 
 ---
 
