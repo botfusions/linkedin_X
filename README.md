@@ -2,7 +2,7 @@
 
 LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
-**Son guncelleme:** 5 Agustos 2026, 02:20 (TRT) — §43'e kadar islendi.
+**Son guncelleme:** 5 Agustos 2026, 03:05 (TRT) — §44'e kadar islendi.
 
 ---
 
@@ -33,6 +33,15 @@ LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
 LinkedIn haftada **2 gonderi** ile sinirli (§41). 83 takipcili hesapta gunde 4 gonderi,
 her sifir etkilesimli gonderiyle bir sonrakinin erisimini dusuruyordu.
+
+> ⚠️ **Hava ve RSS'in LinkedIn'e gitmemesi koda degil ortam degiskenine baglidir.**
+> `LINKEDIN_DISABLED_FLOWS=weather,rss` **deploy ortaminda** tanimli olmali. `.env`
+> gitignore'da oldugu icin imaja girmez; VPS'te Coolify uzerinden verilir.
+> Tanimli degilse ikisi de sessizce LinkedIn'e gider (§44).
+> 10:00 HERMES akisinin Sali/Persembe sinirlamasi bundan bagimsizdir — onu
+> `scheduler.ts` kod icinde ayarlar, env'e ihtiyaci yoktur.
+>
+> Kontrol: `docker exec <konteyner> printenv LINKEDIN_DISABLED_FLOWS` → `weather,rss`
 
 **Mac (Hermes cron) — yorum ajani:**
 
@@ -679,6 +688,15 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
   3. Anahtar yenilendi.
 - **Kural:** Coolify'a secret eklerken **"Build Variable" kutusu isaretlenmez**. Bu sekilde eklenmis bir secret yanmis sayilir → yenile, sonra eski imaji sil.
 - **Not:** Ajan artik VPS'te calismadigi icin `ANTHROPIC_*` degiskenleri orada zaten gereksizdi. Anahtar yalnizca Mac'teki `.env`'de durur.
+
+### 44. v4.0 Kanal Kisitlamasi Uretimde Calismiyordu + Coolify DB Tuzagi (5 Agustos 2026)
+
+- **Sorun:** §41'de LinkedIn'e hava ve RSS gonderilmemesi kararlastirilmisti, kod da dogruydu (`isLinkedInFlowEnabled`). Ama kapiyi acan `LINKEDIN_DISABLED_FLOWS` yalnizca **lokal `.env`**'de vardi; `.env` gitignore'da oldugu icin imaja girmiyor ve VPS'te de tanimli degildi. Sonuc: **uretimde hava ve RSS LinkedIn'e gitmeye devam ediyordu** — v4.0'in cozmek istedigi sorunun ta kendisi, gunde 2 fazla gonderi.
+- **Nasil bulundu:** konteyner icinde `initEnvFromSupabase()` + `isLinkedInFlowEnabled()` calistirilarak. `printenv` tek basina yeterli **degil**: bootstrap Supabase `env_config`'ten 19 degisken yukleyip `process.env`'i eziyor, bu yuzden etkin deger ancak bootstrap'tan sonra okunur.
+- **Cozum:** `LINKEDIN_DISABLED_FLOWS=weather,rss` Coolify'a eklendi (Build Variable **isaretsiz**), restart. Dogrulama: `weather -> KAPALI, rss -> KAPALI, hermes -> ACIK`.
+- **Yan olay — Coolify DB'sine elle INSERT panelin tamamini 500'ledi:** `environment_variables.value` sutunu **Laravel ile sifrelidir** (`eyJpdiI6...` = base64 `{"iv":...}`). Duz metin bir satir yazilinca panel `decrypt()` asamasinda `DecryptException: The payload is invalid.` firlatip **tum uygulama yapilandirma sayfasini** dusurdu. Satirlar silinince duzeldi.
+- **Kural:** Coolify DB'sinden **okumak ve silmek guvenli, yazmak degil.** DELETE sifre cozmez (§43'teki ANTHROPIC temizligi bu yuzden sorunsuzdu ve yaniltici oldu). Deger ekleme/degistirme **panelden** yapilir; sifreleme anahtari Coolify'in kendi `APP_KEY`'idir.
+- **Kurtarma:** `DELETE FROM environment_variables WHERE id IN (...)` → sayfayi yenile.
 
 ---
 © 2026 Botfusions. MIT Lisans.
