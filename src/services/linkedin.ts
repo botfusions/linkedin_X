@@ -30,16 +30,26 @@ function getImageContentType(imagePath: string): string {
  *
  * Akış adları: "weather" | "rss" | "hermes"
  */
+// ponytail: hardcoded çünkü env-var yöntemi üretime bir kez takılmıştı (§44).
+// LINKEDIN_DISABLED_FLOWS imaja girmediğinde weather sessizce LinkedIn'e
+// yayımlanıyordu. Env silinse bile weather asla LinkedIn'e gitmemeli.
+const LINKEDIN_ALWAYS_DISABLED = new Set(["weather"]);
+
 export function isLinkedInFlowEnabled(flow: string): boolean {
   if (process.env.LINKEDIN_PAUSED === "true") {
     console.log("⏸️ LINKEDIN GÖNDERİLERİ DURDURULDU (LINKEDIN_PAUSED=true)");
+    return false;
+  }
+  const f = flow.trim().toLowerCase();
+  if (LINKEDIN_ALWAYS_DISABLED.has(f)) {
+    console.log(`⏸️ LinkedIn kanalı bu akış için her zaman kapalı (kod): ${flow}`);
     return false;
   }
   const disabled = (process.env.LINKEDIN_DISABLED_FLOWS || "")
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
-  if (disabled.includes(flow.trim().toLowerCase())) {
+  if (disabled.includes(f)) {
     console.log(`⏸️ LinkedIn kanalı bu akış için kapalı: ${flow}`);
     return false;
   }

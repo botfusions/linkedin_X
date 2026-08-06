@@ -34,10 +34,13 @@ LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 LinkedIn haftada **2 gonderi** ile sinirli (§41). 83 takipcili hesapta gunde 4 gonderi,
 her sifir etkilesimli gonderiyle bir sonrakinin erisimini dusuruyordu.
 
-> ⚠️ **Hava ve RSS'in LinkedIn'e gitmemesi koda degil ortam degiskenine baglidir.**
-> `LINKEDIN_DISABLED_FLOWS=weather,rss` **deploy ortaminda** tanimli olmali. `.env`
-> gitignore'da oldugu icin imaja girmez; VPS'te Coolify uzerinden verilir.
-> Tanimli degilse ikisi de sessizce LinkedIn'e gider (§44).
+> ⚠️ **Hava durumu LinkedIn'e asla gitmez — bu kod icinde sabitlendi (§44).**
+> `isLinkedInFlowEnabled` icindeki `LINKEDIN_ALWAYS_DISABLED` weather'i ortam
+> degiskeninden bagimsiz olarak kapatir; env silinse bile LinkedIn'e yayimlanmaz.
+>
+> **RSS ise hâlâ ortam degiskenine baglidir:** `LINKEDIN_DISABLED_FLOWS=weather,rss`
+> **deploy ortaminda** tanimli olmali. `.env` gitignore'da oldugu icin imaja girmez;
+> VPS'te Coolify uzerinden verilir. Tanimli degilse RSS sessizce LinkedIn'e gider.
 > 10:00 HERMES akisinin Sali/Persembe sinirlamasi bundan bagimsizdir — onu
 > `scheduler.ts` kod icinde ayarlar, env'e ihtiyaci yoktur.
 >
