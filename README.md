@@ -572,7 +572,7 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 
 - **Degisiklik:** Gorsel uretim modeli `gemini-3.1-flash-image`'den `gemini-3.1-flash-lite-image`'a gecildi.
 - **Neden:**
-  1. Eski Google API Key (`AIzaSyA447FaxxmPvjouCEj19KRhbV-43nFCwrI`) suresi dolmustu → `INVALID_ARGUMENT / API_KEY_INVALID` hatasi
+  1. Eski Google API Key (`YOUR_GEMINI_API_KEY`) suresi dolmustu → `INVALID_ARGUMENT / API_KEY_INVALID` hatasi
   2. Lite model daha dusuk maliyetli; testlerde fotorealistik pencere stili ve Turkce overlay (kutu/arka plan olmadan, cama kazınmıs) ayni kalitede uretildi
 - **Dosyalar:** `src/services/llm.ts` (model URL'si, `generateImageWithGemini`), `.env` (`GOOGLE_API_KEY`)
 - **Dogrulama:** `src/test_weather_dry_run_v3.ts` ile hava durumu gorseli uretildi (1024x1024, paylasimsiz test). Kompozisyon, cama islenmis Turkce metinler (`İSTANBUL`, `22°C`, `Hissedilen: 23°C`, `Nem: %100`, `Rüzgar: 2.38 m/s`) ve deterministik sıcaklik dogru geldi.
