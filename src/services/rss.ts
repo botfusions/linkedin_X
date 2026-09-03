@@ -4,8 +4,9 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+// ponytail: google /rss/topics ID'leri çürür (VPS'ten 404) — search tabanlı URL kalıcı
 const RSS_URL =
-  "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB/sections/CAQiQ0NCQVNMQW9JTDIwdk1EZGpNWFlTQW1WdUdnSlZVeUlOQ0FRYUNRb0hMMjB2TUcxcmVpb0pFZ2N2YlM4d2JXdDZLQUEqKggAKiYICiIgQ0JBU0Vnb0lMMjB2TURkak1YWVNBbVZ1R2dKVlV5Z0FQAVAB?ceid=US:en&oc=3";
+  "https://news.google.com/rss/search?q=artificial+intelligence+when:2d&ceid=US:en&hl=en-US&gl=US";
 
 const HEADERS = {
   "User-Agent":
