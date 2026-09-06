@@ -75,7 +75,7 @@ function isDuplicateTopicLocal(topic: string): boolean {
   return false;
 }
 
-async function isDuplicateTopicSupabase(topic: string): Promise<boolean> {
+export async function isDuplicateTopicSupabase(topic: string): Promise<boolean> {
   try {
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;

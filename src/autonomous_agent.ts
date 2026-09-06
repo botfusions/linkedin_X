@@ -5,7 +5,7 @@ import {
 } from "./services/llm.js";
 import { generateGeminiImage } from "./services/gemini_image.js";
 import { createLinkedInPost, isLinkedInFlowEnabled } from "./services/linkedin.js";
-import { createXPost } from "./services/x.js";
+import { createXPost, isDuplicateTopicSupabase } from "./services/x.js";
 import {
   optimizeWithSelfImprove,
   generateDynamicInfographicPrompt,
@@ -66,6 +66,17 @@ export async function runAutonomousWorkflow() {
 
       const konu = konuRaw;
       console.log(`📍 Konu Seçildi [Satır ${rowNumber}]: ${konu}`);
+
+      // Daha önce yayımlanmış konu: satırı done işaretle ve atla.
+      // Yoksa LLM denetimi red eder, satır asla done olmaz ve her gün
+      // görsel üretim dahil tüm zincir boşuna tekrarlanır (§46).
+      if (await isDuplicateTopicSupabase(konu)) {
+        console.error(
+          `🔁 Satır ${rowNumber}: konu daha önce yayımlanmış — 'done' işaretleniyor.`,
+        );
+        await updateHermesRowPublished(targetRecord._rawRow, "");
+        continue;
+      }
 
       try {
         console.log("🔍 Arastirma yapiliyor (Perplexity)...");
