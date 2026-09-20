@@ -16,10 +16,13 @@ function isXPaused(): boolean {
 }
 
 // X_DISABLED_FLOWS=rss,hermes gibi akış bazlı kanal kapatma (LinkedIn tarafındaki
-// LINKEDIN_DISABLED_FLOWS ile aynı desen). X API kredisi kısıtlıyken belirli
-// akışları X'te durdurmak için.
+// LINKEDIN_DISABLED_FLOWS ile aynı desen). X API kredisi (Pay-Per-Use) tükendiği
+// için (Eylül 2026) varsayılan olarak sadece hava durumu X'te kalır; kredi
+// yüklenince bu varsayılanı geri açmak için "" yapılması yeterli.
+const X_DISABLED_FLOWS_DEFAULT = "rss,hermes,ready-post";
+
 export function isXFlowEnabled(flow: string): boolean {
-  const disabled = (process.env.X_DISABLED_FLOWS || "")
+  const disabled = (process.env.X_DISABLED_FLOWS ?? X_DISABLED_FLOWS_DEFAULT)
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
