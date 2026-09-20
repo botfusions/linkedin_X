@@ -210,7 +210,7 @@ export async function runReadyPostWorkflow() {
     let xUrl = "";
 
     try {
-      const xResult = await createXPost(postText, imagePath, topic || `Hazır Post (Satır ${rowNumber})`);
+      const xResult = await createXPost(postText, imagePath, topic || `Hazır Post (Satır ${rowNumber})`, { flow: "ready-post" });
       if (xResult) {
         console.log("✅ X hazır post yayınlandı!");
         xSuccess = true;

@@ -15,6 +15,21 @@ function isXPaused(): boolean {
   return false;
 }
 
+// X_DISABLED_FLOWS=rss,hermes gibi akış bazlı kanal kapatma (LinkedIn tarafındaki
+// LINKEDIN_DISABLED_FLOWS ile aynı desen). X API kredisi kısıtlıyken belirli
+// akışları X'te durdurmak için.
+export function isXFlowEnabled(flow: string): boolean {
+  const disabled = (process.env.X_DISABLED_FLOWS || "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  if (disabled.includes(flow.trim().toLowerCase())) {
+    console.log(`⏸️ X kanalı bu akış için kapalı: ${flow}`);
+    return false;
+  }
+  return true;
+}
+
 // ─── GÜNLÜK POST LIMITİ ───
 const MAX_DAILY_X_POSTS = 3;
 let dailyXPostCount = 0;
@@ -81,8 +96,12 @@ export async function isDuplicateTopicSupabase(topic: string): Promise<boolean> 
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
     if (!supabaseUrl || !supabaseKey) return false;
 
-    const keyword = topic.toLowerCase().trim().substring(0, 40);
-    const url = `${supabaseUrl}/rest/v1/linkedin+x?select=topic&topic=ilike.*${encodeURIComponent(keyword)}*&order=published_at.desc&limit=5`;
+    // Tam konu (normalize edilmiş) ve sadece durumu "published" olan kayıtlar
+    // karşılaştırılır. Önceki hâl ilk-40-karakter substring + tüm status'lar
+    // (failed dahil) eşleşiyordu, bu da farklı konuları yanlışlıkla "zaten
+    // paylaşılmış" sayıp HERMES kuyruğunu boşa tüketiyordu (§46 sonrası olay).
+    const normalized = topic.toLowerCase().trim();
+    const url = `${supabaseUrl}/rest/v1/linkedin+x?select=topic&status=eq.published&topic=ilike.${encodeURIComponent(normalized)}&limit=1`;
     const res = await fetch(url, {
       headers: {
         apikey: supabaseKey,
@@ -91,7 +110,7 @@ export async function isDuplicateTopicSupabase(topic: string): Promise<boolean> 
     });
     const data = await res.json();
     if (Array.isArray(data) && data.length > 0) {
-      console.log(`🔁 X DUPLICATE (Supabase): "${keyword}..." daha önce paylaşılmış.`);
+      console.log(`🔁 X DUPLICATE (Supabase): "${normalized.slice(0, 40)}..." daha önce yayınlanmış.`);
       return true;
     }
   } catch {
@@ -108,10 +127,12 @@ export async function createXPost(
   text: string,
   imagePath?: string,
   topic?: string,
-  options?: { skipDuplicate?: boolean },
+  options?: { skipDuplicate?: boolean; flow?: string },
 ): Promise<string | null> {
   // --- GÜVENLİK BARİYERLERİ ---
   if (isXPaused()) return null;
+
+  if (options?.flow && !isXFlowEnabled(options.flow)) return null;
 
   if (!text || text.trim().length < 10) {
     console.error(

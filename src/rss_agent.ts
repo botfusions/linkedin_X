@@ -153,7 +153,7 @@ export async function runRSSNewsWorkflow() {
         console.log("⏭️ X atlanıyor (denetim reddi).");
       } else {
         try {
-          const xResult = await createXPost(optimizedX.finalPost, imagePath, article.title);
+          const xResult = await createXPost(optimizedX.finalPost, imagePath, article.title, { flow: "rss" });
           if (xResult) {
             console.log("✅ X haber paylasimi basarili.");
             xSuccess = true;

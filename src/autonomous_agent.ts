@@ -199,7 +199,7 @@ export async function runAutonomousWorkflow() {
           console.log("⏭️ X atlanıyor (denetim reddi).");
         } else {
           try {
-            const xResult = await createXPost(optimizedX.finalPost, imagePath, konu);
+            const xResult = await createXPost(optimizedX.finalPost, imagePath, konu, { flow: "hermes" });
             if (xResult) {
               console.log("✅ X (Twitter) paylasimi basarili.");
               xSuccess = true;
