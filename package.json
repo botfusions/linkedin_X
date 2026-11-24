@@ -23,6 +23,8 @@
     "geo:remote": "bash scripts/geo-remote.sh",
     "yorum:onay": "node scripts/linkedin-comment-approval.mjs",
     "yorum:onay:test": "node --test scripts/linkedin-comment-approval.test.mjs",
+    "post:onay": "node scripts/linkedin-post-approval.mjs",
+    "post:onay:test": "node --test scripts/linkedin-post-approval.test.mjs",
     "yorum:merkez": "tsx src/yorum_merkezi_kopru.ts",
     "yorum:merkez:test": "tsx --test src/yorum_merkezi_kopru.test.ts"
   },

@@ -102,7 +102,7 @@ const fileStore = {
   },
 };
 
-async function tg(token, method, body) {
+export async function tg(token, method, body) {
   const r = await fetch(`https://api.telegram.org/bot${token}/${method}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body), signal:AbortSignal.timeout(20000)});
   const j = await r.json();
   if (!j.ok) throw new Error(`Telegram ${method}: ${r.status} ${j.description || ''}`);
@@ -110,9 +110,9 @@ async function tg(token, method, body) {
 }
 
 // One run at a time: two overlapping runs could both see 'pending' and publish twice.
-async function withLock(fn) {
-  await fs.mkdir(DIR, {recursive:true});
-  const LOCK = path.join(DIR, '.run.lock');
+export async function withLock(fn, dir = DIR) {
+  await fs.mkdir(dir, {recursive:true});
+  const LOCK = path.join(dir, '.run.lock');
   const take = () => fs.open(LOCK, 'wx').then(async (h) => { await h.writeFile(String(process.pid)); return h; });
   const lock = await take().catch(async (e) => {
     if (e.code !== 'EEXIST') throw e;

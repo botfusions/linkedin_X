@@ -138,7 +138,7 @@ async function main() {
     const client = await openMcp(tokenInfo.access_token);
     let result;
     try {
-      result = await publishWithMcp({client,config,text,imagePath,onPosting:async()=>{posting=true;await fs.writeFile(receipt,JSON.stringify({...base,status:'posting',backend:'vlpmedialtd/linkedin-mcp'},null,2),{flag:'wx'});}});
+      result = await publishWithMcp({client,config,text,imagePath,onPosting:async()=>{await fs.writeFile(receipt,JSON.stringify({...base,status:'posting',backend:'vlpmedialtd/linkedin-mcp'},null,2),{flag:'wx'});posting=true;}});
     } finally {await client.close();}
     await fs.writeFile(receipt,JSON.stringify({...base,...result},null,2));
     console.log(JSON.stringify(result));
