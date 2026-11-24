@@ -1,0 +1,93 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>Yanlış bilgi v2</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1350px;overflow:hidden}
+body{font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;color:#f3efe6;background:#07090c;position:relative}
+/* cinematic grade: teal shadows, amber key light, flat layers only */
+.bg{position:absolute;inset:0;background:
+ radial-gradient(ellipse 700px 520px at 88% 8%,#ff9d3a33,transparent 70%),
+ radial-gradient(ellipse 760px 700px at 0% 70%,#0f5d6a55,transparent 70%),
+ linear-gradient(180deg,#0b1115 0%,#07090c 100%)}
+.grain{position:absolute;inset:0;opacity:.13;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,transparent 55%,#000000c0 100%)}
+.bar{position:absolute;left:0;right:0;height:46px;background:#000}
+.bar.t{top:0}.bar.b{bottom:0}
+.bar span{position:absolute;top:15px;font:600 13px/16px Menlo,monospace;letter-spacing:3px;color:#6f7780}
+.bar .l{left:64px}.bar .r{right:64px}
+.wrap{position:absolute;top:46px;bottom:46px;left:0;right:0;padding:44px 64px 30px}
+.kick{font:600 16px/20px Menlo,monospace;letter-spacing:4px;color:#ffb35c}
+/* scene: the wrong answer */
+.scene{margin-top:22px;border-left:3px solid #ff6b4a;padding:6px 0 6px 22px}
+.who{font:600 14px/18px Menlo,monospace;letter-spacing:2px;color:#8a949c}
+.ans{font-size:27px;line-height:38px;color:#d9d4ca;margin-top:6px}
+.ans mark{background:none;color:#fff;border-bottom:3px solid #ff6b4a;padding-bottom:1px}
+.flag{display:inline-block;margin-left:10px;font:700 13px/16px Menlo,monospace;letter-spacing:2px;color:#07090c;background:#ff6b4a;padding:4px 8px;border-radius:3px;vertical-align:4px}
+h1{font-size:74px;line-height:80px;letter-spacing:-2px;font-weight:800;margin-top:40px}
+h1 em{font-style:normal;color:#ffb35c}
+.lede{font-size:23px;line-height:32px;color:#a9b1b7;margin-top:14px}
+/* pipeline */
+.flow{position:relative;margin-top:40px}
+.rail{position:absolute;left:35px;top:36px;bottom:36px;width:2px;background:linear-gradient(180deg,#ffb35c,#4fc3c9)}
+.step{position:relative;display:grid;grid-template-columns:72px 1fr 250px;column-gap:26px;align-items:center;padding:30px 0;border-bottom:1px solid #ffffff14}
+.step:last-child{border-bottom:none}
+.num{width:72px;height:72px;border-radius:50%;background:#0b1115;border:2px solid #ffb35c;display:flex;align-items:center;justify-content:center;font:700 28px/1 Menlo,monospace;color:#ffb35c;position:relative;z-index:1}
+.step:nth-child(4) .num,.step:nth-child(5) .num{border-color:#4fc3c9;color:#4fc3c9}
+.verb{font:700 15px/18px Menlo,monospace;letter-spacing:3px;color:#ffb35c}
+.step:nth-child(4) .verb,.step:nth-child(5) .verb{color:#4fc3c9}
+.what{font-size:29px;line-height:35px;font-weight:700;margin-top:5px;letter-spacing:-.3px}
+.why{font-size:19px;line-height:25px;color:#98a1a8;margin-top:5px}
+/* output column: flat mini artefacts */
+.out{width:250px;border:1px solid #ffffff24;border-radius:8px;padding:11px 13px;background:#ffffff08}
+.out .lab{font:600 11px/14px Menlo,monospace;letter-spacing:2px;color:#6f7a82}
+.out .v{font:500 15px/21px Menlo,monospace;color:#e8e2d6;margin-top:5px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px}
+.cols i{font:500 12px/18px Menlo,monospace;font-style:normal;color:#e8e2d6;background:#ffffff10;border-radius:3px;padding:1px 6px}
+.cols i.bad{color:#ff8a6e}
+.pages{display:flex;align-items:center;gap:6px;margin-top:7px;font:500 14px/1 Menlo,monospace;color:#8a949c}
+.pg{width:22px;height:28px;border:1.5px solid #8a949c;border-radius:3px}
+.pg.x{border-color:#ff6b4a}
+.pg.ok{border-color:#4fc3c9;background:#4fc3c926;width:26px;height:32px}
+.cmp{display:flex;gap:6px;margin-top:7px}
+.cmp span{flex:1;font:500 12px/16px Menlo,monospace;text-align:center;padding:4px 0;border-radius:3px}
+.cmp .a{background:#ff6b4a26;color:#ff8a6e}.cmp .b{background:#4fc3c926;color:#7fdde2}
+/* loop back */
+.loop{display:flex;align-items:center;gap:14px;margin-top:26px;font:600 15px/20px Menlo,monospace;letter-spacing:1.5px;color:#4fc3c9}
+.loop svg{flex:none}
+.foot{position:absolute;left:64px;right:64px;bottom:26px;display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid #ffffff1c;padding-top:16px}
+.brand{font-size:21px;font-weight:800;letter-spacing:-.2px}
+.brand span{color:#ffb35c}
+.disc{font-size:15px;line-height:20px;color:#7d868d;text-align:right;max-width:520px}
+</style></head><body>
+<div class="bg"></div><div class="grain"></div><div class="vig"></div>
+<div class="bar t"><span class="l">GEO · YÖNTEM NOTU</span><span class="r">SAHNE 01</span></div>
+<div class="bar b"><span class="l">BOTFUSIONS</span><span class="r">4 ADIM · 1 DÖNGÜ</span></div>
+<main class="wrap">
+ <div class="kick">// SORUN</div>
+ <div class="scene">
+  <div class="who">AI ASİSTAN YANITI</div>
+  <div class="ans">"Firma bu hizmeti <mark>sadece İstanbul'da</mark> veriyor."<span class="flag">YANLIŞ</span></div>
+ </div>
+ <h1>Yeni içerik yazmadan önce<br><em>hatanın kaynağını</em> bulun.</h1>
+ <div class="lede">İlk refleks yeni bir blog yazısı. Önce sıra şu:</div>
+
+ <div class="flow"><div class="rail"></div>
+  <div class="step"><div class="num">01</div>
+   <div><div class="verb">KAYDET</div><div class="what">Yanlış cümleyi olduğu gibi not alın</div><div class="why">Yanıtlar değişir. Kayıt yoksa karşılaştırma da yok.</div></div>
+   <div class="out"><div class="lab">ÇIKTI · KAYIT SATIRI</div><div class="cols"><i>soru</i><i>asistan</i><i>tarih</i><i class="bad">yanlış cümle</i></div></div>
+  </div>
+  <div class="step"><div class="num">02</div>
+   <div><div class="verb">KAYNAĞA BAK</div><div class="what">Yanıt hangi sayfaya dayanıyor?</div><div class="why">Çoğu zaman eski bir fiyat sayfası ya da güncellenmemiş bir rehber.</div></div>
+   <div class="out"><div class="lab">ÇIKTI · KAYNAK URL</div><div class="v">/fiyatlar-2023</div></div>
+  </div>
+  <div class="step"><div class="num">03</div>
+   <div><div class="verb">SİTENİ DÜZELT</div><div class="what">Bilgi tek ve net bir yerde dursun</div><div class="why">Hizmet, fiyat, konum. Üç sayfada üç farklı sürüm olmasın.</div></div>
+   <div class="out"><div class="lab">ÇIKTI · TEK DOĞRU SAYFA</div><div class="pages"><div class="pg x"></div><div class="pg x"></div><div class="pg x"></div>→<div class="pg ok"></div></div></div>
+  </div>
+  <div class="step"><div class="num">04</div>
+   <div><div class="verb">TEKRAR SOR</div><div class="what">Birkaç hafta sonra aynı soruyu sorun</div><div class="why">Düzelme hemen gelmeyebilir. Tek denemeyle karar vermeyin.</div></div>
+   <div class="out"><div class="lab">ÇIKTI · ÖNCE / SONRA</div><div class="cmp"><span class="a">önce</span><span class="b">sonra</span></div></div>
+  </div>
+ </div>
+ <div class="loop"><svg width="46" height="26" viewBox="0 0 46 26" fill="none"><path d="M44 4 V14 a8 8 0 0 1 -8 8 H8" stroke="#4fc3c9" stroke-width="2.5"/><path d="M13 16 L7 22 L13 28" stroke="#4fc3c9" stroke-width="2.5" transform="translate(0,-3)"/></svg>HÂLÂ YANLIŞSA 01'E DÖN, YENİ KAYIT AÇ</div>
+
+ <div class="foot"><div class="brand">Botfusions <span>·</span> GEO</div><div class="disc">Bu bir yöntem notudur.<br>Düzelme süresi ve sonuç garanti edilmez.</div></div>
+</main></body></html>
