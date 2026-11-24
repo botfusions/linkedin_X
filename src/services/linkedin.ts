@@ -1,3 +1,4 @@
+import { trialChannelPaused } from "./geo_trial_policy.js";
 import fs from "fs/promises";
 import path from "path";
 import axios from "axios";
@@ -36,6 +37,7 @@ function getImageContentType(imagePath: string): string {
 const LINKEDIN_ALWAYS_DISABLED = new Set(["weather"]);
 
 export function isLinkedInFlowEnabled(flow: string): boolean {
+  if (trialChannelPaused("legacy-linkedin")) return false;
   if (process.env.LINKEDIN_PAUSED === "true") {
     console.log("⏸️ LINKEDIN GÖNDERİLERİ DURDURULDU (LINKEDIN_PAUSED=true)");
     return false;
@@ -64,6 +66,10 @@ export async function createLinkedInPost(
   text: string,
   imagePath: string,
 ): Promise<string | null> {
+  if (trialChannelPaused("legacy-linkedin")) {
+    console.log("⏸️ Eski LinkedIn akışı kapalı; GEO deneme komutunu kullanın.");
+    return null;
+  }
   // --- GÜVENLİK BARİYERİ ---
   if (!text || text.trim().length < 10) {
     console.error(

@@ -13,7 +13,18 @@
     "ready-post": "tsx src/ready_post_agent.ts",
     "linkedin-auth": "tsx src/linkedin_auth.ts",
     "engagement": "tsx src/engagement_agent.ts",
-    "engagement:tek": "tsx src/engagement_agent.ts --tek"
+    "engagement:tek": "tsx src/engagement_agent.ts --tek",
+    "feedback:rapor": "tsx src/feedback_cli.ts",
+    "feedback:test": "tsx src/feedback_loop_validator.ts",
+    "runtime:guard": "node scripts/linkedin-runtime-guard.mjs",
+    "typecheck": "tsc --noEmit",
+    "geo:linkedin": "node scripts/geo-linkedin-trial.mjs",
+    "geo:test": "node --test scripts/geo-linkedin-trial.test.mjs",
+    "geo:remote": "bash scripts/geo-remote.sh",
+    "yorum:onay": "node scripts/linkedin-comment-approval.mjs",
+    "yorum:onay:test": "node --test scripts/linkedin-comment-approval.test.mjs",
+    "yorum:merkez": "tsx src/yorum_merkezi_kopru.ts",
+    "yorum:merkez:test": "tsx --test src/yorum_merkezi_kopru.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.1",

@@ -1,4 +1,11 @@
+/**
+ * DEPRECATED parallel engagement implementation: retained for compatibility,
+ * but replaced by the canonical LinkedIn vault + profile-backed Hermes flow.
+ * Keep deterministic watchlist/scoring here; never restore the retired vendor
+ * generator or a LinkedIn write path.
+ */
 import fs from "fs/promises";
+import { readFileSync } from "fs";
 import path from "path";
 
 /**
@@ -51,8 +58,26 @@ export interface Opportunity {
   gerekce: string[];
 }
 
-const WATCHLIST_PATH = path.join(process.cwd(), "data", "takip-listesi.json");
-const CAPTURED_PATH = path.join(process.cwd(), "data", "yakalanan-gonderiler.json");
+const LINKEDIN_VAULT_ROOT =
+  process.env.LINKEDIN_VAULT_ROOT || "/System/Volumes/Data/Hermes/Hermes_Agent/Linkedin";
+const WATCHLIST_PATH = path.join(LINKEDIN_VAULT_ROOT, "configs", "takip_listesi.json");
+const SCORING_PATH = path.join(LINKEDIN_VAULT_ROOT, "configs", "puanlama_esikleri.json");
+const SCORING = JSON.parse(readFileSync(SCORING_PATH, "utf-8")) as {
+  minimum_skor: number;
+  maksimum_taslak: number;
+  oncelik_puanlari: Record<string, number>;
+  sinyaller: {
+    okura_dogrudan_soru: { puan: number };
+    gonderi_0_1_saat: { puan: number };
+    gonderi_1_3_saat: { puan: number };
+    gonderi_3_6_saat: { puan: number };
+    tepki_50_ve_ustu: { puan: number };
+    tepki_15_49: { puan: number };
+    yorum_15_ve_ustu: { puan: number };
+  };
+};
+const CAPTURED_PATH =
+  process.env.LINKEDIN_CAPTURED_PATH || path.join(process.cwd(), "data", "yakalanan-gonderiler.json");
 
 export function postUrl(id: string): string {
   return `https://www.linkedin.com/feed/update/urn:li:activity:${id}/`;
@@ -150,17 +175,16 @@ export function scoreOpportunity(
   let skor = 0;
   const gerekce: string[] = [];
 
-  // Hesap önceliği: 1 → +40, 2 → +25, 3 → +10, 4 → 0
-  const oncelikPuan: Record<number, number> = { 1: 40, 2: 25, 3: 10, 4: 0 };
-  const op = oncelikPuan[hesap.oncelik] ?? 0;
-  skor += op;
-  if (op > 0) gerekce.push(`Öncelik ${hesap.oncelik} hesap (+${op})`);
+  // Canonical puanlama_esikleri.json kaynağından yüklenir.
+  const oncelik = SCORING.oncelik_puanlari[String(hesap.oncelik)] ?? 0;
+  skor += oncelik;
+  if (oncelik > 0) gerekce.push(`Öncelik ${hesap.oncelik} hesap (+${oncelik})`);
 
-  // Soru soruyor mu — en güçlü sinyal, en yüksek ağırlık
+  // Soru soruyor mu — en güçlü sinyal
   const { davet, sebep } = detectReaderQuestion(post.metin);
   if (davet) {
-    skor += 35;
-    gerekce.push(`Okura soru soruyor — davetli giriş (+35, ${sebep})`);
+    skor += SCORING.sinyaller.okura_dogrudan_soru.puan;
+    gerekce.push(`Okura soru soruyor — davetli giriş (+${SCORING.sinyaller.okura_dogrudan_soru.puan}, ${sebep})`);
   } else if ((post.metin.match(/\?/g) || []).length >= 2) {
     skor += 15;
     gerekce.push("Metinde soru var (+15)");
@@ -169,34 +193,33 @@ export function scoreOpportunity(
   // Tazelik
   if (typeof post.yasSaat === "number") {
     if (post.yasSaat <= 1) {
-      skor += 30;
-      gerekce.push("İlk 1 saat — en yüksek görünürlük (+30)");
+      skor += SCORING.sinyaller.gonderi_0_1_saat.puan;
+      gerekce.push(`İlk 1 saat — en yüksek görünürlük (+${SCORING.sinyaller.gonderi_0_1_saat.puan})`);
     } else if (post.yasSaat <= 3) {
-      skor += 20;
-      gerekce.push("3 saatten yeni (+20)");
+      skor += SCORING.sinyaller.gonderi_1_3_saat.puan;
+      gerekce.push(`3 saatten yeni (+${SCORING.sinyaller.gonderi_1_3_saat.puan})`);
     } else if (post.yasSaat <= 6) {
-      skor += 8;
-      gerekce.push("6 saatten yeni (+8)");
+      skor += SCORING.sinyaller.gonderi_3_6_saat.puan;
+      gerekce.push(`6 saatten yeni (+${SCORING.sinyaller.gonderi_3_6_saat.puan})`);
     } else {
       gerekce.push("6 saatten eski — yorum görünürlüğü düşük (+0)");
     }
   }
 
-  // Etkileşim hacmi: gönderi ne kadar yayılıyorsa yorum o kadar çok kişiye ulaşır
+  // Etkileşim hacmi
   const tepki = post.tepki ?? 0;
   if (tepki >= 50) {
-    skor += 20;
-    gerekce.push(`Yüksek etkileşim (${tepki} tepki) (+20)`);
+    skor += SCORING.sinyaller.tepki_50_ve_ustu.puan;
+    gerekce.push(`Yüksek etkileşim (${tepki} tepki) (+${SCORING.sinyaller.tepki_50_ve_ustu.puan})`);
   } else if (tepki >= 15) {
-    skor += 10;
-    gerekce.push(`Orta etkileşim (${tepki} tepki) (+10)`);
+    skor += SCORING.sinyaller.tepki_15_49.puan;
+    gerekce.push(`Orta etkileşim (${tepki} tepki) (+${SCORING.sinyaller.tepki_15_49.puan})`);
   }
 
-  // Kalabalıklaşmış yorum alanı değerini düşürür
   const yorum = post.yorum ?? 0;
   if (yorum >= 15) {
-    skor -= 10;
-    gerekce.push(`Yorum alanı kalabalık (${yorum}) (-10)`);
+    skor += SCORING.sinyaller.yorum_15_ve_ustu.puan;
+    gerekce.push(`Yorum alanı kalabalık (${yorum}) (${SCORING.sinyaller.yorum_15_ve_ustu.puan})`);
   }
 
   return { skor, gerekce };

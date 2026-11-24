@@ -1,0 +1,11 @@
+{
+  "enabled": true,
+  "startDate": "2026-10-03",
+  "endDate": "2026-11-01",
+  "timezone": "Europe/Istanbul",
+  "expectedSub": "CETScQHWaU",
+  "expectedName": "Ömer Cenk Tokgöz",
+  "xPaused": true,
+  "legacyLinkedInPaused": true,
+  "backend": "linkedin-mcp"
+}

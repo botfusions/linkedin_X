@@ -2,7 +2,7 @@
 
 LinkedIn ve X (Twitter) icin tam otonom icerik uretim ve paylasim sistemi.
 
-**Son guncelleme:** 5 Agustos 2026, 03:05 (TRT) — §44'e kadar islendi.
+**Son guncelleme:** 8 Agustos 2026, 16:30 (TRT) — §45'e kadar islendi.
 
 ---
 
@@ -700,6 +700,15 @@ Bu bolum, production'da karsilasilan ve cozulen sorunlari icerir. Yeni test veya
 - **Yan olay — Coolify DB'sine elle INSERT panelin tamamini 500'ledi:** `environment_variables.value` sutunu **Laravel ile sifrelidir** (`eyJpdiI6...` = base64 `{"iv":...}`). Duz metin bir satir yazilinca panel `decrypt()` asamasinda `DecryptException: The payload is invalid.` firlatip **tum uygulama yapilandirma sayfasini** dusurdu. Satirlar silinince duzeldi.
 - **Kural:** Coolify DB'sinden **okumak ve silmek guvenli, yazmak degil.** DELETE sifre cozmez (§43'teki ANTHROPIC temizligi bu yuzden sorunsuzdu ve yaniltici oldu). Deger ekleme/degistirme **panelden** yapilir; sifreleme anahtari Coolify'in kendi `APP_KEY`'idir.
 - **Kurtarma:** `DELETE FROM environment_variables WHERE id IN (...)` → sayfayi yenile.
+
+### 45. Deploy Eski Konteyneri Durdurmadi — Weather LinkedIn'e Geri Dondu (8 Agustos 2026)
+
+- **Sorun:** §44'teki `LINKEDIN_ALWAYS_DISABLED` fix'i (`ba13638`, 6 Agustos) redeploy edilmesine ragmen 8 Agustos sabah 08:00'de weather LinkedIn'e paylasildi.
+- **Kok neden (CONTAINER, kod DEGIL):** Coolify redeploy'u eski `botfusions-zamanlayici` konteynerini (5 Agustos, fix'siz) **durdurmamis, yeni bir UUID'li konteyner olusturmustu**. Iki scheduler ayni anda calisiyordu — eski olan fix'sizdi ve sabah 08:00'i o tetikledi. Kod zaten dogruydu; eski imajda `LINKEDIN_ALWAYS_DISABLED` yoktu.
+- **Teshis:** SSH ile VPS'e baglanildi. `docker ps` 3 container gosterdi: `botfusions-api` (Python), `botfusions-zamanlayici` (eski scheduler, fix'siz), `dgecwxjms61k579zpew9y0rd:ba136389` (yeni scheduler, fix'li). Eski konteynerde `grep LINKEDIN_ALWAYS_DISABLED` → **yok**. Yeni konteynerde → **var**.
+- **Cozum:** `docker stop botfusions-zamanlayici botfusions-api`. Yalnizca `dgecwxjms61k579zpew9y0rd:ba136389` birakildi.
+- **Onlem:** Coolify redeploy sonrasi `docker ps` ile **tek** scheduler calistigi dogrulanmali. Eski konteyner yeni UUID'li imaja gecis yapmamissa manuel durdur.
+- **Dogrulama:** `docker exec dgecwxj... grep LINKEDIN_ALWAYS_DISABLED /app/src/services/linkedin.ts` → `const LINKEDIN_ALWAYS_DISABLED = new Set(["weather"]);` + `if (LINKEDIN_ALWAYS_DISABLED.has(f))`.
 
 ---
 © 2026 Botfusions. MIT Lisans.

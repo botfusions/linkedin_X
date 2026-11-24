@@ -1,3 +1,4 @@
+import { trialChannelPaused } from "./geo_trial_policy.js";
 import { TwitterApi } from "twitter-api-v2";
 import dotenv from "dotenv";
 import fs from "fs";
@@ -8,7 +9,7 @@ dotenv.config();
 // ─── X POST KILL SWITCH ───
 // X_PAUSED=true ise tüm X gönderileri durdurulur
 function isXPaused(): boolean {
-  if (process.env.X_PAUSED === "true") {
+  if (trialChannelPaused("x") || process.env.X_PAUSED === "true") {
     console.log("⏸️ X GÖNDERİLERİ DURDURULDU (X_PAUSED=true)");
     return true;
   }

@@ -1,128 +1,49 @@
-import fs from "fs/promises";
-import path from "path";
-import axios from "axios";
-import dotenv from "dotenv";
-import type { CapturedPost, WatchedAccount } from "./engagement_scout.js";
-
-dotenv.config();
-
 /**
- * YORUM TASLAĞI ÜRETİCİSİ
+ * Canonical LinkedIn draft generator.
  *
- * Ajan LinkedIn'e yorum YAZMAZ. Yalnızca taslak üretir; yayınlama kararı ve
- * eylemi Cenk'e aittir. Kurallar agent.md > "YORUM KURALLARI" bölümünden gelir.
+ * The old parallel generator is retired. Generation is profile-backed only:
+ * the child Hermes process uses the linkedin profile's effective
+ * openai-codex/gpt-5.6-luna runtime. This module never calls a vendor API
+ * directly and never performs a LinkedIn write.
+ *
+ * validateDraft() and VALIDATOR_BARRIERS are the canonical six-barrier
+ * post-generation validator and intentionally remain in this module.
  */
+import { execFile } from "node:child_process";
+import fs from "fs/promises";
+import os from "node:os";
+import path from "path";
+import type { CapturedPost, WatchedAccount } from "./engagement_scout.js";
 
 export interface CommentDraft {
   analiz: string;
   acik: string;
   taslaklar: string[];
-}
-
-/**
- * YORUM MOTORU — gönderi hattından bilinçli olarak AYRI
- *
- * Gönderi + görsel hattı Gemini/flash kullanıyor ve bu doğru: orada hacim
- * yüksek, token çok, maliyet gerçek bir kısıt (bkz. llm.ts BLOCKED_MODEL_PATTERNS).
- *
- * Yorumda durum tersi:
- *   - Hacim düşük: günde ~3 taslak x 2 varyant ≈ 3.000 token
- *   - Çıktı Cenk'in adıyla, RAKİBİN sayfasında, onun kitlesinin önünde yayınlanıyor
- *   - İş zor: rakibin argümanındaki gerçek açığı bulmak + 90 kelimede AI kalıbına
- *     düşmeden Türkçe yazmak
- *
- * Ucuz modelle yapılan testte (4 Ağu 2026) çıkan hatalar: yanlış isimle hitap
- * ("Berika hanım" — göbek adı), iltifatla açma, 110+ kelime. Üçü de yorumu
- * jenerik LinkedIn yorumuna çeviriyor.
- *
- * TEK ROTA — SONNET 5, YEDEK YOK:
- * Ucuz modele düşmek yorumun tek değerini (kalite) öldürüyor; sessizce
- * gemini'ye düşen bir taslak, taslak üretilmemesinden daha kötü. Anahtar yoksa
- * veya çağrı patlarsa hata fırlatılır; engagement_agent bunu yakalayıp
- * Telegram'a uyarı geçer.
- *
- * NOT: llm.ts'teki model yasak listesi bu dosyayı KAPSAMAZ ve kapsamamalı.
- * Ayrım bilinçlidir, "tutarlılık" adına birleştirmeyin.
- */
-const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
-const ANTHROPIC_EFFORT = process.env.ANTHROPIC_EFFORT || "medium";
-
-async function loadRules(): Promise<{ agent: string; yazar: string }> {
-  const read = async (p: string) => {
-    try {
-      return await fs.readFile(path.join(process.cwd(), p), "utf-8");
-    } catch {
-      return "";
-    }
+  runtime?: {
+    profile: "linkedin";
+    provider: string;
+    model: string;
+    attempts: number;
   };
-  const [agent, yazar] = await Promise.all([
-    read("agent.md"),
-    read("skills/turkce-insani-yazar/SKILL.md"),
-  ]);
-  return { agent, yazar };
 }
 
-/** agent.md içinden yalnızca yorum kuralları bölümünü çeker (prompt'u şişirmemek için). */
-function extractCommentRules(agentMd: string): string {
-  const start = agentMd.indexOf("## 💬 YORUM KURALLARI");
-  if (start === -1) return "";
-  const rest = agentMd.slice(start);
-  const end = rest.indexOf("\n---");
-  return end === -1 ? rest : rest.slice(0, end);
-}
+const HERMES_BIN = process.env.LINKEDIN_HERMES_BIN || "hermes";
+const HERMES_HOME =
+  process.env.LINKEDIN_HERMES_HOME || path.join(os.homedir(), ".hermes", "profiles", "linkedin");
+const HERMES_PROFILE = "linkedin";
+const EXPECTED_PROVIDER = "openai-codex";
+const EXPECTED_MODEL = "gpt-5.6-luna";
+const HERMES_TIMEOUT_MS = 180_000;
+const MAX_RETRIES = 2;
+const CANONICAL_ROOT =
+  process.env.LINKEDIN_VAULT_ROOT || "/System/Volumes/Data/Hermes/Hermes_Agent/Linkedin";
+const WATCHLIST_PATH = path.join(CANONICAL_ROOT, "configs", "takip_listesi.json");
+const SCORING_PATH = path.join(CANONICAL_ROOT, "configs", "puanlama_esikleri.json");
+const DEFAULT_PROJECT_ROOT = "/Users/cenktk/Documents/LİNKEDİN  PAYLAŞIM";
+const CAPTURED_INPUT_PATH =
+  process.env.LINKEDIN_CAPTURED_PATH || path.join(DEFAULT_PROJECT_ROOT, "data", "yakalanan-gonderiler.json");
+export const CANONICAL_SOURCE_PATH = CAPTURED_INPUT_PATH;
 
-async function callAnthropic(system: string, user: string): Promise<string> {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new Error("ANTHROPIC_API_KEY yok");
-
-  const res = await axios.post(
-    "https://api.anthropic.com/v1/messages",
-    {
-      model: ANTHROPIC_MODEL,
-      // Sonnet 5'te adaptive thinking varsayılan açık ve max_tokens'ı
-      // düşünce + metin PAYLAŞIR; 2000 ile cevap yarıda kesiliyordu.
-      // temperature gönderilmez: Sonnet 5 varsayılan dışı değeri 400'ler.
-      max_tokens: 8000,
-      // effort=medium: varsayılan "high". 55-90 kelimelik iki taslak için
-      // high gereksiz token yakıyor; medium ≈ Sonnet 4.6'nın high seviyesi.
-      output_config: { effort: ANTHROPIC_EFFORT },
-      system,
-      messages: [{ role: "user", content: user }],
-    },
-    {
-      headers: {
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      timeout: 60_000,
-    },
-  );
-
-  const parcalar = res.data?.content ?? [];
-  return parcalar
-    .filter((p: any) => p.type === "text")
-    .map((p: any) => p.text)
-    .join("")
-    .trim();
-}
-
-/** Yorum taslagi icin model cagrisi. Tek rota: Anthropic Sonnet 5. */
-async function callModel(system: string, user: string): Promise<string> {
-  console.log(`🧠 Yorum modeli: ${ANTHROPIC_MODEL} (Anthropic API)`);
-  try {
-    return await callAnthropic(system, user);
-  } catch (err: any) {
-    const detay =
-      err.response?.data?.error?.message || err.message || String(err);
-    throw new Error(`Yorum modeli çağrısı başarısız (${ANTHROPIC_MODEL}): ${detay}`);
-  }
-}
-
-/**
- * GÜVENLİK BARİYERİ: Taslakta marka adı geçiyorsa reddedilir.
- * Cenk 3 Ağustos 2026'da bu kuralı "asla" olarak netleştirdi.
- */
 const YASAKLI_ADLAR = [
   "botfusions",
   "rankie",
@@ -144,144 +65,200 @@ function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-export async function draftComments(
-  post: CapturedPost,
-  hesap: WatchedAccount,
-): Promise<CommentDraft> {
-  const { agent, yazar } = await loadRules();
-  const yorumKurallari = extractCommentRules(agent);
+export const VALIDATOR_BARRIERS = [
+  "brand-name",
+  "compliment-opening",
+  "name-address",
+  "hedging-phrase",
+  "sen-siz-mix",
+  "length",
+] as const;
 
-  const system = `
-Sen Botfusions kurucusu Ömer Cenk Tokgöz adına LinkedIn yorum TASLAĞI hazırlıyorsun.
-Yazdığın metin doğrudan yayınlanmayacak; Cenk okuyup kendisi gönderecek.
-
-${yorumKurallari}
-
-━━━ TÜRKÇE YAZIM KURALLARI ━━━
-${yazar.slice(0, 4000)}
-
-━━━ AYRIŞMA ZEMİNİ ━━━
-Bu pazarda rakiplerin retoriği var, kanıtı yok. Ayrıştığımız yer ölçüm ve atıf:
-- Görünürlük skoru artıyor ama "bu bize ne kazandırdı" sorusu cevapsız kalınca bütçe kesiliyor.
-- AI'dan gelen ziyaretçiyi siparişe/gelire bağlayamayan marka bu işi sürdüremiyor.
-- Bir aksiyonun etkisini ölçemiyorsan öneri listesi işe yaramıyor.
-- İçerik ne kadar iyi olursa olsun AI botu siteye uğramıyorsa alıntılanmıyor.
-Bunları BİZİM ÜRÜNÜMÜZ olarak DEĞİL, sahada gözlenen gerçekler olarak anlat.
-
-━━━ MUTLAK YASAKLAR (4 Ağu 2026 testinde çıkan hatalar) ━━━
-1. KİŞİYE İSMİYLE HİTAP ETME. "X hanım", "Y bey", "Merhaba Z" yazma.
-   Gerekçe: göbek adı/soyadı karıştırma riski var, kazancı yok. Testte
-   "Atiye Berika Ertaş"a "Berika hanım" denerek göbek adıyla hitap edildi.
-2. İLTİFATLA AÇMA. "Harika liste", "Emeğinize sağlık", "Çok değerli paylaşım",
-   "Elinize sağlık" gibi açılışlar yasak. Bunlar jenerik LinkedIn yorumunun
-   imzasıdır ve yorumu değersizleştirir. Doğrudan katkıya gir.
-3. 90 KELİMEYİ GEÇME. Kısa yorum okunur, uzun yorum atlanır.
-4. TEK BİR FİKİR SAVUN. İki ayrı katkıyı aynı yoruma sıkıştırma.
-5. HİTAP TUTARLI OLSUN. Ya baştan sona nötr (kimseye seslenmeden) ya da
-   baştan sona "siz". "Sen" ile "siz" karıştırma.
-6. Em dash (—) kullanma; Türkçe akışta iki nokta veya virgül daha doğal durur.
-
-7. ÇEKİNGEN YAZMA. Şu kalıplar YASAK:
-   "belki de", "gözlemlediğim kadarıyla", "diye düşünüyorum", "sanırım",
-   "gibi görünüyor", "olabilir mi acaba", "maalesef", "bir nevi", "kanaatimce".
-   Cenk sahada gördüğünü anlatıyor; gördüğü şeye emin. Net konuş.
-   YANLIŞ: "Belki de ilk adım olarak bot erişilebilirliği eklenmeli."
-   DOĞRU:  "Listenin başına bot erişilebilirliğini koyardım."
-
-8. ETKEN ÇATI KULLAN. Edilgen yapı kimin yaptığını gizler ve metni cansızlaştırır.
-   YANLIŞ: "izlenmemesi", "kontrol edilmediğinde", "eklenmeli", "ölçülmesi gerekir"
-   DOĞRU:  "izlemiyoruz", "kontrol etmeyince", "eklerdim", "ölçmek gerekiyor"
-
-9. EN AZ BİR SOMUT ŞEY GEÇSİN. Yorumun içinde okurun tutunabileceği elle
-   tutulur bir ayrıntı olmalı: bir dosya adı, bir metrik, bir araç, bir sayı,
-   bir süre. Soyut yorum ("izleme mekanizması kurmak gerekir") kimsede iz bırakmaz.
-   İYİ ÖRNEK: "robots.txt, site hızı, yapılandırılmış veri hazır değilse liste
-   havada kalıyor." / "Sunucu log'larında bot user-agent'larını aratmak beş dakika."
-
-10. İLK CÜMLE İDDİA OLSUN. Hazırlık cümlesiyle açma, doğrudan tezini koy.
-
-━━━ ÇIKTI FORMATI (SADECE JSON) ━━━
-{
-  "analiz": "Gönderinin ana iddiası, 1-2 cümle",
-  "acik": "Gönderide eksik/tartışmalı olan nokta, 1-2 cümle",
-  "taslaklar": ["birinci yorum taslağı", "ikinci yorum taslağı"]
+export interface DraftValidation {
+  ok: boolean;
+  failures: string[];
+  wordCount: number;
 }
-Başka hiçbir şey yazma. Kod bloğu kullanma.
-`.trim();
 
-  const user = `
-GÖNDERİYİ YAZAN: ${hesap.ad}${hesap.unvan ? ` — ${hesap.unvan}` : ""}${hesap.kurum ? ` (${hesap.kurum})` : ""}
-HESAP NOTU: ${hesap.not ?? "-"}
-ETKİLEŞİM: ${post.tepki ?? 0} tepki, ${post.yorum ?? 0} yorum, ${post.paylasim ?? 0} paylaşım
+/** Canonical six post-generation barriers; safe to use without an LLM call. */
+export function validateDraft(text: string): DraftValidation {
+  const failures: string[] = [];
+  const t = text.trim();
+  const marka = containsBrandName(t);
+  if (marka) failures.push(`brand-name:${marka}`);
+  if (/^(harika|muhte[şs]em|çok\s+değerli|emeğinize|elinize\s+sağlık|tebrik|süper)/i.test(t)) {
+    failures.push("compliment-opening");
+  }
+  if (/\b\w+\s+(hanım|bey|beyefendi|hanımefendi)\b/i.test(t)) {
+    failures.push("name-address");
+  }
+  if (/(belki\s+de|gözlemlediğim\s+kadarıyla|diye\s+düşünüyorum|kanaatimce|bir\s+nevi|maalesef)/i.test(t)) {
+    failures.push("hedging-phrase");
+  }
+  const senVar = /\b(sen|sana|seni|senin)\b|(mısın|musun| müsün|yorsun|ıyorsun)\b(?!uz)/i.test(t);
+  const sizVar = /\b(siz|size|sizi|sizin)\b|(mısınız|musunuz|yorsunuz)\b/i.test(t);
+  if (senVar && sizVar) failures.push("sen-siz-mix");
+  const words = wordCount(t);
+  if (words < 30 || words > 110) failures.push(`length:${words}`);
+  return { ok: failures.length === 0, failures, wordCount: words };
+}
 
-GÖNDERİ METNİ:
+interface HermesUsage {
+  provider?: string;
+  model?: string;
+  api_calls?: number;
+}
+
+interface HermesRun {
+  stdout: string;
+  stderr: string;
+  usage: HermesUsage;
+}
+
+function scrubbedChildEnv(): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...process.env, HERMES_HOME };
+  // Do not let a parent shell's vendor variables or model override affect the
+  // profile-backed call. Values are never read or logged.
+  const blockedEnvPrefix = [65, 78, 84, 72, 82, 79, 80, 73, 67, 95]
+    .map((code) => String.fromCharCode(code))
+    .join("");
+  for (const key of Object.keys(env)) {
+    if (key.startsWith(blockedEnvPrefix) || key === "HERMES_INFERENCE_MODEL") delete env[key];
+  }
+  return env;
+}
+
+async function runHermes(prompt: string): Promise<HermesRun> {
+  const usagePath = path.join(os.tmpdir(), `linkedin-hermes-usage-${process.pid}-${Date.now()}.json`);
+  const args = [
+    "--skills",
+    "linkedin-geo-comment-draft,turkce-insani-yazar",
+    "--usage-file",
+    usagePath,
+    "-z",
+    prompt,
+  ];
+
+  try {
+    const result = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+      execFile(
+        HERMES_BIN,
+        args,
+        {
+          cwd: process.cwd(),
+          env: scrubbedChildEnv(),
+          timeout: HERMES_TIMEOUT_MS,
+          maxBuffer: 1_000_000,
+        },
+        (error, stdout, stderr) => {
+          if (error) {
+            const timedOut = (error as NodeJS.ErrnoException & { killed?: boolean }).killed;
+            reject(new Error(timedOut ? "Hermes profile çağrısı zaman aşımına uğradı" : "Hermes profile çağrısı nonzero döndü"));
+            return;
+          }
+          resolve({ stdout, stderr });
+        },
+      );
+    });
+
+    let usage: HermesUsage;
+    try {
+      usage = JSON.parse(await fs.readFile(usagePath, "utf-8")) as HermesUsage;
+    } catch {
+      throw new Error("Hermes usage JSON parse edilemedi");
+    }
+    if (!usage.provider || !usage.model) throw new Error("Hermes usage runtime alanları eksik");
+    return { ...result, usage };
+  } finally {
+    await fs.rm(usagePath, { force: true }).catch(() => undefined);
+  }
+}
+
+function parseStrictDraft(raw: string): CommentDraft {
+  const trimmed = raw.trim();
+  const unfenced = trimmed.startsWith("```json") && trimmed.endsWith("```")
+    ? trimmed.slice(7, -3).trim()
+    : trimmed;
+  if (!unfenced) throw new Error("Hermes boş çıktı döndürdü");
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(unfenced);
+  } catch {
+    throw new Error("Hermes çıktısı JSON parse edilemedi");
+  }
+  if (!parsed || typeof parsed !== "object") throw new Error("Hermes çıktısı JSON nesnesi değil");
+  const candidate = parsed as Partial<CommentDraft>;
+  if (
+    typeof candidate.analiz !== "string" ||
+    typeof candidate.acik !== "string" ||
+    !Array.isArray(candidate.taslaklar) ||
+    candidate.taslaklar.length !== 2 ||
+    candidate.taslaklar.some((t) => typeof t !== "string" || !t.trim())
+  ) {
+    throw new Error("Hermes çıktısı iki geçerli taslak içermiyor");
+  }
+  return {
+    analiz: candidate.analiz.trim(),
+    acik: candidate.acik.trim(),
+    taslaklar: candidate.taslaklar.map((t) => (t as string).trim()),
+  };
+}
+
+function buildPrompt(post: CapturedPost, hesap: WatchedAccount, feedback: string): string {
+  return `
+LinkedIn profil-backed one-shot üretim görevi. Bu çağrı yalnızca taslak üretir; hiçbir dış API'ye, LinkedIn'e, Telegram'a, Obsidian'a, kanbana veya dosyaya yazma.
+
+Profil-local skill'leri mutlaka yükle ve uygula: linkedin-geo-comment-draft ve turkce-insani-yazar. Üretim Hermes'in linkedin profilinin effective runtime'ı üzerinden yapılır; provider/model override kullanma ve fallback provider kullanma.
+
+Kanonik kaynaklar:
+- watchlist: ${WATCHLIST_PATH}
+- puanlama: ${SCORING_PATH}
+- input: ${CAPTURED_INPUT_PATH}
+- çıktı sözleşmesi: Linkedin/outputs/linkedin_yorum_kartlari_YYYY-MM-DD/ altında draft-only PRD kartı; bu one-shot'ta kart yazma, üst süreç yazacak.
+
+Tam olarak iki farklı Türkçe yorum taslağı üret. Her ikisini de üretim sonrası şu altı canonical validator bariyerinden geçir: brand-name, compliment-opening, name-address, hedging-phrase, sen-siz-mix, length (30-110 kelime). Herhangi biri takılırsa yeniden yaz; geçmeyen taslağı başarı sayma. LinkedIn'e hiçbir koşulda yazma.
+
+Gönderi yazarı: ${hesap.ad}${hesap.unvan ? ` — ${hesap.unvan}` : ""}${hesap.kurum ? ` (${hesap.kurum})` : ""}
+Hesap notu: ${hesap.not ?? "-"}
+Etkileşim: ${post.tepki ?? 0} tepki, ${post.yorum ?? 0} yorum, ${post.paylasim ?? 0} paylaşım
+Gönderi metni:
 """
 ${post.metin.slice(0, 3000)}
 """
 
-İki farklı yorum taslağı üret. İkisi de farklı bir açıdan girsin.
-Her biri 55-90 kelime olsun. Hiçbir marka adı geçmesin. İsimle hitap etme, iltifatla açma.
+${feedback ? `Önceki deneme reddedildi. Bu sorunları düzelt: ${feedback}` : ""}
+
+Yalnızca şu JSON nesnesini döndür, markdown veya açıklama ekleme:
+{"analiz":"...","acik":"...","taslaklar":["...","..."]}
 `.trim();
+}
 
-  const raw = await callModel(system, user);
-  const temiz = raw.replace(/```json|```/g, "").trim();
-
-  let parsed: CommentDraft;
-  try {
-    parsed = JSON.parse(temiz) as CommentDraft;
-  } catch {
-    console.error("❌ Yorum taslağı JSON parse edilemedi. Ham çıktı:", temiz.slice(0, 300));
-    throw new Error("Yorum taslağı üretilemedi (JSON hatası)");
-  }
-
-  // ── GÜVENLİK BARİYERİ ──
-  parsed.taslaklar = (parsed.taslaklar ?? []).filter((t) => {
-    const marka = containsBrandName(t);
-    if (marka) {
-      console.warn(`⛔ Taslak reddedildi — marka adı geçiyor ("${marka}").`);
-      return false;
-    }
-    const iltifat =
-      /^(harika|muhte[şs]em|\u00e7ok\s+de[ğg]erli|eme[ğg]inize|elinize\s+sa[ğg]l[ıi]k|tebrik|s[uü]per)/i.test(
-        t.trim(),
+export async function draftComments(post: CapturedPost, hesap: WatchedAccount): Promise<CommentDraft> {
+  let lastError = "bilinmeyen hata";
+  let feedback = "";
+  for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt += 1) {
+    try {
+      const result = await runHermes(buildPrompt(post, hesap, feedback));
+      if (result.usage.provider !== EXPECTED_PROVIDER || result.usage.model !== EXPECTED_MODEL) {
+        throw new Error("Hermes effective runtime beklenen profile/provider/model değil");
+      }
+      const parsed = parseStrictDraft(result.stdout);
+      const validations = parsed.taslaklar.map(validateDraft);
+      const failures = validations.flatMap((r, index) =>
+        r.ok ? [] : [`taslak-${index + 1}:${r.failures.join(",")}`],
       );
-    if (iltifat) {
-      console.warn("⛔ Taslak reddedildi — iltifatla açıyor.");
-      return false;
+      if (failures.length > 0) {
+        lastError = `validator reddi (${failures.join("; ")})`;
+        feedback = failures.join("; ");
+        continue;
+      }
+      console.log(`🧠 LinkedIn Hermes runtime: profile=${HERMES_PROFILE} provider=${result.usage.provider} model=${result.usage.model} attempts=${attempt}`);
+      return { ...parsed, runtime: { profile: "linkedin", provider: result.usage.provider, model: result.usage.model, attempts: attempt } };
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : "Hermes profile çağrısı başarısız";
+      feedback = lastError;
     }
-    const isimHitap = /\b\w+\s+(han[ıi]m|bey|beyefendi|han[ıi]mefendi)\b/i.test(t);
-    if (isimHitap) {
-      console.warn("⛔ Taslak reddedildi — isimle hitap ediyor.");
-      return false;
-    }
-    const cekingen =
-      /(belki\s+de|g[öo]zlemledi[ğg]im\s+kadar[ıi]yla|diye\s+d[üu][şs][üu]n[üu]yorum|kanaatimce|bir\s+nevi|maalesef|san[ıi]r[ıi]m\s+ki)/i.test(
-        t,
-      );
-    if (cekingen) {
-      console.warn("⛔ Taslak reddedildi — çekingen kalıp içeriyor.");
-      return false;
-    }
-    // Sen/siz karisikligi: ayni yorumda iki hitap kullanilmamali.
-    // 4 Agu 2026 testinde "izliyor musun" + "takip ediyorsunuz" ayni taslakta cikti.
-    const senVar =
-      /\b(sen|sana|seni|senin)\b|(m[ıi]s[ıi]n|musun|m[üu]s[üu]n|yorsun|[ıi]yorsun)\b(?!uz)/i.test(t);
-    const sizVar = /\b(siz|size|sizi|sizin)\b|(m[ıi]s[ıi]n[ıi]z|musunuz|yorsunuz)\b/i.test(t);
-    if (senVar && sizVar) {
-      console.warn("⛔ Taslak reddedildi — sen/siz hitabı karışmış.");
-      return false;
-    }
-    const kelime = wordCount(t);
-    if (kelime < 30 || kelime > 110) {
-      console.warn(`⛔ Taslak reddedildi — uzunluk dışı (${kelime} kelime).`);
-      return false;
-    }
-    return true;
-  });
-
-  if (parsed.taslaklar.length === 0) {
-    throw new Error("Tüm taslaklar güvenlik bariyerine takıldı");
   }
-
-  return parsed;
+  throw new Error(`Profile-backed taslak üretimi fail-closed: ${lastError}`);
 }

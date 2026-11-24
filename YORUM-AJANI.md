@@ -49,10 +49,27 @@ Gönderi verisi  →  data/yakalanan-gonderiler.json
                         ↓
                 engagement_agent.ts   (Telegram'a gönder)
                         ↓
-                    CENK OKUR, KENDİSİ YAYINLAR
+                    CENK OKUR, BEĞENDİĞİ TASLAĞIN BUTONUNA BASAR
+                        ↓
+                scripts/linkedin-comment-approval.mjs   (Hermes cron, 2 dk)
+                        ↓
+                linkedin-mcp → linkedin_comment_on_post
 ```
 
-**Ajan hiçbir koşulda LinkedIn'e yorum yazmaz.** Sadece taslak üretir.
+**Butonsuz yorum yok.** Taslak ajanı LinkedIn'e yazmaz; yalnızca onay kaydı bırakır.
+
+## Approved comment publishing (added 2026-11-24)
+
+Cenk asked for comments to be published through the API with his approval.
+
+- `engagement_agent.ts` writes `data/yorum-onay/<activityId>.json` (`status: pending`) and sends the drafts with inline buttons: "Taslak N'i yayınla" and "Reddet".
+- Button presses on @aifatura_bot (main Mac Hermes gateway bot) are handled inside the main gateway by the Hermes plugin `~/.hermes/plugins/linkedin-yorum-onay`, which runs `node scripts/linkedin-comment-approval.mjs --callback` and publishes only the pressed draft via `linkedin_comment_on_post` (activity URN, retried once on the thread URN LinkedIn names). The old getUpdates poller job "LinkedIn Yorum Onayı" (acfc15be0419) is paused: it conflicts (409) with the gateway on the same token.
+- Safeguards: only Telegram user 6030287709 in the engagement chat; only `pending` records; drafts older than 48 h are refused; status is set to `publishing` before the API call; an error sets `needs_verification` and is never retried automatically; the profile `sub` must match `data/geo-trial.json` `expectedSub`.
+- Token: `data/.linkedin_token.json` (scope `w_member_social`, valid until 2027-01-07).
+- If `getUpdates` returns 409, another process (for example a Hermes gateway) polls the same bot token. Give the gateway its own bot.
+- Tests: `npm run yorum:onay:test`.
+- Daily limit: at most 3 comments per TRT day (rule from `yorum-merkezi.md`, Cenk 16 Sep 2026). `publishing` and `needs_verification` count too. A press over the limit leaves the record `pending`, so it can be pressed again the next day.
+- Not yet verified live: whether LinkedIn accepts `urn:li:activity:` for comments. The first approved press will show it; a failure lands as `needs_verification` with the API message in Telegram.
 
 ---
 
@@ -148,6 +165,9 @@ Bot açmak için: Telegram'da @BotFather → `/newbot` → token'ı buraya yaz. 
 ```bash
 npm run engagement                                   # tarama + taslak üretimi
 npm run engagement:tek -- <id> <slug> "metin"        # tek gönderi için taslak
+npm run feedback:rapor                               # geri bildirim raporu üret
+npm run feedback:test                                # feedback döngüsü doğrulayıcısı
+npm run typecheck                                    # tsc --noEmit tip kontrolü
 ```
 
 Zamanlanmış: her gün **09:00, 13:00, 18:00** — **VPS'te değil, Mac'teki Hermes cron'unda** (5 Ağustos 2026'da taşındı).
@@ -174,3 +194,13 @@ Kurallar `agent.md` > "YORUM KURALLARI" bölümünde. Özet:
 - Şablon: somut saha gözlemi → karşı tarafın tezini kısmen onayla → asıl belirleyici değişkeni koy
 - Belirleyici değişken her seferinde **ölçüm/atıf** tarafında olmalı — rakiplerin retoriği var, kanıtı yok
 - Rakibi çürütme, önüne bir katman ekle ("ön koşul", "eksik halka" çerçeveleri işe yarıyor)
+
+## Yorum Merkezi bridge (added 2026-11-24)
+
+Main feed for comment opportunities: `~/Documents/Linkedin post/yorum-merkezi.md`. The daily competitor scan (`linkedin-yorum-merkezi` skill, BrowserOS Neo) writes each opportunity as a `### NNN — <account>, <post> (<date>)` entry with a `**Kaynak:**` LinkedIn URL and reviewed drafts (`### ✅ ÖNERİLEN: Taslak A` + blockquote). Older entries and the "Gönderilen yorumlar ve sonuçları" table hold the past comments and what worked.
+
+- `src/yorum_merkezi_kopru.ts` (`npm run yorum:merkez`, Hermes job "LinkedIn Yorum Merkezi Köprüsü", every 15 min) parses entries, keeps posts younger than `YORUM_MERKEZI_MAX_SAAT` (default 12 h; age comes from the post ID, `id >> 22` = ms since epoch), runs `validateDraft` and sends up to 2 drafts (recommended first) with buttons through the same `onayIste` used by the engagement agent.
+- Each post is sent once: an existing `data/yorum-onay/<id>.json` means skip. If every draft fails the validator, Cenk gets a note without buttons and the record is stored as `rejected`.
+- The bridge writes no drafts, calls no model and does not edit `yorum-merkezi.md`. The results table there is still filled by the scan or by hand.
+- Tests: `npm run yorum:merkez:test`.
+

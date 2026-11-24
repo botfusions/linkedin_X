@@ -30,3 +30,7 @@ repo_analysis_tmp/
 # OS dosyalari
 .DS_Store
 Thumbs.db
+
+# GEO kişisel yayın kayıtları
+data/geo-trial-receipts/
+data/yorum-onay/

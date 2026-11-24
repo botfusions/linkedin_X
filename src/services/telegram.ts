@@ -49,7 +49,7 @@ export async function sendTelegramMessage(text: string): Promise<void> {
  * Tanimli degilse mesaj GONDERILMEZ ve hata kanalina DUSMEZ; yalnizca
  * konsola uyari yazilir. Boylece yanlislikla n8n kanalina tasma olmaz.
  */
-export async function sendEngagementMessage(text: string): Promise<boolean> {
+export async function sendEngagementMessage(text: string, replyMarkup?: object): Promise<boolean> {
   const token = process.env.TELEGRAM_ENGAGEMENT_BOT_TOKEN || "";
   const chatId = process.env.TELEGRAM_ENGAGEMENT_CHAT_ID || "";
 
@@ -69,6 +69,7 @@ export async function sendEngagementMessage(text: string): Promise<boolean> {
       text,
       parse_mode: "Markdown",
       disable_web_page_preview: false,
+      ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
     });
     console.log("✅ Yorum taslagi Telegram'a gonderildi.");
     return true;
