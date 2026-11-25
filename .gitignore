@@ -35,3 +35,6 @@ Thumbs.db
 data/geo-trial-receipts/
 data/yorum-onay/
 data/post-onay/
+
+# Engager analytics: personal data of LinkedIn members, local only (KVKK)
+data/engager/
