@@ -36,6 +36,9 @@ The wrapper rejects the draft if that Opus check is missing from the run log.
    news (what it means for a Turkish business, one practical step), name the source in the text
    (e.g. "Search Engine Roundtable'ın aktardığına göre"), no link unless the pillar is tanıtım,
    max 3 hashtags at the end, 700-1300 characters, ends with one real question.
+   The first sentence (the hook) stays under 140 characters: on mobile, the rest is behind
+   "...daha fazla". Do not put the source link in the text: the approval script adds it as our
+   first comment from `source_url` (AGENT.md link rule).
 6. Visual: copy `data/post-taslak/2026-11-25/card-v2.html` as the template into `OUT/card.html`,
    replace the content for this post (same style: problem-first, flow with outputs, letterbox,
    teal/amber, FLAT 2D, 1080x1350). Illustrative examples must not name real firms or pages.
@@ -43,7 +46,8 @@ The wrapper rejects the draft if that Opus check is missing from the run log.
    `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=1 --window-size=1080,1350 --screenshot="$PWD/OUT/card.png" "file://$PWD/OUT/card.html"`
    Look at the PNG (Read it). Fix overflow, empty bands or clipped text and render again.
 7. Check: hand the post text AND the card text to the `metin-bakis` agent (Agent tool,
-   `model: "opus"`, mandatory) with the article URL. Verdict handling:
+   `model: "opus"`, mandatory) with the article URL, and ask it to also check that the first
+   sentence is under 140 characters. Verdict handling:
    - YAYINLA/ONAY: done.
    - DÜZELT: apply every fix through the `turkce-insani-yazar` skill again, then ask
      `metin-bakis` (model opus) once more. If the second verdict is not ONAY, status `skip`.

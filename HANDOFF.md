@@ -6,6 +6,11 @@
 - First real run: 2026-11-25 15:15 TRT (slot 16). Check that the Telegram request arrived ~15:30-15:55 and the per-slot receipt after Cenk's press.
 - Wrapper fix: worker deletes a non-sent `result.json` before the run, so a same-day dry-run result can never be sent.
 - Dry-run does not mark the news link used, so a real run may pick the same story as a dry-run.
+- ~12:40 TRT, from github.com/sergebulaev/linkedin-skills (rules only, no code; it needs paid Apify/Publora):
+  - Hook rule: first sentence under 140 chars (prompt step 5 + metin-bakis ask in step 7, AGENT.md link rule). Soft rule, no hard gate.
+  - Source link as our FIRST COMMENT: wrapper passes `result.json` `source_url` as `--source-url` (dropped if not a clean https URL). `--request` stores `first_comment` = `Kaynak: <url>` (fixed template, `firstComment()`) in record.json and shows it in the Telegram approval text. On the press: publish -> record + receipt `published` -> then one `linkedin_comment_on_post` via `commentWithThreadFix`; a comment failure keeps `published`, is reported, never retried. `hashOf` unchanged. Tests 12/12. UNTESTED LIVE until Cenk's first Yayınla press on a post with a source link. Plugin timeout 150 s covers publish + comment.
+  - "Post yayınlandı" reply now ends with "İlk 60 dakikada gelen yorumlara yanıt ver."
+- NEXT job (Cenk 2026-11-25): engager analytics. Pull who likes/comments on our own posts, segment by ICP fit, list prospects. Idea from that repo's linkedin-engager-analytics; build on linkedin-mcp/Neo, not Apify. Then: follow-up on replies to our comments (thread-monitor rules: 0-6 h hot, 6-24 h warm, 24-72 h cool, >72 h DM; never 3+ chained replies; skip if author deleted).
 
 ## Current state 2026-11-25 ~03:00 TRT
 - Goal now: two own GEO news posts a day (10:00, 16:00 TRT), each published only on Cenk's Telegram press; competitor comments keep the existing Cowork scan -> Hermes bridge -> press flow.

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parsePostCallback, checkPost, hashOf, handlePostCallback, receiptKey} from './linkedin-post-approval.mjs';
+import {parsePostCallback, checkPost, hashOf, handlePostCallback, receiptKey, firstComment} from './linkedin-post-approval.mjs';
 
 const OWNER = 6030287709;
 const PNG = Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), Buffer.alloc(16)]);
@@ -24,7 +24,7 @@ function setup({rec = {}, snapText = TEXT, seen = false, dayFree = true, publish
   return {store, publish, writes, days, keys, get published() { return published; }};
 }
 const press = (data, from = OWNER, chat = OWNER) => ({data, from:{id:from}, message:{message_id:1, chat:{id:chat}}});
-const run = (s, data, cb = press(data)) => handlePostCallback({cb, approverId:OWNER, chatId:String(OWNER), store:s.store, publish:s.publish, now:NOW});
+const run = (s, data, cb = press(data), comment) => handlePostCallback({cb, approverId:OWNER, chatId:String(OWNER), store:s.store, publish:s.publish, comment, now:NOW});
 
 test('parsePostCallback accepts only py/pr with 13-digit id and 8-hex nonce', () => {
   assert.deepEqual(parsePostCallback(`py:${ID}:abcd1234`), {action:'publish', id:ID, nonce:'abcd1234'});
@@ -103,4 +103,31 @@ test('slot records lock <day>-<slot>, legacy records lock <day>', async () => {
   const legacy = setup();
   await run(legacy, `py:${ID}:abcd1234`);
   assert.equal(legacy.keys[0], '2026-11-25');
+});
+
+test('firstComment accepts one https URL only', () => {
+  assert.equal(firstComment('https://techcrunch.com/a'), 'Kaynak: https://techcrunch.com/a');
+  for (const bad of ['http://x.com', 'https://a.com b', 'javascript:alert(1)', '', undefined, `https://${'a'.repeat(600)}`]) assert.throws(() => firstComment(bad));
+});
+
+test('first comment: added after publish; failure keeps published, no retry', async () => {
+  const calls = [];
+  const ok = setup({rec:{first_comment:'Kaynak: https://x.com/a'}});
+  const r = await run(ok, `py:${ID}:abcd1234`, undefined, async (urn, text) => { calls.push([urn, text]); return {id:'c1'}; });
+  assert.deepEqual(calls, [['urn:li:share:1', 'Kaynak: https://x.com/a']]);
+  assert.deepEqual(ok.writes, ['publishing', 'published', 'published']);
+  assert.match(r.reply, /ilk yoruma eklendi/);
+  let tries = 0;
+  const bad = setup({rec:{first_comment:'Kaynak: https://x.com/a'}});
+  const r2 = await run(bad, `py:${ID}:abcd1234`, undefined, async () => { tries++; throw new Error('400'); });
+  assert.equal(tries, 1);
+  assert.equal(bad.published, 1);
+  assert.ok(!bad.writes.includes('needs_verification'));
+  assert.match(r2.reply, /Post yayınlandı[\s\S]*eklenemedi/);
+});
+
+test('no first_comment in record means no comment call', async () => {
+  let n = 0;
+  await run(setup(), `py:${ID}:abcd1234`, undefined, async () => { n++; });
+  assert.equal(n, 0);
 });
