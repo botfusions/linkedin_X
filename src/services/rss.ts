@@ -29,10 +29,11 @@ const parser = new XMLParser({
 
 export async function fetchNewsFromRSS(
   maxItems: number = 5,
+  url: string = RSS_URL,
 ): Promise<NewsArticle[]> {
   try {
-    console.log("📡 Google News AI RSS çekiliyor...");
-    const response = await axios.get(RSS_URL, {
+    console.error(`📡 RSS çekiliyor: ${url}`);
+    const response = await axios.get(url, {
       headers: HEADERS,
       timeout: 15000,
     });
@@ -50,7 +51,7 @@ export async function fetchNewsFromRSS(
         content: item["content:encoded"] || item.description || "",
       }));
 
-    console.log(`✅ ${articles.length} haber çekildi.`);
+    console.error(`✅ ${articles.length} haber çekildi.`);
     return articles;
   } catch (error: any) {
     console.error("❌ RSS çekme hatası:", error.message);

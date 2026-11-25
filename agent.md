@@ -63,10 +63,11 @@ Ajan yorum **yazmaz, taslak üretir**. Yayınlama kararı ve eylemi Cenk'e aitti
 
 ## ✍️ Metin Formatı ve LinkedIn Kuralları
 
+0. **MANDATORY writer skill (Cenk, 2026-11-25):** Every post text (own posts, the 10:00/16:00 GEO news posts, comment drafts) is written by invoking the `turkce-insani-yazar` skill, not by an agent following its rules from memory. No skill run = no draft sent for approval. After the skill, the text goes through `metin-bakis` (maker never checks own work). Applies to every agent and every runtime (Claude Code, Hermes, Codex, Cowork).
 1. **Ton:** İnsan gibi yazan, net görüşlü bir profesyonel. Kurumsal broşür dili ve AI kalıpları yasak (`skills/turkce-insani-yazar` kuralları zorunlu).
 2. **Uzunluk:** Format planındaki hedef uzunluğa uyulur. Bu bir POST'tur, makale değil.
 3. **LİNK:** (Bu kural yalnızca GÖNDERİLER içindir; yorumlarda link ve marka adı tamamen yasaktır.) Yalnızca tanıtım sütunu (%10) postlarında `www.botfusions.com/geo-hizmeti` bağlantısı kullanılır. Diğer postlarda link YOK (link erişimi düşürür); Botfusions'a en fazla tek cümlelik doğal değinme yapılabilir.
-4. **HASHTAG:** Postun en sonunda 3-5 adet, konuyla birebir ilgili hashtag. 10 hashtag spam sinyalidir, YASAK.
+4. **HASHTAG:** Postun en sonunda en fazla 3 adet (Cenk, 2026-11-25), konuyla birebir ilgili hashtag. 10 hashtag spam sinyalidir, YASAK.
 5. **EMOJİ:** En fazla 3-4 adet, doğal duran yerlerde. Her paragrafa emoji serpiştirme.
 
 ## 🎨 Görsel Tasarım Kuralları

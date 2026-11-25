@@ -42,7 +42,7 @@ Makale okuyucuya **"ne"** ve **"nerede"** olduğunu anlatır ama **"oradan nası
 - **Dwell time'a oynayın:** Hook (ilk satır) + kısa paragraflar + okunabilir format. İçerikte ne kadar uzun tutarlarsa algoritma o kadar yayar.
 - **Yorum stratejisi:** "Güzel paylaşım" değil, **inceleme ekleyen** yorumlar yazın. Yorum, like'tan çok daha güçlü sinyal.
 - **Format çeşitliliği:** Native video + carousel (kaydırmalı) gönderileri, metin tek düzeninden daha yüksek etkileşim alır.
-- **Hashtag:** Konu başına 3-5, kestirme.
+- **Hashtag:** Konu başına en fazla 3 (Cenk, 2026-11-25).
 
 ### Sütun 4 — İlişki Kurma (25 puan)
 *Bağlantı kalitesi ve iletişim sürekliliğini ölçer.*

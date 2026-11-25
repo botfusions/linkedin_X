@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parsePostCallback, checkPost, hashOf, handlePostCallback} from './linkedin-post-approval.mjs';
+import {parsePostCallback, checkPost, hashOf, handlePostCallback, receiptKey} from './linkedin-post-approval.mjs';
 
 const OWNER = 6030287709;
 const PNG = Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), Buffer.alloc(16)]);
@@ -9,7 +9,7 @@ const NOW = Date.parse('2026-11-25T09:00:00Z');
 const ID = '1764061200000';
 
 function setup({rec = {}, snapText = TEXT, seen = false, dayFree = true, publishImpl} = {}) {
-  const writes = [], days = [];
+  const writes = [], days = [], keys = [];
   let published = 0;
   const record = {status:'pending', nonce:'abcd1234', created_at:new Date(NOW - 3600e3).toISOString(), hash:hashOf(TEXT, PNG), image_file:'image.png', ...rec};
   const store = {
@@ -17,11 +17,11 @@ function setup({rec = {}, snapText = TEXT, seen = false, dayFree = true, publish
     write: async (id, r) => writes.push(r.status),
     snapshot: async () => ({text:snapText, image:PNG, imagePath:'/x/image.png'}),
     hashSeen: async () => seen,
-    claimDay: async (day, r) => { days.push(['claim', r.status]); return dayFree; },
-    writeDay: async (day, r) => days.push(['write', r.status]),
+    claimDay: async (day, r) => { days.push(['claim', r.status]); keys.push(day); return dayFree; },
+    writeDay: async (day, r) => { days.push(['write', r.status]); keys.push(day); },
   };
   const publish = publishImpl || (async () => { published++; return {status:'api_accepted', urn:'urn:li:share:1', url:'https://www.linkedin.com/feed/update/urn:li:share:1/'}; });
-  return {store, publish, writes, days, get published() { return published; }};
+  return {store, publish, writes, days, keys, get published() { return published; }};
 }
 const press = (data, from = OWNER, chat = OWNER) => ({data, from:{id:from}, message:{message_id:1, chat:{id:chat}}});
 const run = (s, data, cb = press(data)) => handlePostCallback({cb, approverId:OWNER, chatId:String(OWNER), store:s.store, publish:s.publish, now:NOW});
@@ -88,4 +88,19 @@ test('publish error becomes needs_verification and is not retried', async () => 
   assert.deepEqual(s.writes, ['publishing', 'needs_verification']);
   assert.deepEqual(s.days.at(-1), ['write', 'needs_verification']);
   assert.match(out.reply, /tekrar denemedim/);
+});
+
+test('slot records lock <day>-<slot>, legacy records lock <day>', async () => {
+  assert.equal(receiptKey('2026-11-25', '10'), '2026-11-25-10');
+  assert.equal(receiptKey('2026-11-25', undefined), '2026-11-25');
+  const slotted = setup({rec:{slot:'16'}});
+  const r = await run(slotted, `py:${ID}:abcd1234`);
+  assert.match(r.reply, /Post yayınlandı/);
+  assert.deepEqual(slotted.keys, ['2026-11-25-16', '2026-11-25-16']);
+  const busy = setup({rec:{slot:'10'}, dayFree:false});
+  assert.match((await run(busy, `py:${ID}:abcd1234`)).reply, /10:00 postu zaten/);
+  assert.equal(busy.published, 0);
+  const legacy = setup();
+  await run(legacy, `py:${ID}:abcd1234`);
+  assert.equal(legacy.keys[0], '2026-11-25');
 });

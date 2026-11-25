@@ -183,7 +183,7 @@ Hedef uzunluk: ${format.targetLength} (bu bir POST'tur, makale DEĞİL — uzunl
 1. HOOK: İlk satır tek başına merak uyandırmalı ("Devamını gör" tıklatmalı). Rakam, karşıt iddia veya keskin gözlemle başla. Selamlama ve "**" ile başlama YASAK.
 2. DWELL TIME: Kısa paragraflar (1-3 satır), aralarında boş satır. Okuyucuyu sonuna kadar taşıyan bir akış kur — şablon bölümleri değil, tek bir düşünce hattı.
 3. YORUM > LIKE: Post, net BİR tartışma sorusuyla bitmeli (okuyucunun deneyimini/görüşünü soran, "yorumlarınızı bekliyorum" gibi jenerik değil).
-4. HASHTAG: En sonda 3-5 adet, konuyla birebir ilgili. 10 hashtag SPAM sinyalidir, YASAK.
+4. HASHTAG: En sonda en fazla 3 adet, konuyla birebir ilgili. 10 hashtag SPAM sinyalidir, YASAK.
 5. LİNK: Sütun talimatı izin vermiyorsa post içinde link OLMAYACAK (link erişimi düşürür).
 6. EMOJİ: En fazla 3-4 adet, doğal duran yerlerde. Her paragrafa/maddeye emoji serpiştirme — bu AI izi bırakır.
 7. ŞABLON YASAĞI: "🔍 Mini Araştırma", "📊 Rakamlar ne diyor?", "⚙️ Stratejiler" gibi sabit başlıklı bölümler KURMA. Her post aynı iskeletle çıkmamalı; format talimatı tek yapı kaynağıdır.

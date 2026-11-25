@@ -13,6 +13,13 @@ while (($#)); do
   esac
 done
 [[ -f "$captions" && -f "$image" ]] || { echo 'Metin ve görsel dosyası gerekli.' >&2; exit 2; }
+# Cenk 2026-11-25: own personal posts publish only via Telegram approval on this Mac
+# (scripts/linkedin-post-approval.mjs). The VPS day receipts do not see Mac receipts, so a
+# VPS publish can double-post. Preflight without --publish still runs.
+if [[ "$publish" == '--publish' ]]; then
+  echo 'Kişisel LinkedIn yayını kapalı (25 Kasım 2026, Cenk): yalnızca Telegram onayıyla, scripts/linkedin-post-approval.mjs üzerinden yayınlanır.' >&2
+  exit 3
+fi
 day=$(TZ=Europe/Istanbul date +%F)
 host=root@5.182.33.26
 container=dgecwxjms61k579zpew9y0rd-181546513318

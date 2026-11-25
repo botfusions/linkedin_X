@@ -1,6 +1,6 @@
 // Telegram-approved LinkedIn post publisher for Cenk's own profile.
 //
-// --request --captions <json with linkedin_personal> --image <png|jpg>
+// --request --captions <json with linkedin_personal> --image <png|jpg> [--slot 10|16]
 //   Snapshots the text and image into data/post-onay/<id>/, writes a pending record and
 //   sends the image plus the full text with publish/reject buttons (py:/pr:<id>:<nonce>).
 // --callback
@@ -19,7 +19,10 @@ import {openMcp, publishWithMcp, dayInIstanbul} from './geo-linkedin-trial.mjs';
 import {withLock, tg} from './linkedin-comment-approval.mjs';
 
 const DIR = path.resolve('data/post-onay');
-// Shared day lock with geo-linkedin-trial.mjs: one own post per TRT day, whichever path posts it.
+// Receipts: <day>-<slot>.json for the 10:00/16:00 slots (Cenk 2026-11-25: two own posts a day);
+// a request without --slot keeps the old <day>.json lock shared with geo-linkedin-trial.mjs.
+export const SLOTS = ['10', '16'];
+export const receiptKey = (day, slot) => (slot ? `${day}-${slot}` : day);
 const RECEIPTS = path.resolve('data/geo-trial-receipts');
 const MAX_AGE_MS = 48 * 3600 * 1000;
 const DEFAULT_APPROVER = 6030287709; // Cenk
@@ -64,19 +67,20 @@ export async function handlePostCallback({cb, approverId, chatId, store, publish
   if (hashOf(snap.text, snap.image) !== rec.hash) return {reply:'Taslak dosyaları onaydan sonra değişmiş, yayınlamadım.', done:true};
   if (await store.hashSeen(rec.hash)) return {reply:'Aynı metin ve görsel daha önce gönderilmiş, yayınlamadım.', done:true};
   const day = dayInIstanbul(new Date(now));
-  const base = {day, hash:rec.hash, source:'post-onay', record:p.id, image:snap.imagePath, createdAt:at};
+  const key = receiptKey(day, rec.slot);
+  const base = {day, slot:rec.slot || null, hash:rec.hash, source:'post-onay', record:p.id, image:snap.imagePath, createdAt:at};
   // Exclusive day receipt: blocks a second own post today from this path and from the trial script.
-  if (!(await store.claimDay(day, {...base, status:'posting'}))) return {reply:'Bugün zaten bir post yayınlandı ya da yayınlanıyor. Yarın tekrar basabilirsin.'};
+  if (!(await store.claimDay(key, {...base, status:'posting'}))) return {reply: rec.slot ? `Bugünün ${rec.slot}:00 postu zaten yayınlandı ya da yayınlanıyor.` : 'Bugün zaten bir post yayınlandı ya da yayınlanıyor. Yarın tekrar basabilirsin.'};
   // Mark before the call: a crash mid-publish must never lead to a second post.
   await store.write(p.id, {...rec, status:'publishing', decided_at:at});
   try {
     const result = await publish(snap.text, snap.imagePath);
     await store.write(p.id, {...rec, status:'published', decided_at:at, published_at:new Date(now).toISOString(), result});
-    await store.writeDay(day, {...base, ...result});
+    await store.writeDay(key, {...base, ...result});
     return {reply:`Post yayınlandı.\n${result.url}`, done:true};
   } catch (e) {
     await store.write(p.id, {...rec, status:'needs_verification', decided_at:at, error:e.message});
-    await store.writeDay(day, {...base, status:'needs_verification', error:e.message});
+    await store.writeDay(key, {...base, status:'needs_verification', error:e.message});
     return {reply:`Yayın hatası, tekrar denemedim. LinkedIn profilinde kontrol et.\n${e.message}`, done:true};
   }
 }
@@ -123,7 +127,8 @@ async function publishPost(text, imagePath) {
 
 async function requestMode(args) {
   const arg = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
-  const captions = arg('--captions'), imageIn = arg('--image');
+  const captions = arg('--captions'), imageIn = arg('--image'), slot = arg('--slot');
+  if (slot !== undefined && !SLOTS.includes(slot)) throw new Error(`--slot ${SLOTS.join(' veya ')} olmalı.`);
   if (!captions || !imageIn) throw new Error('Kullanım: node scripts/linkedin-post-approval.mjs --request --captions captions.json --image gorsel.png');
   const token = process.env.TELEGRAM_ENGAGEMENT_BOT_TOKEN, chatId = process.env.TELEGRAM_ENGAGEMENT_CHAT_ID;
   if (!token || !chatId) throw new Error('TELEGRAM_ENGAGEMENT_BOT_TOKEN / TELEGRAM_ENGAGEMENT_CHAT_ID eksik.');
@@ -135,7 +140,7 @@ async function requestMode(args) {
   await fs.writeFile(path.join(dir, 'text.txt'), text);
   await fs.writeFile(path.join(dir, `image.${ext}`), image);
   const rec = {schema:'linkedin-post-approval/v1', status:'pending', created_at:new Date().toISOString(), nonce,
-    hash:hashOf(text, image), image_file:`image.${ext}`, source:{captions:path.resolve(captions), image:path.resolve(imageIn)}};
+    hash:hashOf(text, image), image_file:`image.${ext}`, ...(slot ? {slot} : {}), source:{captions:path.resolve(captions), image:path.resolve(imageIn)}};
   await fileStore.write(id, rec);
   const form = new FormData();
   form.set('chat_id', chatId);
@@ -144,9 +149,9 @@ async function requestMode(args) {
   const r = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {method:'POST', body:form, signal:AbortSignal.timeout(30000)});
   const j = await r.json();
   if (!j.ok) throw new Error(`Telegram sendPhoto: ${r.status} ${j.description || ''}`);
-  await tg(token, 'sendMessage', {chat_id:chatId, text:`📣 Post onayı #${id} (${text.length} karakter)\n\n${text}`,
+  await tg(token, 'sendMessage', {chat_id:chatId, text:`📣 Post onayı #${id}${slot ? ` · ${slot}:00 postu` : ''} (${text.length} karakter)\n\n${text}`,
     reply_markup:{inline_keyboard:[[{text:'✅ Yayınla', callback_data:`py:${id}:${nonce}`}, {text:'❌ Reddet', callback_data:`pr:${id}:${nonce}`}]]}});
-  console.log(JSON.stringify({schema:'linkedin-post-approval-request/v1', status:'sent', id, characters:text.length}));
+  console.log(JSON.stringify({schema:'linkedin-post-approval-request/v1', status:'sent', id, slot:slot || null, characters:text.length}));
 }
 
 async function callbackMode() {
