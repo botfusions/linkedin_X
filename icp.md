@@ -16,6 +16,10 @@ view Cenk's profile or engage with his posts.
 - 1st-degree connection (a message is possible without a request).
 - Recent: viewed or engaged in the last 7 days.
 
+## Source quality (Cenk, 2026-11-25)
+- Profile viewers: do NOT contact, do not draft openers for them. Most viewers are people who want to sell to us. Keep them as a count only.
+- Preferred source: people who react to or comment on competitor GEO posts, read with a separate (non-main) LinkedIn account.
+
 ## Hard limits
 - Read-only. No automatic messages, connection requests or likes.
 - Store only what LinkedIn shows publicly: name, headline, profile URL, degree, when seen, source.
