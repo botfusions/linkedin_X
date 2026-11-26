@@ -6,7 +6,21 @@ says `ready`, the wrapper PUBLISHES it automatically (Cenk 2026-11-26, `AUTO = T
 wrapper) and sends Cenk a Telegram notice. Your metin-bakis check is the last gate before the post goes out.
 
 Inputs from the wrapper (first lines of the prompt): `SLOT` (10 or 16), `DAY` (YYYY-MM-DD, TRT),
-`OUT` (folder to write into, e.g. `data/post-taslak/2026-11-26-10/`).
+`OUT` (folder to write into, e.g. `data/post-taslak/2026-11-26-10/`), and sometimes `QUEUE`.
+
+## Queue post (own content), only when the wrapper's prompt has a `QUEUE=` line
+The wrapper picked a finished post from `data/post-kuyruk/` (read its `README.md`). Queue posts
+go to Cenk's Telegram press, not auto-publish. Then:
+- Skip steps 2, 3, 3b and 4. Do not search news. Pillar = `kuyruk`, format = `kuyruk`.
+- Step 1 still applies (read AGENT.md and recent posts).
+- Step 5: the text after `---` in the QUEUE file is the post. Invoke the `turkce-insani-yazar`
+  skill only for a light pass (spelling, flow). Keep every fact, number, date and the list
+  structure. Never add a fact that is not under `olgular:` in the file.
+- Step 6: make the card for this post as usual (facts on the card also only from `olgular:`).
+- Step 7: give metin-bakis (opus) the post, the card text, the file's `olgular:` line and its
+  `source_url` (open the page to check). Same verdict handling.
+- Step 8: `news_link` = "", `source_url` = the file's `source_url`, pillar/format `kuyruk`, and
+  add `"queue_item":"<file name>"`. Never edit the QUEUE file: the wrapper marks it.
 
 ## Steps
 
