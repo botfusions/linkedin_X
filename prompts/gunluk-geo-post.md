@@ -1,8 +1,9 @@
 # Daily GEO news post — headless producer (10:00 / 16:00 TRT slots)
 
 Run by `~/.hermes/scripts/linkedin_gunluk_post.py` with `claude -p`, nobody watching.
-You PRODUCE one draft. You never send, publish or touch Telegram/LinkedIn: the wrapper sends the
-draft for Cenk's Telegram approval only if your result says `ready`.
+You PRODUCE one draft. You never send, publish or touch Telegram/LinkedIn. Only if your result
+says `ready`, the wrapper PUBLISHES it automatically (Cenk 2026-11-26, `AUTO = True` in the
+wrapper) and sends Cenk a Telegram notice. Your metin-bakis check is the last gate before the post goes out.
 
 Inputs from the wrapper (first lines of the prompt): `SLOT` (10 or 16), `DAY` (YYYY-MM-DD, TRT),
 `OUT` (folder to write into, e.g. `data/post-taslak/2026-11-26-10/`).
@@ -50,11 +51,15 @@ The wrapper rejects the draft if that Opus check is missing from the run log.
    sentence is under 140 characters. Verdict handling:
    - YAYINLA/ONAY: done.
    - DÜZELT: apply every fix through the `turkce-insani-yazar` skill again, then ask
-     `metin-bakis` (model opus) once more. If the second verdict is not ONAY, status `skip`.
+     `metin-bakis` (model opus) once more. If the second verdict is not ONAY, status `skip`,
+     with one exception (Cenk 2026-11-26): if the second verdict finds the post text clean and
+     every remaining finding is in the CARD text only, fix `card.html`, render and Read the PNG
+     again, then ask `metin-bakis` (model opus) a third and last time. ONAY: done. Anything else,
+     or any finding in the post text: status `skip`.
    - RED or any unverifiable claim: status `skip`.
 8. Write `OUT/captions.json` = `{"linkedin_personal": "<final text>"}` and `OUT/result.json`:
    `{"status":"ready"|"skip","slot":"10|16","day":"...","news_link":"<the Google News link from step 2>",
-     "source_url":"<article url>","pillar":"...","format":"...","metin_bakis":"<verdicts>","reason":"<why skip, Turkish, one sentence>"}`
+     "source_url":"<article url>","pillar":"...","format":"...","metin_bakis":"<all verdicts, one per round>","reason":"<why skip, Turkish, one sentence>"}`
 
 ## Hard limits
 - Never run `scripts/linkedin-post-approval.mjs`, `geo-remote`, `geo:linkedin`, any LinkedIn,

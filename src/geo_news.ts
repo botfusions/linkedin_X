@@ -9,12 +9,19 @@ import { fetchNewsFromRSS, type NewsArticle } from "./services/rss.js";
 const gn = (q: string) =>
   `https://news.google.com/rss/search?q=${encodeURIComponent(q)}+when:2d&ceid=US:en&hl=en-US&gl=US`;
 
+// Order matters: the top 10 are taken in feed order, so trade press goes first (2026-11-26: the
+// GEO/AEO query alone filled all 10 slots with agency lists and press releases).
 export const FEEDS = [
-  gn('"generative engine optimization" OR "answer engine optimization"'),
+  "https://www.searchenginejournal.com/feed/",
+  "http://feeds.seroundtable.com/SearchEngineRoundtable1", // its https host fails TLS
   gn('"AI Overviews" OR "AI Mode" Google search'),
   gn('"ChatGPT search" OR "Perplexity" OR "AI search" visibility brands'),
-  "https://www.searchenginejournal.com/feed/",
+  gn('"generative engine optimization" OR "answer engine optimization"'),
 ];
+
+// Agency rankings, awards and vendor press releases are never our news.
+// Not "launches"/"announces": they also match real news ("Google launches AI Mode in ...").
+const JUNK = /\b(best|top \d+|\d+ (best|top)|agenc(y|ies)|providers?|recognized|award|certification|certified|press release)\b/i;
 
 // Trade-press feeds carry all SEO news; keep only items about AI answers/search.
 const GEO_WORDS = /\b(GEO|AEO|generative engine|answer engine|AI Overview|AI Mode|ChatGPT|Perplexity|Gemini|Copilot|LLM|AI search|citation|AI visibility)\b/i;
@@ -32,6 +39,7 @@ export function pickFresh(items: NewsArticle[], used: string[], now = Date.now()
     if (!a.link || seen.has(a.link) || titles.has(key)) return false;
     if (!Number.isFinite(t) || now - t > MAX_AGE_MS) return false;
     if (!GEO_WORDS.test(`${a.title} ${a.contentSnippet}`)) return false;
+    if (JUNK.test(a.title.replace(/\s+-\s+[^-]+$/, ""))) return false;
     titles.add(key);
     return true;
   });

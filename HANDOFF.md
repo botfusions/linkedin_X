@@ -1,3 +1,5 @@
+Status: active - build the follow-up on replies to our comments (thread-monitor timing rules)
+
 # HANDOFF — 2026-11-24 (Telegram-approved LinkedIn comments)
 
 ## Update 2026-11-25 ~11:20 TRT (read this first)
@@ -13,6 +15,15 @@
 - NEXT job (Cenk 2026-11-25): engager analytics. Pull who likes/comments on our own posts, segment by ICP fit, list prospects. Idea from that repo's linkedin-engager-analytics; build on linkedin-mcp/Neo, not Apify. Then: follow-up on replies to our comments (thread-monitor rules: 0-6 h hot, 6-24 h warm, 24-72 h cool, >72 h DM; never 3+ chained replies; skip if author deleted).
 - Engager analytics, first run 2026-11-25 (manual, Neo): own posts have 0 reactions/comments (last 20), so the only real source is the Premium profile-viewers page (`/me/profile-views/`, shows ~10 people, 7 named). ICP in `icp.md`; list in `data/engager/2026-11-25.md` (gitignored, personal data). Result: 1 aday, 4 meslektaş. No weekly job yet: volume too low; re-run by hand or add a job when posts start getting reactions. Apify not used: LinkedIn actors need Cenk's session cookie handed to a third party.
 - Update same day: Cenk signed the Neo Default profile into his unused second account (cenk-tokgoz-82010992, 6 connections) for reading competitor posts. The main account (0918ab373) is no longer signed in on Neo. Profile viewers: never contact (mostly sellers, `icp.md`). Read 2 Webtures posts (~120 reactions): mostly an engagement pod (Kafası pages, the same ~20 people, Webtures staff); 2 weak aday. Then read 1 Brantial TR post (55 reactions): the same pod (Webtures, Brantial, Exportial share one engagement network); Hüseyin Kılıç / Can Doğan posts get 1-2 reactions. Conclusion: reactor mining is not a prospect source here; only 1 weak aday (Dinçer Ç., Tüyap). Better route for prospects: the `musteri-bul` skill (treg) or a LinkedIn people search by title, not engagers.
+- 2026-11-26 ~16:10 TRT, daily GEO posts:
+  - AUTO-PUBLISH (Cenk: "kendiliğinden yayınlansın"): wrapper `AUTO = True` passes `--auto`; `linkedin-post-approval.mjs --auto` builds the press in code (`autoPress`) and runs the same `handlePostCallback` guards (hash, once-only, per-slot receipt, first comment), then sends a Telegram notice with the result. Back to press approval: set `AUTO = False` (backup `linkedin_gunluk_post.py.bak-onayli-20261126`).
+  - Why both 2026-11-26 slots skipped: (1) `geo_news.ts` took the top 10 in feed order and the GEO/AEO query filled them with agency lists/press releases; fixed: trade feeds first (SEJ + Search Engine Roundtable), JUNK title filter, test added. (2) 10:00 stopped on a card-only error at round 2; fixed: third metin-bakis round for card-only findings.
+  - Auto-publish gate: the wrapper reads the LAST metin-bakis verdict from harness `task_notification` events (`last_verdict`, model text never counts) and publishes only on ONAY/YAYINLA. Checked on real logs: 2026-11-25-16 ONAY, 2026-11-26-10 ONAY, 2026-11-26-10-skip1 DÜZELT.
+  - If the approval lock is busy, `--auto` falls back to the normal button message. Publish call timeout 300 s; on timeout the wrapper notifies "check the profile" and never retries.
+  - WARNING: a hand run of `linkedin_gunluk_post_10.sh` / `_16.sh` now publishes. For tests use `linkedin_gunluk_post.py --slot 10 --worker --dry-run`.
+  - First live `--auto` run: 2026-11-27 09:15 TRT. Only `autoPress` + `handlePostCallback` are unit-tested; the `--auto` branch itself has not run yet.
+  - Rankie (app.rankie.ai MCP) holds social-post briefs per Cenk; the MCP is configured only for the `Botfusions Web` project, not here. Not wired in.
+  - The 10:00 slot was re-run by hand at 15:59 (old wrapper, Telegram buttons): SEJ "Is GEO visibility delivering business value".
 - Cenk 2026-11-25 ~15:45 TRT: prospect finding is ON HOLD. Focus is comments and own posts. Next build candidate: follow-up on replies to our comments (thread-monitor rules above).
 
 ## Current state 2026-11-25 ~03:00 TRT

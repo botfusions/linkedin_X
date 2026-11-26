@@ -16,3 +16,14 @@ test("pickFresh keeps fresh GEO items, drops used, old, off-topic and duplicate 
   ], ["https://x/5"], NOW);
   assert.deepEqual(out.map((o) => o.link), ["https://x/1"]);
 });
+
+test("pickFresh drops agency lists, awards and vendor press releases", () => {
+  const out = pickFresh([
+    a("The 10 Best AEO Providers in 2026 - Inter Press Service", "https://x/6"),
+    a("8 AI SEO Agencies Helping Brands Get Mentioned in ChatGPT - Business Matters", "https://x/7"),
+    a("Finseo Achieves ISO 27001 Certification to Bring Security to AEO and GEO", "https://x/8"),
+    a("Google AI Mode adds image collections", "https://x/9"),
+    a("Google launches AI Mode in Turkey - The Verge", "https://x/10"),
+  ], [], NOW);
+  assert.deepEqual(out.map((o) => o.link), ["https://x/9", "https://x/10"]);
+});

@@ -6,7 +6,9 @@
 //   sends the image plus the full text with publish/reject buttons (py:/pr:<id>:<nonce>).
 // --callback
 //   Called by the Hermes plugin (linkedin-yorum-onay) for one press. Publishes only the
-//   pressed snapshot, once. No press, no post. No automatic retry after an uncertain publish.
+//   pressed snapshot, once. No automatic retry after an uncertain publish.
+// --request ... --auto (Cenk 2026-11-26): publish right away through the same callback guards
+//   (autoPress), then send a Telegram notice. If the lock is busy, it falls back to the buttons.
 //
 // Publishing here is approved per press by Cenk, not by the 30-day trial window in
 // data/geo-trial.json; only expectedSub is taken from that file.
@@ -51,6 +53,11 @@ export function firstComment(url) {
 }
 
 export const hashOf = (text, image) => createHash('sha256').update(text).update(image).digest('hex');
+
+// --auto (Cenk 2026-11-26: "kendiliğinden yayınlansın"): the press Cenk would make, built in code,
+// so auto posts go through the same once-only, hash and per-slot receipt guards as a real press.
+export const autoPress = (id, nonce, approverId, chatId) =>
+  ({from:{id:approverId}, message:{chat:{id:chatId}}, data:`py:${id}:${nonce}`});
 
 // Pure decision; side effects injected so tests run without network or disk.
 export async function handlePostCallback({cb, approverId, chatId, store, publish, comment, now = Date.now()}) {
@@ -169,6 +176,24 @@ async function requestMode(args) {
   const rec = {schema:'linkedin-post-approval/v1', status:'pending', created_at:new Date().toISOString(), nonce,
     hash:hashOf(text, image), image_file:`image.${ext}`, ...(slot ? {slot} : {}), ...(first ? {first_comment:first} : {}), source:{captions:path.resolve(captions), image:path.resolve(imageIn)}};
   await fileStore.write(id, rec);
+  if (args.includes('--auto')) {
+    const approverId = Number(process.env.TELEGRAM_ENGAGEMENT_APPROVER_ID || DEFAULT_APPROVER);
+    const r = await withLock(() => handlePostCallback({cb:autoPress(id, nonce, approverId, chatId), approverId, chatId, store:fileStore, publish:publishPost, comment:commentOnPost}), DIR);
+    if (r.locked) console.error('Kilit dolu: otomatik yayın yerine normal onay mesajı gönderiliyor.');
+  }
+  const after = args.includes('--auto') ? await fileStore.read(id) : null;
+  if (after && after.status !== 'pending') {
+    const ok = after.status === 'published';
+    const fc = after.first_comment_result ? `\nİlk yorum: ${after.first_comment_result.status}` : '';
+    const form = new FormData();
+    form.set('chat_id', chatId);
+    form.set('caption', `🤖 Otomatik post${slot ? ` · ${slot}:00` : ''} #${id}\n${ok ? `Yayınlandı: ${after.result?.url || ''}${fc}\nİlk 60 dakikada gelen yorumlara yanıt ver.` : `Yayınlanmadı, durum: ${after.status}. ${after.error || ''}`}`.slice(0, 1000));
+    form.set('photo', new Blob([image], {type: ext === 'png' ? 'image/png' : 'image/jpeg'}), `image.${ext}`);
+    await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {method:'POST', body:form, signal:AbortSignal.timeout(30000)}).catch(() => {});
+    console.log(JSON.stringify({schema:'linkedin-post-approval-request/v1', status:after.status, id, slot:slot || null, characters:text.length}));
+    if (!ok) process.exitCode = 1;
+    return;
+  }
   const form = new FormData();
   form.set('chat_id', chatId);
   form.set('caption', `📣 Post onayı #${id}: görsel. Metin ve butonlar bir sonraki mesajda.`);

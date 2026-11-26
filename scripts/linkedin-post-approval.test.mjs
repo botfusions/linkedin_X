@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parsePostCallback, checkPost, hashOf, handlePostCallback, receiptKey, firstComment} from './linkedin-post-approval.mjs';
+import {parsePostCallback, checkPost, hashOf, handlePostCallback, receiptKey, firstComment, autoPress} from './linkedin-post-approval.mjs';
 
 const OWNER = 6030287709;
 const PNG = Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), Buffer.alloc(16)]);
@@ -130,4 +130,15 @@ test('no first_comment in record means no comment call', async () => {
   let n = 0;
   await run(setup(), `py:${ID}:abcd1234`, undefined, async () => { n++; });
   assert.equal(n, 0);
+});
+
+test('autoPress publishes once through the same guards as a real press', async () => {
+  const s = setup();
+  const cb = autoPress(ID, 'abcd1234', OWNER, String(OWNER));
+  const r = await handlePostCallback({cb, approverId:OWNER, chatId:String(OWNER), store:s.store, publish:s.publish, now:NOW});
+  assert.match(r.reply, /Post yayınlandı/);
+  assert.equal(s.published, 1);
+  const busy = setup({dayFree:false});
+  await handlePostCallback({cb, approverId:OWNER, chatId:String(OWNER), store:busy.store, publish:busy.publish, now:NOW});
+  assert.equal(busy.published, 0); // slot already used today: no second post
 });
