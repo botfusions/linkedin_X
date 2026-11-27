@@ -1,7 +1,8 @@
 # Comment reader — headless, READ-ONLY (BrowserOS Neo)
 
 Run by a wrapper with `claude -p`, nobody watching. You only READ LinkedIn pages and write one JSON
-file. You never click, type, comment, react, send or publish. You do not touch Telegram, `.env`
+file. You never type, comment, react, send or publish. The ONLY click you may make is the
+reply expander described in step 2 (it just shows hidden replies). You do not touch Telegram, `.env`
 files or tokens. If something is unclear or a step fails, write what you saw into the JSON
 (`error`) and stop; do not improvise.
 
@@ -15,9 +16,16 @@ Neo's `page.evaluate` does not exist; read the DOM with raw CDP (`page.cdp(metho
 1. Read `WATCH`. Take at most 10 items (the list is already newest first).
 2. For each item, in one `run` call per page (about 5 fresh pages per call at most, the cap is 30 s):
    `browser.open(url)`, `waitForSelector('[componentkey^="replaceableComment_"]', {timeout: 15000})`
-   (no match = zero comments, that is a valid result), then run the extraction below, then `page.close()`.
+   (no match = zero comments, that is a valid result), then, ONLY for items whose `kind` is `our_comment`, expand
+   hidden replies (see "Expand replies" below), then run the extraction below, then `page.close()`.
 3. Write `OUT` as JSON: `{"read_at": "<ISO>", "pages": [{"url", "kind", "our_comment_urn", "error", "has_more", "comments": [...]}]}`.
    Copy `kind` and `our_comment_urn` from the watch item. Do not add anything else.
+
+## Expand replies (only `kind: our_comment`)
+LinkedIn shows just the newest reply of a thread; older ones sit behind "Önceki yanıtları göster". Take
+`page.snapshot({mode: 'interactive'})`, find the lines whose button text matches
+`/yanıt(lar)?ı?\s*(göster|gör)/i` and does NOT contain "Yanıtla", click at most 3 of them with `page.click(ref)`,
+then `page.waitForTime(1500)`. Click nothing else, ever (no "Yanıtla", "Beğen", "Takip Et", "Daha fazla").
 
 ## Extraction (paste into `run`, `p` is the page handle)
 ```js
@@ -31,13 +39,15 @@ for (const [i, id] of q.nodeIds.entries()) {
   const m = /\((?:urn:li:)?(activity|share|ugcPost):(\d+),(\d+)\)/.exec(key);
   if (!m) continue;
   const html = (await c('DOM.getOuterHTML', {nodeId: id})).outerHTML;
-  const profile = (/href="https:\/\/www\.linkedin\.com\/in\/([^"?\/]+)/.exec(html) || [])[1] || '';
+  const profiles = [];   // unique /in/ slugs in page order: [0] = author, [1] = who a reply is addressed to
+  for (const mm of html.matchAll(/href="https:\/\/www\.linkedin\.com\/in\/([^"?\/]+)/g)) { const sl = decodeURIComponent(mm[1]); if (!profiles.includes(sl)) profiles.push(sl); }
+  const profile = profiles[0] || '';
   const lines = html.replace(/<(script|style)[\s\S]*?<\/\1>/g, '').replace(/<[^>]+>/g, '\n')
     .replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"').split('\n').map((s) => s.trim()).filter(Boolean);
   comments.push({
     position: i,                                   // order on the page
     urn: `urn:li:comment:(urn:li:${m[1]}:${m[2]},${m[3]})`,   // API form, ready for parent_comment
-    profile: decodeURIComponent(profile),
+    profile, profiles,
     author: lines[0] || '',
     author_badge: lines[1] === 'Yazar' ? 'Yazar' : '',        // "Yazar" = author of the post
     headline: lines[1] === 'Yazar' ? lines[2] || '' : lines[1] || '',
@@ -56,12 +66,12 @@ return comments;
   The reading account is a different one (`cenk-tokgoz-82010992`); its comments are also ours: by_us true.
 - `reply_count`: if the last lines of the node are two numbers, they are likes then replies; otherwise null.
   If you are not sure, null. Never guess.
-- Drop `text_lines`. Keep: `position`, `urn`, `profile`, `author`, `author_badge`, `headline`, `age_text`, `text`, `by_us`, `reply_count`.
-- `has_more`: true if the page text contains "daha fazla yorum" or "yanıtı gör" / "yanıtları gör" (use `page.grep`). Do NOT click it.
+- Drop `text_lines`. Keep: `position`, `urn`, `profile`, `profiles`, `author`, `author_badge`, `headline`, `age_text`, `text`, `by_us`, `reply_count`.
+- `has_more`: true if the page text contains "daha fazla yorum" or "yanıtı gör" / "yanıtları gör" (use `page.grep`) after you finished. Do not click anything beyond the expander rule.
 
 ## Known limit (do not try to solve it)
 A reply sits at the same DOM level as its parent comment: nesting is not visible. Do not write a
-`parent` field. Order (`position`) is all you give.
+`parent` field. Order (`position`) and `profiles` are all you give (the wrapper works out who replied to whom).
 
 ## Failure conditions
 - A page redirects to a login or checkpoint page, or shows a CAPTCHA: write `"error": "login"` for it and read no further pages. Do not try to sign in.

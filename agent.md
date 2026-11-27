@@ -52,6 +52,7 @@ Rules 1, 2, 6 and 10 above apply. These replace rules 3, 4 and 8 for such replie
 - Give the evidence professionally but warmly: one concrete point from our post or a named source, no lecture.
 - Short: about 30-55 words, 3 sentences at most. Do not repeat what the post already says.
 - This overrides the "end with a question" format line in the turkce-insani-yazar skill for these replies.
+- Also applies to replies to OUR comment on someone else's post (lane 2 / Ertunç comments). Answer from what we really do in GEO / AI visibility, grounded in the NotebookLM notebook and our own practice notes; never name a brand; if the sources do not show our practice, skip instead of inventing.
 
 ---
 

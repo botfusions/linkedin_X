@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {windowOf, toApiCommentUrn, watchList, newComments, markSeen, loadSeen, pendingFromReading} from './linkedin-yorum-takip.mjs';
+import {windowOf, toApiCommentUrn, watchList, newComments, markSeen, loadSeen, pendingFromReading, repliesToUs} from './linkedin-yorum-takip.mjs';
 
 const NOW = Date.parse('2026-11-27T12:00:00Z');
 const ago = (h) => new Date(NOW - h * 3600e3).toISOString();
@@ -58,4 +58,22 @@ test('dedupe: only unseen, non-own comments; marking is idempotent', async () =>
   const again = await markSeen(['u1'], await loadSeen(f), f, NOW + 1000);
   assert.equal(again.u1, new Date(NOW).toISOString()); // first-seen time kept
   assert.deepEqual(newComments(cs, await loadSeen(f)).map((c) => c.urn), ['u2']);
+});
+
+test('repliesToUs: only replies addressed to our comment, thread ends at the next top-level comment', async () => {
+  const mk = (ms) => `urn:li:comment:(urn:li:activity:1,${(BigInt(ms) << 22n) + 5n})`;
+  const OURS = mk(NOW - 5 * 3600e3), R1 = mk(NOW - 2 * 3600e3), R2 = mk(NOW - 1 * 3600e3), OTHER = mk(NOW - 4 * 3600e3), R3 = mk(NOW - 3600e3 / 2);
+  const me = 'ömer-cenk-tokgöz-0918ab373';
+  const page = {kind: 'our_comment', url: 'https://x/t', our_comment_urn: OURS, comments: [
+    {urn: mk(NOW - 9 * 3600e3), profiles: ['anna']},
+    {urn: OURS, profiles: [me], by_us: true, text: 'our text'},
+    {urn: R1, profiles: ['anna', me], author: 'Anna', text: 'q'},
+    {urn: R2, profiles: [me, 'anna'], by_us: true},          // our own reply: ignored
+    {urn: OTHER, profiles: ['ertunc']},                       // next top-level: thread over
+    {urn: R3, profiles: ['anna', 'ertunc']},                  // reply in another thread: not ours
+  ]};
+  assert.deepEqual(repliesToUs(page).map((c) => c.urn), [R1]);
+  const out = await pendingFromReading({pages: [page]}, {seen: {}, now: NOW});
+  assert.deepEqual(out.map((c) => [c.urn, c.kind, c.parent_comment, c.our_comment_text]), [[R1, 'reply_to_our_comment', OURS, 'our text']]);
+  assert.deepEqual((await pendingFromReading({pages: [page]}, {seen: {[R1]: 'x'}, now: NOW})), []);
 });

@@ -37,6 +37,7 @@ export function validRequest(r) {
   if (!commentId(r.comment_urn) || !postUrnFromComment(r.comment_urn)) return why('comment_urn');
   for (const k of ['author', 'comment_text', 'draft', 'post_url']) if (typeof r[k] !== 'string' || !r[k].trim()) return why(k);
   if (r.draft.length > 1250) return why('draft too long');
+  if (r.parent_comment && postUrnFromComment(r.parent_comment) !== postUrnFromComment(r.comment_urn)) return why('parent_comment');
   return {ok: true};
 }
 
@@ -154,7 +155,7 @@ export async function request(file, {store = fileStore(), send, now = Date.now()
   if (old && old.status !== 'send_failed') throw new Error('Bu yorum için kayıt zaten var.');
   const nonce = randomHex();
   const rec = {schema: 'linkedin-yanit-onay/v1', status: 'pending', created_at: new Date(now).toISOString(), nonce,
-    comment_urn: r.comment_urn, parent_comment: r.comment_urn, post_urn: postUrnFromComment(r.comment_urn), post_url: r.post_url,
+    comment_urn: r.comment_urn, parent_comment: r.parent_comment || r.comment_urn, post_urn: postUrnFromComment(r.comment_urn), post_url: r.post_url,
     author: r.author, profile: r.profile || r.author, headline: r.headline || '', comment_text: r.comment_text, draft: r.draft};
   await store.write(id, rec);
   const buttons = {inline_keyboard: [[{text: '✅ Yanıtı yayınla', callback_data: `qy:${id}:${nonce}`}, {text: '❌ Reddet', callback_data: `qr:${id}:${nonce}`}]]};

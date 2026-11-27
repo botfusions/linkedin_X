@@ -70,16 +70,39 @@ export async function markSeen(urns, seen, file = SEEN, now = Date.now()) {
   return next;
 }
 
-// From a reader output file: unseen comments of OTHER people on OUR posts, newest-limit by age.
-// Own-post pages only: on other people's posts a stranger's comment is not a reply to us.
+// Our two accounts (profile slugs): comments by them are never "new", and a reply addressed to them is a reply to us.
+export const OUR_PROFILES = ['ömer-cenk-tokgöz-0918ab373', 'cenk-tokgoz-82010992'];
+const isUs = (c) => c.by_us || OUR_PROFILES.includes(c.profiles?.[0] || c.profile);
+
+// Replies to OUR comment on someone else's post. The page lists a thread flat: our comment, then its
+// replies (each carries the author slug first and the addressee slug second in `profiles`), then the next
+// top-level comment (one slug only). Shortcut: a top-level comment that mentions someone looks like a
+// reply and would end the scan late; the addressee check keeps it from counting as a reply to us.
+export function repliesToUs(page) {
+  const list = page.comments || [];
+  const i = list.findIndex((c) => c.urn === page.our_comment_urn);
+  if (i < 0) return [];
+  const out = [];
+  for (const c of list.slice(i + 1)) {
+    if ((c.profiles?.length || 0) < 2) break; // next top-level comment: thread over
+    if (!isUs(c) && OUR_PROFILES.includes(c.profiles[1])) out.push(c);
+  }
+  return out;
+}
+
+// From a reader output file: unseen comments of OTHER people that need a decision, newest first.
+// kind own_post: any comment on our post. kind our_comment: only replies addressed to our comment.
 export async function pendingFromReading(reading, {seen, now = Date.now(), maxAgeH = MAX_AGE_H} = {}) {
   const out = [];
   for (const page of reading.pages || []) {
-    if (page.kind !== 'own_post' || page.error) continue;
-    for (const c of newComments(page.comments || [], seen)) {
+    if (page.error || !['own_post', 'our_comment'].includes(page.kind)) continue;
+    const cands = page.kind === 'own_post' ? page.comments || [] : repliesToUs(page);
+    for (const c of newComments(cands.filter((x) => !isUs(x)), seen)) {
       const born = commentTimeMs(c.urn);
       if (born === null || windowOf((now - born) / H) === null || (now - born) / H > maxAgeH) continue;
-      out.push({...c, post_url: page.url, window: windowOf((now - born) / H), age_h: Math.round((now - born) / H * 10) / 10});
+      out.push({...c, post_url: page.url, window: windowOf((now - born) / H), age_h: Math.round((now - born) / H * 10) / 10,
+        ...(page.kind === 'our_comment' ? {kind: 'reply_to_our_comment', parent_comment: page.our_comment_urn,
+          our_comment_text: (page.comments || []).find((x) => x.urn === page.our_comment_urn)?.text || ''} : {})});
     }
   }
   return out.sort((a, b) => a.age_h - b.age_h);
