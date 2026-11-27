@@ -16,7 +16,7 @@ and `OUT=<result path>`.
    other side wrong, add a layer instead of refuting. Do NOT use the "Replies to people who comment on OUR
    posts" section: that is for another lane.
 2. Decide: draft or skip (a bad comment is worse than none).
-   Draft only if the post is about GEO/AEO/AI visibility/measurement (or is a channel-value post, e.g. an
+   Draft only if the post is about GEO/AEO/SEO/AI visibility/measurement (or is a channel-value post, e.g. an
    event or ecosystem post) AND has a gap: an unsourced number, a missing layer, an inconsistency, an
    unexplained method, or an open question to the audience. SKIP (with reason) for: off-topic, pure
    announcement or hiring post, nothing to add that is concrete, tiny reach with no engagement, a repost with no
