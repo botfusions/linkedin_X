@@ -12,7 +12,7 @@ and `OUT=<result path>`.
 ## Steps
 1. Read `agent.md`, section "YORUM KURALLARI" (rules 1-10) and the format lines in "Metin Formatı". These
    rules apply in full: NO brand names (Botfusions, Rankie, Populon, aiizle, client names), no link,
-   no hashtag, no emoji, 60-120 words, "sahada şunu görüyorum" voice, no unsourced number, never call the
+   no hashtag, no emoji, 60-120 words, "pratikte şunu görüyorum" voice (never start with the word "Sahada": use "Pratikte", "Uygulamada" or "Deneyimlerime göre"), no unsourced number, never call the
    other side wrong, add a layer instead of refuting. Do NOT use the "Replies to people who comment on OUR
    posts" section: that is for another lane.
 2. Decide: draft or skip (a bad comment is worse than none).

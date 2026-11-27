@@ -34,7 +34,7 @@ LinkedIn: haftada 21 gönderiden **haftada 2**'ye indi.
 Ajan yorum **yazmaz, taslak üretir**. Yayınlama kararı ve eylemi Cenk'e aittir.
 
 1. **MARKA ADI ASLA GEÇMEZ.** Ne Botfusions, ne Rankie, ne Populon, ne aiizle, ne müşteri adı. İstisnası yok. Yorum reklam kokarsa hem etkisini kaybeder hem rakip sayfasında spam muamelesi görür.
-2. **Dil "biz şunu yapıyoruz" değil, "sahada şunu görüyorum"** olur. Birinci tekil, kurucu ağzı.
+2. **Dil "biz şunu yapıyoruz" değil, "pratikte şunu görüyorum"** olur. Birinci tekil, kurucu ağzı. Yorum "Sahada" kelimesiyle BAŞLAMAZ (Cenk, 2026-11-27); daha geniş kapsamlı bir açılış seç: "Pratikte", "Uygulamada", "Deneyimlerime göre". Kodda `validateDraft` bariyeri `banned-opening` bunu zorlar.
 3. **Uzunluk 60-120 kelime.** LinkedIn yorumunda uzun metin okunmuyor.
 4. **Şablon:** somut saha gözlemi → karşı tarafın tezini kısmen onayla → asıl belirleyici değişkeni ortaya koy.
 5. **Belirleyici değişken her seferinde ölçüm/atıf tarafında olmalı.** Rakiplerin retoriği var, kanıtı yok; ayrıştığımız tek yer burası.

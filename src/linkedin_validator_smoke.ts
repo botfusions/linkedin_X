@@ -16,9 +16,9 @@ const drafts = [
 
 const before = readdirSync("/System/Volumes/Data/Hermes/Hermes_Agent/Linkedin/outputs");
 const results = drafts.map((draft) => validateDraft(draft));
-if (VALIDATOR_BARRIERS.length !== 7) throw new Error("7 validator bariyeri yok");
+if (VALIDATOR_BARRIERS.length !== 8) throw new Error("8 validator bariyeri yok");
 if (results.length !== 2 || results.some((r) => !r.ok)) {
-  throw new Error(`İki taslak 7 bariyerden geçmedi: ${JSON.stringify(results)}`);
+  throw new Error(`İki taslak 8 bariyerden geçmedi: ${JSON.stringify(results)}`);
 }
 const question = detectReaderQuestion("Siz bu listeye hangi maddeyi eklerdiniz?");
 if (!question.davet) throw new Error("Soru detection örneği yakalanmadı");

@@ -6,7 +6,7 @@
  * openai-codex/gpt-5.6-luna runtime. This module never calls a vendor API
  * directly and never performs a LinkedIn write.
  *
- * validateDraft() and VALIDATOR_BARRIERS are the canonical seven-barrier
+ * validateDraft() and VALIDATOR_BARRIERS are the canonical eight-barrier
  * post-generation validator and intentionally remain in this module.
  */
 import { execFile } from "node:child_process";
@@ -73,6 +73,7 @@ export const VALIDATOR_BARRIERS = [
   "sen-siz-mix",
   "length",
   "question-ending",
+  "banned-opening",
 ] as const;
 
 export interface DraftValidation {
@@ -81,7 +82,7 @@ export interface DraftValidation {
   wordCount: number;
 }
 
-/** Canonical seven post-generation barriers; safe to use without an LLM call. */
+/** Canonical eight post-generation barriers; safe to use without an LLM call. */
 export function validateDraft(text: string): DraftValidation {
   const failures: string[] = [];
   const t = text.trim();
@@ -103,6 +104,8 @@ export function validateDraft(text: string): DraftValidation {
   if (words < 30 || words > 110) failures.push(`length:${words}`);
   // Cenk 2026-11-27: a comment never ends with a question.
   if (/\?["'”’)\s]*$/.test(t)) failures.push("question-ending");
+  // Cenk 2026-11-27: a comment does not open with "Sahada" (too narrow); use a broader opener.
+  if (/^["'“]?\s*sahada\b/i.test(t)) failures.push("banned-opening");
   return { ok: failures.length === 0, failures, wordCount: words };
 }
 
