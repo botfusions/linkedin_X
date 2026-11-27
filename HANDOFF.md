@@ -1,4 +1,12 @@
-Status: active - first live comment follow-up run 16:45 TRT 2026-11-27; then commit
+Status: active - first live queue post at 10:00 TRT 2026-11-27 (Telegram press); then engager/comment follow-up build
+
+## Update 2026-11-27 ~12:50 TRT: lane 2 own competitor tracking built (replaces the Cowork comment-opportunity step)
+- Built: `data/rakip-takip/hedefler.json` (25 targets from the Cowork SKILL.md; P1 = 7 pages every run, rest rotate, cap 12), `scripts/linkedin-rakip-takip.mjs` (+ test 3/3: `npm run rakip:takip:test`), `prompts/rakip-okuyucu.md` (Neo reader: ids from list-page HTML, only posts <= 8 h are opened), `prompts/rakip-taslak.md` (2 drafts, skip allowed, turkce-insani-yazar + metin-bakis opus), `src/rakip_onay_gonder.ts` (`npm run rakip:onay -- <istek.json>`, same buttons/records as the Cowork bridge), wrapper `~/.hermes/scripts/linkedin_rakip_takip.py` (`--worker [--dry-run]`, `--self-test`).
+- Dry run 12:2x TRT: 12 pages read, 3 fresh posts, 1 skip (Webtures product post), 2 drafts passed the gate; sent for real to Telegram (Brantial TR 7531991490953175040, Brantial EN 7531989835948101632). Dedupe against the old bridge is by `data/yorum-onay/<id>.json`.
+- Bug found and fixed in `~/.hermes/scripts/linkedin_gunluk_post.py` (backup `.bak-evdict-20261127`): `used_tools`/`last_verdict` crashed on stream events that are not dicts.
+- NOT done: Hermes job (times need Cenk's OK; the old 13:00/19:00/22:00 idea misses the 6 h rule), Cowork pause (it also writes follower/newsletter/ad-library report; lane 1 only reads it optionally). Plan: run both in parallel one week, then decide. Lane 2 reads from the second account; watch for login/checkpoint.
+- Correction: Cowork did run on 25 Nov (report + entry 119 exist); no report for 26 Nov. Earlier claim "stale since 4 Nov" was wrong.
+
 
 - 2026-11-27 ~11:40 TRT: Hermes jobs created with Cenk OK (default profile, no-agent, deliver local, script `linkedin_yorum_takip.sh`): "Yorum Takibi A" `45 10,16 * * *` and "Yorum Takibi B" `30 11,17 * * *` (next runs 16:45 and 17:30 TRT today). Competitor-thread runs are not built. Lock file stops overlap.
 ## Update 2026-11-27 ~11:35 TRT: reply approval button proven
