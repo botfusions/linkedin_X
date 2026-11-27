@@ -21,7 +21,7 @@ and `OUT=<result path>`.
    unexplained method, or an open question to the audience. SKIP (with reason) for: off-topic, pure
    announcement or hiring post, nothing to add that is concrete, tiny reach with no engagement, a repost with no
    own text, or anything you cannot answer without inventing a fact. When unsure, skip. A skip is a normal result.
-3. If drafting: write TWO drafts (A recommended, B alternative, genuinely different angles) by invoking the
+3. If drafting: NO draft may end with a question (Cenk, 2026-11-27, agent.md rule 11): the last sentence is a statement. Then write TWO drafts (A recommended, B alternative, genuinely different angles) by invoking the
    `turkce-insani-yazar` skill (agent.md rule 0). The skill must run; do not write from memory.
 4. Check: call the `metin-bakis` agent with `model: "opus"` on the drafts. Give it the post text and the
    comment rules. Read its `KARAR` line. If `DÜZELT`, apply the fixes (keep the skill's style) and call

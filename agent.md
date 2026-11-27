@@ -40,9 +40,10 @@ Ajan yorum **yazmaz, taslak üretir**. Yayınlama kararı ve eylemi Cenk'e aitti
 5. **Belirleyici değişken her seferinde ölçüm/atıf tarafında olmalı.** Rakiplerin retoriği var, kanıtı yok; ayrıştığımız tek yer burası.
 6. **Kaynaksız rakam kullanma.** Karşı tarafın kaynaksız rakamını da doğrudan "yalan" diye işaretleme; kendi kaynağını koy, okuyucu farkı görsün.
 7. **Rakibi köşeye sıkıştırma.** Çürütme değil, önüne bir katman ekleme. "Ön koşul" ve "eksik halka" çerçeveleri işe yarıyor.
-8. **Öncelik: soru soran gönderiler.** "Siz ne eklerdiniz?" tipi kapanışlar davetli giriş sağlıyor, yanıt olasılığı belirgin yüksek.
+8. **Öncelik: soru soran gönderiler.** "Siz ne eklerdiniz?" tipi kapanışlı GÖNDERİLER davetli giriş sağlıyor, yanıt olasılığı belirgin yüksek. Bu, hangi gönderiye yazacağımızı seçme kuralıdır; bizim yorumumuz soruyla bitmez (kural 11).
 9. **Zamanlama:** İlk 1 saat kritik. 6 saati geçen gönderide yorumun görünürlüğü ciddi düşer.
 10. Yazım dili `skills/turkce-insani-yazar/SKILL.md` kurallarına tabidir.
+11. **Hiçbir yorum soru cümlesiyle bitmez** (Cenk, 2026-11-27; rakip gönderilerine yazdığımız yorumlar ve kendi gönderilerimize gelen yorumlara yanıtlar dahil). Son cümle bir tespit ya da değerlendirme olur. Bu kural turkce-insani-yazar skill'indeki "soru ile bitir" satırını yorumlar için geçersiz kılar. Kodda `validateDraft` bariyeri `question-ending` ve iki Hermes sarmalayıcısının kapısı bunu zorlar. Kendi gönderilerimizin (post) kapanışı bu kuralın dışındadır.
 
 ### Replies to people who comment on OUR posts (Cenk, 2026-11-27)
 Rules 1, 2, 6 and 10 above apply. These replace rules 3, 4 and 8 for such replies:
