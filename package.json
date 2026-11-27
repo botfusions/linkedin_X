@@ -25,6 +25,8 @@
     "yorum:onay:test": "node --test scripts/linkedin-comment-approval.test.mjs",
     "post:onay": "node scripts/linkedin-post-approval.mjs",
     "post:onay:test": "node --test scripts/linkedin-post-approval.test.mjs",
+    "yanit:onay:test": "node --test scripts/linkedin-yanit-onay.test.mjs",
+    "yorum:takip:test": "node --test scripts/linkedin-yorum-takip.test.mjs",
     "yorum:merkez": "tsx src/yorum_merkezi_kopru.ts",
     "yorum:merkez:test": "tsx --test src/yorum_merkezi_kopru.test.ts"
   },

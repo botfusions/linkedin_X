@@ -28,9 +28,17 @@ export function parseCallback(data) {
 // Feed URLs often carry urn:li:activity, but comments need the post's own thread URN.
 // LinkedIn rejects that with a 400 naming the real one; a 400 means nothing was posted,
 // so one call with the named URN is safe (not a retry of an uncertain publish).
-export async function commentWithThreadFix(call, postUrn) {
+// Right after publishing, LinkedIn can answer 404 "Unable to obtain activity" (seen 2026-11-26 on
+// a first comment). A 404 posted nothing, so waiting and calling again is safe.
+export async function commentWithThreadFix(call, postUrn, waits = [10e3, 30e3]) {
   const errText = (res) => res.content?.map(c => c.text).join(' ') || 'MCP hata döndürdü.';
+  const notReady = (res) => /failed with 404: Unable to obtain activity/.test(errText(res));
   let res = await call(postUrn);
+  for (const ms of waits) {
+    if (!res.isError || !notReady(res)) break;
+    await new Promise((r) => setTimeout(r, ms));
+    res = await call(postUrn);
+  }
   if (res.isError) {
     const m = /actual threadUrn: (urn:li:(?:ugcPost|share):\d+)/.exec(errText(res));
     if (!m || !/failed with 400/.test(errText(res))) throw new Error(errText(res));

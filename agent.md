@@ -44,6 +44,14 @@ Ajan yorum **yazmaz, taslak üretir**. Yayınlama kararı ve eylemi Cenk'e aitti
 9. **Zamanlama:** İlk 1 saat kritik. 6 saati geçen gönderide yorumun görünürlüğü ciddi düşer.
 10. Yazım dili `skills/turkce-insani-yazar/SKILL.md` kurallarına tabidir.
 
+### Replies to people who comment on OUR posts (Cenk, 2026-11-27)
+Rules 1, 2, 6 and 10 above apply. These replace rules 3, 4 and 8 for such replies:
+- Do NOT end with a question. End on the statement.
+- Say politely whether we agree or not ("Katılıyorum" / "Bu noktada farklı düşünüyorum"). Agree where the commenter is right; where we have no measurement, say so kindly ("orada temkinli kalıyorum"), never call the claim wrong.
+- Give the evidence professionally but warmly: one concrete point from our post or a named source, no lecture.
+- Short: about 30-55 words, 3 sentences at most. Do not repeat what the post already says.
+- This overrides the "end with a question" format line in the turkce-insani-yazar skill for these replies.
+
 ---
 
 ## 📋 Genel İşleyiş Kuralları

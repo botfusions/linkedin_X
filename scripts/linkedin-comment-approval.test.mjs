@@ -63,6 +63,17 @@ test('activity URN 400 -> one call with the thread URN LinkedIn names; other err
   assert.equal(n, 1);
 });
 
+test('404 "Unable to obtain activity" waits and calls again, then gives up', async () => {
+  const err = (t) => ({isError:true, content:[{text:t}]}), ok = {content:[{type:'text', text:JSON.stringify({id:'c2'})}]};
+  const nf = err("LinkedIn API POST /v2/socialActions/x/comments failed with 404: Unable to obtain activity for urn: 'urn:li:share:1'");
+  let n = 0;
+  const r = await commentWithThreadFix(async () => (++n < 3 ? nf : ok), 'urn:li:share:1', [0, 0]);
+  assert.equal(n, 3); assert.equal(r.id, 'c2');
+  n = 0;
+  await assert.rejects(commentWithThreadFix(async () => (n++, nf), 'urn:li:share:1', [0, 0]), /404/);
+  assert.equal(n, 3);
+});
+
 test('claim blocks a second comment even if the record is rewritten as pending', async () => {
   const sent = []; const s = mem(rec());
   await handleCallback({cb:cb('y:7390000000000000001:1:abcd1234'), approverId:ME, chatId:CHAT, store:s, publish:async (u, t) => { sent.push(t); return {}; }, now:NOW});
