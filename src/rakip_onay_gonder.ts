@@ -19,6 +19,7 @@ export interface RakipIstegi {
   headline: string;
   age_h: number;
   drafts: string[];
+  lane?: string;
 }
 
 /** Drafts that pass the brand/tone barrier, at most two. */
@@ -52,7 +53,7 @@ async function main(): Promise<void> {
     process.exitCode = 3; // the wrapper marks the post seen and tells Cenk
     return;
   }
-  await onayIste({ id: r.id, postUrn: r.urn, url: r.url, hesap: r.author, taslaklar: gecen, mesaj: mesajSatirlari(r, gecen) });
+  await onayIste({ id: r.id, postUrn: r.urn, url: r.url, hesap: r.author, taslaklar: gecen, mesaj: mesajSatirlari(r, gecen), ...(r.lane ? { lane: r.lane } : {}) });
   console.log(JSON.stringify({ status: "sent", drafts: gecen.length }));
 }
 

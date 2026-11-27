@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseCallback, handleCallback, commentWithThreadFix} from './linkedin-comment-approval.mjs';
+import {countsTowardDaily, parseCallback, handleCallback, commentWithThreadFix} from './linkedin-comment-approval.mjs';
 
 const ME = 6030287709, CHAT = '6030287709', NOW = Date.parse('2026-11-24T12:00:00Z');
 const rec = () => ({status:'pending', created_at:'2026-11-24T10:00:00Z', post_urn:'urn:li:activity:7390000000000000001', url:'u', drafts:['bir', 'iki'], nonce:'abcd1234'});
@@ -80,4 +80,12 @@ test('claim blocks a second comment even if the record is rewritten as pending',
   s.r = {...rec(), nonce:'ffff0000'}; // producer overwrote the record
   const out = await handleCallback({cb:cb('y:7390000000000000001:1:ffff0000'), approverId:ME, chatId:CHAT, store:s, publish:async (u, t) => { sent.push(t); return {}; }, now:NOW});
   assert.equal(sent.length, 1); assert.match(out.reply, /zaten/);
+});
+
+test('daily count: published/publishing/needs_verification of today count, Ertunç lane and other days do not', () => {
+  const day = '2026-11-27', at = '2026-11-27T10:00:00Z';
+  for (const status of ['published', 'publishing', 'needs_verification']) assert.equal(countsTowardDaily({status, decided_at: at}, day), true);
+  assert.equal(countsTowardDaily({status: 'published', decided_at: at, lane: 'ertunc'}, day), false);
+  assert.equal(countsTowardDaily({status: 'pending', decided_at: at}, day), false);
+  assert.equal(countsTowardDaily({status: 'published', decided_at: '2026-11-26T10:00:00Z'}, day), false);
 });

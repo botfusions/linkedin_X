@@ -84,6 +84,11 @@ export async function handleCallback({cb, approverId, chatId, store, publish, no
   }
 }
 
+// 'publishing'/'needs_verification' may have gone out, so they count too.
+// The Ertunç trial lane (Cenk, 2026-11-27) is outside the daily limit until he sets its own number.
+export const countsTowardDaily = (r, day) =>
+  r.lane !== 'ertunc' && ['published', 'publishing', 'needs_verification'].includes(r.status) && !!r.decided_at && dayTRT(Date.parse(r.decided_at)) === day;
+
 const fileStore = {
   async read(id) {
     try { return JSON.parse(await fs.readFile(path.join(DIR, `${id}.json`), 'utf8')); }
@@ -98,8 +103,7 @@ const fileStore = {
     for (const f of await fs.readdir(DIR)) {
       if (!f.endsWith('.json')) continue;
       const r = JSON.parse(await fs.readFile(path.join(DIR, f), 'utf8'));
-      // 'publishing'/'needs_verification' may have gone out, so they count too
-      if (['published', 'publishing', 'needs_verification'].includes(r.status) && r.decided_at && dayTRT(Date.parse(r.decided_at)) === day) n++;
+      if (countsTowardDaily(r, day)) n++;
     }
     return n;
   },

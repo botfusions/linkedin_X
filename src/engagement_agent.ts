@@ -221,6 +221,8 @@ export interface OnayIstegi {
   taslaklar: string[];
   /** Message lines above the buttons (Markdown, already escaped). */
   mesaj: string[];
+  /** Optional lane tag stored in the record (e.g. "ertunc"); the daily limit skips the Ertunç lane. */
+  lane?: string;
 }
 
 /** Writes the pending record, then sends the drafts with publish/reject buttons. */
@@ -259,6 +261,7 @@ async function onayKaydiYaz(o: OnayIstegi): Promise<string> {
     url: o.url,
     account: o.hesap,
     drafts: o.taslaklar,
+    ...(o.lane ? { lane: o.lane } : {}),
   };
   const tmp = `${dosya}.tmp-${process.pid}`;
   await fs.writeFile(tmp, JSON.stringify(kayit, null, 2) + "\n", "utf-8");
