@@ -68,7 +68,7 @@ Cenk asked for comments to be published through the API with his approval.
 - Token: `data/.linkedin_token.json` (scope `w_member_social`, valid until 2027-01-07).
 - If `getUpdates` returns 409, another process (for example a Hermes gateway) polls the same bot token. Give the gateway its own bot.
 - Tests: `npm run yorum:onay:test`.
-- Daily limit: at most 3 comments per TRT day (rule from `yorum-merkezi.md`, Cenk 16 Sep 2026). `publishing` and `needs_verification` count too. A press over the limit leaves the record `pending`, so it can be pressed again the next day.
+- Daily limit: at most 6 comments per TRT day (Cenk raised it from 3 on 27 Nov 2026). `publishing` and `needs_verification` count too. A press over the limit leaves the record `pending`, so it can be pressed again the next day.
 - Not yet verified live: whether LinkedIn accepts `urn:li:activity:` for comments. The first approved press will show it; a failure lands as `needs_verification` with the API message in Telegram.
 
 ---

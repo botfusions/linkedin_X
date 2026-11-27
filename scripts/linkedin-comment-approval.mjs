@@ -14,7 +14,7 @@ import {openMcp, readMcpResult} from './geo-linkedin-trial.mjs';
 const DIR = path.resolve('data/yorum-onay');
 const OFFSET = path.join(DIR, '.telegram-offset.json');
 const MAX_AGE_MS = 48 * 3600 * 1000; // comment visibility drops fast; older approvals are refused
-const DAILY_LIMIT = 3; // yorum-merkezi.md rule: at most 3 comments a day (Cenk, 16 Sep 2026)
+const DAILY_LIMIT = 6; // at most 6 comments a day (Cenk raised it from 3 on 27 Nov 2026; 3 since 16 Sep)
 const DEFAULT_APPROVER = 6030287709; // Cenk, same as the linkedin profile's TELEGRAM_ALLOWED_USERS
 
 export const dayTRT = (ms) => new Date(ms).toLocaleDateString('en-CA', {timeZone:'Europe/Istanbul'});

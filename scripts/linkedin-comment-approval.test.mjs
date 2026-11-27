@@ -46,8 +46,8 @@ test('stale button (old nonce) never publishes the newer draft', async () => {
   assert.equal(called, 0); assert.equal(s.r.status, 'pending'); assert.match(out.reply, /eski/);
 });
 
-test('daily limit of 3 blocks the 4th comment and keeps the record pending', async () => {
-  let called = 0; const s = mem(rec()); s.published = 3;
+test('daily limit of 6 blocks the 7th comment and keeps the record pending', async () => {
+  let called = 0; const s = mem(rec()); s.published = 6;
   const out = await handleCallback({cb:cb('y:7390000000000000001:1:abcd1234'), approverId:ME, chatId:CHAT, store:s, publish:async () => called++, now:NOW});
   assert.equal(called, 0); assert.equal(s.r.status, 'pending'); assert.match(out.reply, /sınırı/);
 });
