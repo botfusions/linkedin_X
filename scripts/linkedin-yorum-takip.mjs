@@ -120,6 +120,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   } else if (arg('--new')) { // --new <okuma.json>: print the comments that still need a decision
     console.log(JSON.stringify(await pendingFromReading(JSON.parse(await fs.readFile(arg('--new'), 'utf8')), {seen: await loadSeen()}), null, 2));
   } else if (arg('--mark')) { // --mark <urn>[,<urn>...]: remember them (sent or skipped)
-    await markSeen(arg('--mark').split(','), await loadSeen());
+    await markSeen(arg('--mark').split(/,(?=urn:)/), await loadSeen());
   } else { console.error('usage: --watch [own|comments] | --new <okuma.json> | --mark <urn,urn>'); process.exit(2); }
 }
